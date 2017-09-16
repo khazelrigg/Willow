@@ -120,7 +120,7 @@ public class Main {
             // Get non abbreviated tags
             String trainedFile = "models/english-bidirectional-distsim.tagger";
 
-            Map<String, String> posAbbrev = nonAbbreviate("posAbbreviations.txt");
+            Map<String, String> posAbbrev = nonAbbreviate();
 
             // Set up Stanford Tagger
             MaxentTagger tagger = new MaxentTagger(trainedFile);
@@ -173,10 +173,10 @@ public class Main {
         }
     }
 
-    private static HashMap<String, String> nonAbbreviate(String path) {
+    private static HashMap<String, String> nonAbbreviate() {
         HashMap <String, String> posNoAbbrev = new HashMap<>();
         try {
-            Scanner in = new Scanner(new FileReader(path));
+            Scanner in = new Scanner(new FileReader("posAbbreviations.txt"));
             while (in.hasNextLine()) {
                 String[] line = in.nextLine().split(":");
                 posNoAbbrev.put(line[0].trim(), line[1].trim());
