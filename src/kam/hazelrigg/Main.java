@@ -20,7 +20,7 @@ public class Main {
     public static void main(String[] args) {
 
         if (!fileName.equals("")) {
-            resultsFile = fileName.substring(0, fileName.length() - 4) + "Results.txt";
+            resultsFile = "results/" + fileName.substring(0, fileName.length() - 4) + "Results.txt";
 
             if (hasResults()) {
                 System.out.println("[NOTE] " + fileName + " already has results");
@@ -55,7 +55,6 @@ public class Main {
 
         try {
             File file = new File(resultsFile);
-            System.out.println("[FILE] " + resultsFile);
             if (file.exists() && !file.isDirectory()) return true;
         } catch (NullPointerException nullptr) {
             return false;
@@ -149,7 +148,7 @@ public class Main {
                     tagType = posAbbrev.get(tagType);
 
                     if (tagType == null) {
-                        System.out.println("[UNKNOWN] " + line[0]);
+                        System.out.println("[UNKNOWN TAG] " + line[0]);
                         tagType = "Unknown";
                     }
 

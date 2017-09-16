@@ -207,7 +207,6 @@ confidence, 2
 clear, 2
 performance, 2
 temple, 2
-, 1
 extent, 1
 impels, 1
 temporary, 1
@@ -697,29 +696,26 @@ various, 1
 fulfillment, 1
 treating, 1
 
-Noun, singular or mass, 356
-Preposition or subordinating conjunction, 308
-Determiner, 216
-Adjective, 148
-Verb, base form, 127
-Noun, plural, 116
-Personal pronoun, 107
-Adverb, 86
-Coordinating conjunction, 71
-Verb, past participle, 54
-Possessive pronoun, 51
-to, 50
-Modal, 45
-Verb, 3rd person singular present, 39
-Proper noun, singular, 20
+Noun, singular or mass, 371
+Adjective, 150
+Noun, plural, 118
+Verb, base form, 105
+Preposition or subordinating conjunction, 89
+Adverb, 87
+Personal pronoun, 63
+Verb, past participle, 56
+Possessive pronoun, 49
+Modal, 47
+Determiner, 30
+List item marker, 19
 Verb, gerund or present participle, 19
 Verb, past tense, 18
+Verb, 3rd person singular present, 17
 Wh-determiner, 12
-Verb, non-3rd person singular present, 10
 Adjective, comparative, 7
 Unknown, 5
 Cardinal number, 5
 Adjective, superlative, 4
+Coordinating conjunction, 3
 Wh-pronoun, 2
-Proper noun, plural, 2
-Existential there, 1
+Verb, non-3rd person singular present, 1
