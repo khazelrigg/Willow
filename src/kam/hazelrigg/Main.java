@@ -1,37 +1,56 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PiePlot3D;
+import org.jfree.data.general.DefaultPieDataset;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
-
-// Look into JFreeChart for graphing / modeling data
-// Look into StanfordNLP for parts of speech
 
 public class Main {
 
     private static String fileName;
 
     public static void main(String[] args) {
-        fileName = getFileName();
-        //fileName = "trumpsInauguralAddress.txt";
+        //fileName = getFileName();
+
+        fileName = "teddysInauguralAddress.txt";
         // getFileName returns null if file does not exist
 
         if (fileName != null) {
-            if (fileName.endsWith("Results.txt")) {
-                readCount();
-            } else {
-                Map<String, Integer> pos = sortByValue(partOfSentence());
 
-                writeCount(wordCount(), pos);
+            if (hasResults()) {
                 fileName = fileName.substring(0, fileName.length() - 4) + "Results.txt";
                 readCount();
+            } else {
+                Map<String, Integer> pos = sortByValue(partOfSpeech());
+
+                writeCount(wordCount(), pos);
+
+                //fileName = fileName.substring(0, fileName.length() - 4) + "Results.txt";
+                readCount();
+                makeGraph(pos);
             }
+
         } else {
-            System.out.println("[Error] File not found/is not .txt");
+            System.out.println("[Error - Main] File not found/is not .txt");
         }
 
+    }
+
+    private static boolean hasResults() {
+        try {
+            File file = new File(fileName.substring(0, fileName.length() - 4) + "Results.txt");
+            if (file.exists() && !file.isDirectory()) return true;
+        } catch (NullPointerException nullpointer) {
+            return false;
+        }
+        return false;
     }
 
     private static String getFileName() {
@@ -57,6 +76,7 @@ public class Main {
 
     private static void readCount() {
         // Read Results file for counts
+
         try {
             Scanner in = new Scanner(new FileReader(fileName));
             System.out.println("\n----[ Using results from " + fileName + " ]----\n");
@@ -66,7 +86,7 @@ public class Main {
             }
             in.close();
         } catch (FileNotFoundException notFound) {
-            System.out.println("[Error] File not found: " + notFound);
+            System.out.println("[Error - readCount] File not found: " + notFound);
         }
     }
 
@@ -74,10 +94,10 @@ public class Main {
     private static void writeCount(Map<String, Integer> wordFreq, Map<String, Integer> wordType) {
         // Write the word counts to a file
 
-        String outFile = fileName.substring(0, fileName.length() - 4) + "Results.txt";
+        //String outFile = fileName.substring(0, fileName.length() - 4) + "Results.txt";
         try {
-            FileWriter fstream = new FileWriter(outFile);
-            BufferedWriter out = new BufferedWriter(fstream);
+            fileName = fileName.substring(0, fileName.length() - 4) + "Results.txt";
+            BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
 
             for (String word : wordFreq.keySet()) {
                 out.write(word + ", " + wordFreq.get(word) + "\n");
@@ -91,36 +111,61 @@ public class Main {
 
             out.close();
         } catch (java.io.IOException ioExc) {
-            System.out.println("[Error] Failed to write file: " + ioExc);
+            System.out.println("[Error - writeCount] Failed to write file: " + ioExc);
         }
     }
 
-    private static Map<String, Integer> partOfSentence () {
+    private static Map<String, Integer> partOfSpeech() {
+        // Count the frequency of POS
+
         try {
+            Map<String, String> posAbbrev = new HashMap<>();
+
             Scanner in = new Scanner(new FileReader(fileName));
+            Scanner posAbbrevIn = new Scanner(new FileReader("posAbbreviations.txt"));
+
+            // Unabbreviate results for easier understanding
+            while (posAbbrevIn.hasNext()) {
+                String[] line = posAbbrevIn.nextLine().split(":");
+                posAbbrev.put(line[0].trim(), line[1].trim());
+            }
+
             String trainedFile = "models/english-bidirectional-distsim.tagger";
             MaxentTagger tagger = new MaxentTagger(trainedFile);
-            Map <String, Integer> partOfSentence = new HashMap<>();
+            Map<String, Integer> partOfSentence = new HashMap<>();
 
-            while (in.hasNext()) {
+            while (in.hasNextLine()) {
                 String[] line = in.nextLine().split("\\s");
 
                 for (String word : line) {
                     word = word.replaceAll("\\W", "");
+                    // Catch words that are only whitespace
+                    if (word.length() == 0) continue;
+
                     String tagged = tagger.tagString(word);
-                    String tagType = tagged.substring(word.length()).replace("_", "");
+                    String tagType = tagged.substring(word.length()).replace("_", "")
+                            .toLowerCase().trim();
+
+                    // Get the non abbreviated form as tagType
+                    tagType = posAbbrev.get(tagType);
+
+                    if (tagType == null) {
+                        tagType = "Unknown";
+                    }
 
                     if (partOfSentence.containsKey(tagType))
                         partOfSentence.put(tagType, partOfSentence.get(tagType) + 1);
                     else partOfSentence.put(tagType, 1);
                 }
             }
+
             return partOfSentence;
-        } catch (IOException ioexc) {
-            System.out.println("[Error] File not found: " + ioexc);
+        } catch (IOException ioe) {
+            System.out.println("[Error - partOfSpeech] File not found: " + ioe);
             return null;
         }
     }
+
     private static Map<String, Integer> wordCount() {
         // Count the frequency of a words appearance
 
@@ -167,12 +212,46 @@ public class Main {
             // Sort map wordFreq before returning to make results easier to understand
             wordFreq = sortByValue(wordFreq);
 
-
             return wordFreq;
 
         } catch (FileNotFoundException notFound) {
-            System.out.println("[Error] File not found: " + notFound);
+            System.out.println("[Error - wordCount] File not found: " + notFound);
             return null;
+        }
+    }
+
+    private static void makeGraph(Map<String, Integer> posMap) {
+        // Create an image representing the distribution of parts of speech
+
+        DefaultPieDataset dataset = new DefaultPieDataset();
+
+        // Load POS data into dataset
+        for (String type : posMap.keySet()) {
+            dataset.setValue(type, posMap.get(type));
+        }
+
+        JFreeChart chart = ChartFactory.createPieChart3D(
+                "Parts of Speech in " + fileName,
+                dataset,
+                false,
+                true,
+                false);
+
+        PiePlot3D plot = (PiePlot3D) chart.getPlot();
+        plot.setBaseSectionOutlinePaint(new Color(0, 0, 0));
+        plot.setDarkerSides(true);
+        plot.setBackgroundPaint(new Color(204, 204, 204));
+        plot.setLabelBackgroundPaint(new Color(255, 255, 255));
+        plot.setStartAngle(90f);
+        plot.setLabelFont(new Font("Ubuntu San Serif", Font.TRUETYPE_FONT, 10));
+        plot.setDepthFactor(0.05f);
+
+        File pieChart = new File(fileName.substring(0, fileName.length() - 4) + ".jpg");
+
+        try {
+            ChartUtilities.saveChartAsJPEG(pieChart, chart, 900, 900);
+        } catch (IOException ioexc) {
+            System.out.println("[Error - makeGraph] Failed to make pie chart " + ioexc);
         }
     }
 
@@ -190,6 +269,5 @@ public class Main {
                         LinkedHashMap::new
                 ));
     }
-
 
 }
