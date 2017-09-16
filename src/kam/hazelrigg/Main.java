@@ -14,25 +14,21 @@ import java.util.stream.Collectors;
 
 public class Main {
 
-    private static String fileName;
+    final private static String fileName = getFileName();
+    private static String resultsFile = "";
 
     public static void main(String[] args) {
-        //fileName = getFileName();
-
-        fileName = "teddysInauguralAddress.txt";
-        // getFileName returns null if file does not exist
 
         if (fileName != null) {
+            resultsFile = fileName.substring(0, fileName.length() - 4) + "Results.txt";
 
             if (hasResults()) {
-                fileName = fileName.substring(0, fileName.length() - 4) + "Results.txt";
+                System.out.println("[NOTE] " + fileName + " already has results");
                 readCount();
             } else {
                 Map<String, Integer> pos = sortByValue(partOfSpeech());
 
                 writeCount(wordCount(), pos);
-
-                //fileName = fileName.substring(0, fileName.length() - 4) + "Results.txt";
                 readCount();
                 makeGraph(pos);
             }
@@ -41,16 +37,6 @@ public class Main {
             System.out.println("[Error - Main] File not found/is not .txt");
         }
 
-    }
-
-    private static boolean hasResults() {
-        try {
-            File file = new File(fileName.substring(0, fileName.length() - 4) + "Results.txt");
-            if (file.exists() && !file.isDirectory()) return true;
-        } catch (NullPointerException nullpointer) {
-            return false;
-        }
-        return false;
     }
 
     private static String getFileName() {
@@ -62,28 +48,33 @@ public class Main {
 
         if (input.length() < 4) return null;
         if (!input.endsWith(".txt")) return null;
+        return input;
+    }
 
-        File file = new File(input.substring(0, input.length() - 4) + "Results.txt");
+    private static boolean hasResults() {
+        // Find out if a file already has a results file
 
-        // File.isFile will return true if a Results file exists
-        if (file.isFile()) {
-            return input.substring(0, input.length() - 4) + "Results.txt";
-        } else {
-            return input;
+        try {
+            File file = new File(resultsFile);
+            System.out.println("[FILE] " + resultsFile);
+            if (file.exists() && !file.isDirectory()) return true;
+        } catch (NullPointerException nullptr) {
+            return false;
         }
-
+        return false;
     }
 
     private static void readCount() {
         // Read Results file for counts
 
         try {
-            Scanner in = new Scanner(new FileReader(fileName));
+            Scanner in = new Scanner(new FileReader(resultsFile));
             System.out.println("\n----[ Using results from " + fileName + " ]----\n");
 
             while (in.hasNext()) {
                 System.out.println(in.nextLine());
             }
+
             in.close();
         } catch (FileNotFoundException notFound) {
             System.out.println("[Error - readCount] File not found: " + notFound);
@@ -94,17 +85,18 @@ public class Main {
     private static void writeCount(Map<String, Integer> wordFreq, Map<String, Integer> wordType) {
         // Write the word counts to a file
 
-        //String outFile = fileName.substring(0, fileName.length() - 4) + "Results.txt";
         try {
-            fileName = fileName.substring(0, fileName.length() - 4) + "Results.txt";
-            BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
+            BufferedWriter out = new BufferedWriter(new FileWriter(resultsFile));
+            System.out.println("[WRITE] " + resultsFile);
 
+            // Write word frequency
             for (String word : wordFreq.keySet()) {
                 out.write(word + ", " + wordFreq.get(word) + "\n");
             }
-            out.write("\n");
-            // Write part of sentence tags
 
+            out.write("\n");
+
+            // Write POS tags to the bottom of the file
             for (String type : wordType.keySet()) {
                 out.write(type + ", " + wordType.get(type) + "\n");
             }
@@ -115,14 +107,68 @@ public class Main {
         }
     }
 
+
+    private static Map<String, Integer> wordCount() {
+        // Count the frequency of a words appearance
+
+        try {
+            Scanner in = new Scanner(new FileReader(fileName));
+
+            Map<String, Integer> wordFreq = new HashMap<>();
+
+            String stopWords = "this but are on that have the of to and a an in is it for ";
+
+            while (in.hasNext()) {
+                // Split line into separate words
+                String[] line = in.nextLine().split("\\s");
+
+                for (String word : line) {
+                    word = word.toLowerCase();
+
+                    if (stopWords.contains(word + " ")) continue; // If the word is a stop word skip over it
+
+                    // Remove punctuation from each word
+                    word = word.replaceAll("\\W", "");
+
+                    wordFreq = addFreq(wordFreq, word);
+                }
+            }
+
+            in.close();
+
+            wordFreq = sortByValue(wordFreq); // Sort map wordFreq before returning to make results easier to understand
+            return wordFreq;
+
+        } catch (FileNotFoundException notFound) {
+            System.out.println("[Error - wordCount] File not found: " + notFound);
+            return null;
+        }
+    }
+
+    private static Map<String, Integer> addFreq(Map<String, Integer> map, String key) {
+        // Add keys into map with a count
+
+        if (map.containsKey(key))
+            map.put(key, map.get(key) + 1);
+        else
+            map.put(key, 1);
+        return map;
+    }
+
+    // Incorporate partOfSpeech into wordCount so that only one pass is being made over file
+
     private static Map<String, Integer> partOfSpeech() {
         // Count the frequency of POS
 
         try {
             Map<String, String> posAbbrev = new HashMap<>();
+            Map<String, Integer> posCounts = new HashMap<>();
 
             Scanner in = new Scanner(new FileReader(fileName));
             Scanner posAbbrevIn = new Scanner(new FileReader("posAbbreviations.txt"));
+
+            String trainedFile = "models/english-bidirectional-distsim.tagger";
+            MaxentTagger tagger = new MaxentTagger(trainedFile);
 
             // Unabbreviate results for easier understanding
             while (posAbbrevIn.hasNext()) {
@@ -130,18 +176,14 @@ public class Main {
                 posAbbrev.put(line[0].trim(), line[1].trim());
             }
 
-            String trainedFile = "models/english-bidirectional-distsim.tagger";
-            MaxentTagger tagger = new MaxentTagger(trainedFile);
-            Map<String, Integer> partOfSentence = new HashMap<>();
-
             while (in.hasNextLine()) {
                 String[] line = in.nextLine().split("\\s");
 
                 for (String word : line) {
                     word = word.replaceAll("\\W", "");
-                    // Catch words that are only whitespace
-                    if (word.length() == 0) continue;
+                    if (word.length() == 0) continue;  // Catch words that are only whitespace
 
+                    // Tag word with its POS
                     String tagged = tagger.tagString(word);
                     String tagType = tagged.substring(word.length()).replace("_", "")
                             .toLowerCase().trim();
@@ -150,72 +192,19 @@ public class Main {
                     tagType = posAbbrev.get(tagType);
 
                     if (tagType == null) {
+                        System.out.println("[UNKNOWN] " + line[0]);
                         tagType = "Unknown";
                     }
 
-                    if (partOfSentence.containsKey(tagType))
-                        partOfSentence.put(tagType, partOfSentence.get(tagType) + 1);
-                    else partOfSentence.put(tagType, 1);
+                    if (posCounts.containsKey(tagType))
+                        posCounts.put(tagType, posCounts.get(tagType) + 1);
+                    else posCounts.put(tagType, 1);
                 }
             }
+            return posCounts;
 
-            return partOfSentence;
         } catch (IOException ioe) {
             System.out.println("[Error - partOfSpeech] File not found: " + ioe);
-            return null;
-        }
-    }
-
-    private static Map<String, Integer> wordCount() {
-        // Count the frequency of a words appearance
-
-        try {
-            Scanner in = new Scanner(new FileReader(fileName));
-            //MaxentTagger tagger = new MaxentTagger("models/english-left3words-distsim.tagger");
-
-
-            Map<String, Integer> wordFreq = new HashMap<>();
-            //Map<String, Integer> wordType = new HashMap<>();
-
-            String blacklist = "this but are on that have the of to and a an in is it for ";
-
-            while (in.hasNext()) {
-                // Split line into separate words
-                String[] line = in.nextLine().split("\\s");
-
-                for (String word : line) {
-                    word = word.toLowerCase() + " ";
-
-                    //String tag = tagger.tagString(word);
-                    //tag = tag.substring(word.length());
-
-                    // If blacklisted word don't add to count
-                    if (blacklist.contains(word)) continue;
-
-                    // Remove punctuation from each word
-                    word = word.replaceAll("\\W", "");
-
-                    // Check if word has been seen before, if it has then increase its count by 1
-                    if (wordFreq.containsKey(word))
-                        wordFreq.put(word, wordFreq.get(word) + 1);
-                    else wordFreq.put(word, 1);
-
-                    /*
-                    if (wordType.containsKey(tag))
-                        wordType.put(tag, wordType.get(word) + 1);
-                    else wordType.put(tag, 1);
-                    */
-                }
-            }
-
-            in.close();
-            // Sort map wordFreq before returning to make results easier to understand
-            wordFreq = sortByValue(wordFreq);
-
-            return wordFreq;
-
-        } catch (FileNotFoundException notFound) {
-            System.out.println("[Error - wordCount] File not found: " + notFound);
             return null;
         }
     }
@@ -243,15 +232,15 @@ public class Main {
         plot.setBackgroundPaint(new Color(204, 204, 204));
         plot.setLabelBackgroundPaint(new Color(255, 255, 255));
         plot.setStartAngle(90f);
-        plot.setLabelFont(new Font("Ubuntu San Serif", Font.TRUETYPE_FONT, 10));
+        plot.setLabelFont(new Font("Ubuntu San Serif", Font.PLAIN, 10));
         plot.setDepthFactor(0.05f);
 
-        File pieChart = new File(fileName.substring(0, fileName.length() - 4) + ".jpg");
+        File pieChart = new File(resultsFile.replaceAll(".txt", "") + ".jpg");
 
         try {
             ChartUtilities.saveChartAsJPEG(pieChart, chart, 900, 900);
-        } catch (IOException ioexc) {
-            System.out.println("[Error - makeGraph] Failed to make pie chart " + ioexc);
+        } catch (IOException ioe) {
+            System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
         }
     }
 
