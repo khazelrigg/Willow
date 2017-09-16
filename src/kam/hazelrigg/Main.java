@@ -19,18 +19,17 @@ public class Main {
 
     public static void main(String[] args) {
 
-        if (fileName != null) {
+        if (!fileName.equals("")) {
             resultsFile = fileName.substring(0, fileName.length() - 4) + "Results.txt";
 
             if (hasResults()) {
                 System.out.println("[NOTE] " + fileName + " already has results");
                 readCount();
             } else {
-                Map<String, Integer> pos = sortByValue(partOfSpeech());
-
-                writeCount(wordCount(), pos);
+                Map<String, Map<String, Integer>> counts = wordCount();
+                writeCount(counts.get("wordFreq"), counts.get("posCount"));
                 readCount();
-                makeGraph(pos);
+                makeGraph(counts.get("posCount"));
             }
 
         } else {
@@ -46,8 +45,8 @@ public class Main {
         System.out.print("File path: ");
         String input = kb.nextLine();
 
-        if (input.length() < 4) return null;
-        if (!input.endsWith(".txt")) return null;
+        if (input.length() < 4) return "";
+        if (!input.endsWith(".txt")) return "";
         return input;
     }
 
@@ -108,13 +107,24 @@ public class Main {
     }
 
 
-    private static Map<String, Integer> wordCount() {
+    private static Map<String, Map<String, Integer>> wordCount() {
         // Count the frequency of a words appearance
+
+        Map<String, Map<String, Integer>> results = new HashMap<>();
 
         try {
             Scanner in = new Scanner(new FileReader(fileName));
 
             Map<String, Integer> wordFreq = new HashMap<>();
+            Map<String, Integer> posCount = new HashMap<>();
+
+            // Get non abbreviated tags
+            String trainedFile = "models/english-bidirectional-distsim.tagger";
+
+            Map<String, String> posAbbrev = nonAbbreviate("posAbbreviations.txt");
+
+            // Set up Stanford Tagger
+            MaxentTagger tagger = new MaxentTagger(trainedFile);
 
             String stopWords = "this but are on that have the of to and a an in is it for ";
 
@@ -124,64 +134,11 @@ public class Main {
 
                 for (String word : line) {
                     word = word.toLowerCase();
-
                     if (stopWords.contains(word + " ")) continue; // If the word is a stop word skip over it
 
                     // Remove punctuation from each word
                     word = word.replaceAll("\\W", "");
-
-                    wordFreq = addFreq(wordFreq, word);
-                }
-            }
-
-            in.close();
-
-            wordFreq = sortByValue(wordFreq); // Sort map wordFreq before returning to make results easier to understand
-            return wordFreq;
-
-        } catch (FileNotFoundException notFound) {
-            System.out.println("[Error - wordCount] File not found: " + notFound);
-            return null;
-        }
-    }
-
-    private static Map<String, Integer> addFreq(Map<String, Integer> map, String key) {
-        // Add keys into map with a count
-
-        if (map.containsKey(key))
-            map.put(key, map.get(key) + 1);
-        else
-            map.put(key, 1);
-        return map;
-    }
-
-    // Incorporate partOfSpeech into wordCount so that only one pass is being made over file
-
-    private static Map<String, Integer> partOfSpeech() {
-        // Count the frequency of POS
-
-        try {
-            Map<String, String> posAbbrev = new HashMap<>();
-            Map<String, Integer> posCounts = new HashMap<>();
-
-            Scanner in = new Scanner(new FileReader(fileName));
-            Scanner posAbbrevIn = new Scanner(new FileReader("posAbbreviations.txt"));
-
-            String trainedFile = "models/english-bidirectional-distsim.tagger";
-            MaxentTagger tagger = new MaxentTagger(trainedFile);
-
-            // Unabbreviate results for easier understanding
-            while (posAbbrevIn.hasNext()) {
-                String[] line = posAbbrevIn.nextLine().split(":");
-                posAbbrev.put(line[0].trim(), line[1].trim());
-            }
-
-            while (in.hasNextLine()) {
-                String[] line = in.nextLine().split("\\s");
-
-                for (String word : line) {
-                    word = word.replaceAll("\\W", "");
-                    if (word.length() == 0) continue;  // Catch words that are only whitespace
+                    if (word.length() == 0) continue;
 
                     // Tag word with its POS
                     String tagged = tagger.tagString(word);
@@ -196,17 +153,50 @@ public class Main {
                         tagType = "Unknown";
                     }
 
-                    if (posCounts.containsKey(tagType))
-                        posCounts.put(tagType, posCounts.get(tagType) + 1);
-                    else posCounts.put(tagType, 1);
+                    posCount = addFreq(posCount, tagType);
+                    wordFreq = addFreq(wordFreq, word);
                 }
             }
-            return posCounts;
+            in.close();
 
-        } catch (IOException ioe) {
-            System.out.println("[Error - partOfSpeech] File not found: " + ioe);
-            return null;
+            // Sort maps before returning to make results easier to understand
+            wordFreq = sortByValue(wordFreq);
+            posCount = sortByValue(posCount);
+
+            results.put("wordFreq", wordFreq);
+            results.put("posCount", posCount);
+
+            return results;
+
+        } catch (FileNotFoundException notFound) {
+            System.out.println("[Error - wordCount] File not found: " + notFound);
+            return results;
         }
+    }
+
+    private static HashMap<String, String> nonAbbreviate(String path) {
+        HashMap <String, String> posNoAbbrev = new HashMap<>();
+        try {
+            Scanner in = new Scanner(new FileReader(path));
+            while (in.hasNextLine()) {
+                String[] line = in.nextLine().split(":");
+                posNoAbbrev.put(line[0].trim(), line[1].trim());
+            }
+            return posNoAbbrev;
+        } catch (FileNotFoundException notFound) {
+            System.out.println("[Error - nonAbbreviate] " + notFound);
+        }
+        return posNoAbbrev;
+    }
+
+    private static Map<String, Integer> addFreq(Map<String, Integer> map, String key) {
+        // Add keys into map with a count
+
+        if (map.containsKey(key))
+            map.put(key, map.get(key) + 1);
+        else
+            map.put(key, 1);
+        return map;
     }
 
     private static void makeGraph(Map<String, Integer> posMap) {
