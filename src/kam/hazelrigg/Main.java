@@ -17,6 +17,9 @@ public class Main {
     final private static String fileName = getFileName();
     private static String resultsFile = "";
 
+    // Set up tagger
+    private static MaxentTagger tagger = new MaxentTagger("models/english-bidirectional-distsim.tagger");
+
     public static void main(String[] args) {
 
         if (!fileName.equals("")) {
@@ -79,7 +82,6 @@ public class Main {
         }
     }
 
-
     private static void writeCount(Map<String, Integer> wordFreq, Map<String, Integer> wordType) {
         // Write the word counts to a file
 
@@ -117,14 +119,6 @@ public class Main {
             Map<String, Integer> wordFreq = new HashMap<>();
             Map<String, Integer> posCount = new HashMap<>();
 
-            // Get non abbreviated tags
-            String trainedFile = "models/english-bidirectional-distsim.tagger";
-
-            Map<String, String> posAbbrev = nonAbbreviate();
-
-            // Set up Stanford Tagger
-            MaxentTagger tagger = new MaxentTagger(trainedFile);
-
             String stopWords = "this but are on that have the of to and a an in is it for ";
 
             while (in.hasNext()) {
@@ -139,18 +133,8 @@ public class Main {
                     word = word.replaceAll("\\W", "");
                     if (word.length() == 0) continue;
 
-                    // Tag word with its POS
-                    String tagged = tagger.tagString(word);
-                    String tagType = tagged.substring(word.length()).replace("_", "")
-                            .toLowerCase().trim();
-
-                    // Get the non abbreviated form as tagType
-                    tagType = posAbbrev.get(tagType);
-
-                    if (tagType == null) {
-                        System.out.println("[UNKNOWN TAG] " + line[0]);
-                        tagType = "Unknown";
-                    }
+                    // Tag each word
+                    String tagType = getTag(word);
 
                     posCount = addFreq(posCount, tagType);
                     wordFreq = addFreq(wordFreq, word);
@@ -159,11 +143,8 @@ public class Main {
             in.close();
 
             // Sort maps before returning to make results easier to understand
-            wordFreq = sortByValue(wordFreq);
-            posCount = sortByValue(posCount);
-
-            results.put("wordFreq", wordFreq);
-            results.put("posCount", posCount);
+            results.put("wordFreq", sortByValue(wordFreq));
+            results.put("posCount", sortByValue(posCount));
 
             return results;
 
@@ -171,6 +152,25 @@ public class Main {
             System.out.println("[Error - wordCount] File not found: " + notFound);
             return results;
         }
+    }
+
+    private static String getTag(String word) {
+        // Get non abbreviated tags
+        Map<String, String> posAbbrev = nonAbbreviate();
+
+        // Tag word with its POS
+        String tagged = tagger.tagString(word);
+        String tagType = tagged.substring(word.length()).replace("_", "")
+                .toLowerCase().trim();
+
+        tagType = posAbbrev.get(tagType);
+
+        if (tagType == null) {
+            System.out.println("[UNKNOWN TAG] " + word);
+            tagType = "Unknown";
+        }
+
+        return tagType;
     }
 
     private static HashMap<String, String> nonAbbreviate() {
