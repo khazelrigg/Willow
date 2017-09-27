@@ -15,42 +15,36 @@ import java.util.stream.Collectors;
 public class Main {
 
     final private static String fileName = getFileName();
-    private static String resultsFile = "";
+    final private static String resultsFile = "results/" + fileName.substring(0, fileName.length() - 4) + "Results.txt";
 
     // Set up tagger
     private static MaxentTagger tagger = new MaxentTagger("models/english-bidirectional-distsim.tagger");
 
     public static void main(String[] args) {
-
-        if (!fileName.equals("")) {
-            resultsFile = "results/" + fileName.substring(0, fileName.length() - 4) + "Results.txt";
-
-            if (hasResults()) {
-                System.out.println("[NOTE] " + fileName + " already has results");
-                readCount();
-            } else {
-                Map<String, Map<String, Integer>> counts = wordCount();
-                writeCount(counts.get("wordFreq"), counts.get("posCount"));
-                readCount();
-                makeGraph(counts.get("posCount"));
-            }
-
+        if (hasResults()) {
+            System.out.println("[NOTE] " + fileName + " already has results");
+            readCount();
         } else {
-            System.out.println("[Error - Main] File not found/is not .txt");
+            Map<String, Map<String, Integer>> counts = wordCount();
+            writeCount(counts.get("wordFreq"), counts.get("posCount"));
+            readCount();
+            makeGraph(counts.get("posCount"));
         }
 
     }
 
     private static String getFileName() {
-        // Get input (fileName) from user and check its validity
+        // Get a filename and check that the file exists
 
         Scanner kb = new Scanner(System.in);
-        System.out.print("File path: ");
-        String input = kb.nextLine();
+        while (true) {
+            System.out.print("File path: ");
+            String input = kb.nextLine();
+            File file = new File(input);
 
-        if (input.length() < 4) return "";
-        if (!input.endsWith(".txt")) return "";
-        return input;
+            if (file.exists() && !file.isDirectory()) return input;
+            else System.out.println("Try again, no file found at " + input);
+        }
     }
 
     private static boolean hasResults() {
