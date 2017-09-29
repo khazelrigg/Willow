@@ -8,19 +8,30 @@ import org.jfree.chart.plot.PiePlot3D;
 import org.jfree.data.general.DefaultPieDataset;
 
 import java.awt.*;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class Main {
 
     private static int totalWordCount = 0;
 
-    final private static String FILE_NAME = getFileName();
-    final private static String RESULTS_FILE = "results/" + FILE_NAME.substring(0, FILE_NAME.length() - 4) + "Results.txt";
+    private static final String FILE_NAME = getFileName();
+    private static final String RESULTS_FILE =
+            "results/" + FILE_NAME.substring(0, FILE_NAME.length() - 4) + "Results.txt";
 
     // Set up tagger
-    private static MaxentTagger tagger = new MaxentTagger("models/english-bidirectional-distsim.tagger");
+    private static MaxentTagger tagger =
+            new MaxentTagger("models/english-bidirectional-distsim.tagger");
 
     public static void main(String[] args) {
 
@@ -41,6 +52,38 @@ public class Main {
         //System.out.println("\nTIME TO RUN: " + (endTime - startTime) + "ms");
     }
 
+    private static String getFileName() {
+        // Get a filename and check that the file exists
+
+        Scanner kb = new Scanner(System.in);
+        while (true) {
+            System.out.print("File path: ");
+            String input = kb.nextLine();
+            File file = new File(input);
+
+            if (file.exists() && !file.isDirectory()) {
+                return input;
+            } else {
+                System.out.println("Try again, no file found at " + input);
+            }
+        }
+    }
+
+    private static boolean hasResults() {
+        // Find out if a file already has a results file
+
+        try {
+            File file = new File(RESULTS_FILE);
+            if (file.exists() && !file.isDirectory()) {
+                return true;
+            }
+        } catch (NullPointerException nullptr) {
+            return false;
+        }
+
+        return false;
+    }
+
     private static Map<String, Map<String, Integer>> wordCount() {
         // Count the frequency of a words appearance
 
@@ -52,11 +95,11 @@ public class Main {
         results.put("WORD", null);
 
         /* THIS IS UGLY, FIND OUT HOW TO MAKE THIS BEAUTIFUL */
-        Map<String, Integer> POS = new HashMap<>();
-        Map<String, Integer> WORD = new HashMap<>();
-        Map<String, Integer> OTHER = new HashMap<>();
+        Map<String, Integer> posMap = new HashMap<>();
+        Map<String, Integer> wordMap = new HashMap<>();
+        Map<String, Integer> otherMap = new HashMap<>();
 
-        OTHER.put("Palindrome", 0);
+        otherMap.put("Palindrome", 0);
 
         try {
             Scanner in = new Scanner(new FileReader(FILE_NAME));
@@ -68,13 +111,19 @@ public class Main {
                 String[] line = in.nextLine().split("\\s");
 
                 for (String word : line) {
-
                     word = word.toLowerCase();
-                    if (stopWords.contains(word + " ")) continue; // If the word is a stop word skip over it
+
+                    // If the word is a stop word skip over it
+                    if (stopWords.contains(word + " ")) {
+                        continue;
+                    }
 
                     // Remove punctuation from each word
                     word = word.replaceAll("\\W", "");
-                    if (word.length() == 0) continue;
+
+                    if (word.length() == 0) {
+                        continue;
+                    }
 
                     totalWordCount++;
 
@@ -82,17 +131,17 @@ public class Main {
                     String tagType = getTag(word);
 
                     // Add counts and tags to corresponding maps
-                    WORD = addFreq(WORD, word);
-                    POS = addFreq(POS, tagType);
+                    wordMap = addFreq(wordMap, word);
+                    posMap = addFreq(posMap, tagType);
 
-                    results.put("WORD", WORD);
-                    results.put("POS", POS);
+                    results.put("WORD", wordMap);
+                    results.put("POS", posMap);
 
                     if (isPalindrome(word)) {
-                        OTHER.put("Palindrome", OTHER.get("Palindrome") + 1);
+                        otherMap.put("Palindrome", otherMap.get("Palindrome") + 1);
                     }
 
-                    results.put("OTHER", OTHER);
+                    results.put("OTHER", otherMap);
                 }
             }
 
@@ -111,30 +160,61 @@ public class Main {
         }
     }
 
-    private static String getFileName() {
-        // Get a filename and check that the file exists
+    private static String getTag(String word) {
+        // Get non abbreviated tags
+        Map<String, String> posAbbrev = nonAbbreviate();
 
-        Scanner kb = new Scanner(System.in);
-        while (true) {
-            System.out.print("File path: ");
-            String input = kb.nextLine();
-            File file = new File(input);
+        // Tag word with its POS
+        String tagged = tagger.tagString(word);
+        String tagType = tagged.substring(word.length()).replace("_", "")
+                .toLowerCase().trim();
 
-            if (file.exists() && !file.isDirectory()) return input;
-            else System.out.println("Try again, no file found at " + input);
+        tagType = posAbbrev.get(tagType);
+
+        if (tagType == null) {
+            System.out.println("[UNKNOWN TAG] " + word);
+            tagType = "Unknown";
         }
+
+        return tagType;
     }
 
-    private static boolean hasResults() {
-        // Find out if a file already has a results file
-
+    private static HashMap<String, String> nonAbbreviate() {
+        HashMap<String, String> posNoAbbrev = new HashMap<>();
         try {
-            File file = new File(RESULTS_FILE);
-            if (file.exists() && !file.isDirectory()) return true;
-        } catch (NullPointerException nullptr) {
-            return false;
+            Scanner in = new Scanner(new FileReader("posAbbreviations.txt"));
+            while (in.hasNextLine()) {
+                String[] line = in.nextLine().split(":");
+                posNoAbbrev.put(line[0].trim(), line[1].trim());
+            }
+            return posNoAbbrev;
+        } catch (FileNotFoundException notFound) {
+            System.out.println("[Error - nonAbbreviate] " + notFound);
         }
-        return false;
+
+        return posNoAbbrev;
+    }
+
+    private static Map<String, Integer> addFreq(Map<String, Integer> map, String key) {
+        // Add keys into map with a count
+
+        if (map.containsKey(key)) {
+            map.put(key, map.get(key) + 1);
+        } else {
+            map.put(key, 1);
+        }
+
+        return map;
+    }
+
+    private static boolean isPalindrome(String str) {
+        for (int i = 0; i < str.length() / 2; i++) {
+            if (str.charAt(i) != str.charAt(str.length() - 1 - i)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static void writeCount(Map<String, Map<String, Integer>> counts) {
@@ -160,55 +240,20 @@ public class Main {
         }
     }
 
-    private static Map<String, Integer> addFreq(Map<String, Integer> map, String key) {
-        // Add keys into map with a count
+    private static void readCount() {
+        // Read Results file for counts
 
-        if (map.containsKey(key))
-            map.put(key, map.get(key) + 1);
-        else
-            map.put(key, 1);
-        return map;
-    }
-
-    private static String getTag(String word) {
-        // Get non abbreviated tags
-        Map<String, String> posAbbrev = nonAbbreviate();
-
-        // Tag word with its POS
-        String tagged = tagger.tagString(word);
-        String tagType = tagged.substring(word.length()).replace("_", "")
-                .toLowerCase().trim();
-
-        tagType = posAbbrev.get(tagType);
-
-        if (tagType == null) {
-            System.out.println("[UNKNOWN TAG] " + word);
-            tagType = "Unknown";
-        }
-
-        return tagType;
-    }
-
-    private static HashMap<String, String> nonAbbreviate() {
-        HashMap <String, String> posNoAbbrev = new HashMap<>();
         try {
-            Scanner in = new Scanner(new FileReader("posAbbreviations.txt"));
-            while (in.hasNextLine()) {
-                String[] line = in.nextLine().split(":");
-                posNoAbbrev.put(line[0].trim(), line[1].trim());
-            }
-            return posNoAbbrev;
-        } catch (FileNotFoundException notFound) {
-            System.out.println("[Error - nonAbbreviate] " + notFound);
-        }
-        return posNoAbbrev;
-    }
+            Scanner in = new Scanner(new FileReader(RESULTS_FILE));
+            System.out.println("\n----[ Using results from " + FILE_NAME + " ]----\n");
 
-    private static boolean isPalindrome(String str) {
-        for (int i = 0; i < str.length() / 2; i++) {
-            if (str.charAt(i) != str.charAt(str.length() - 1 - i)) return false;
+            while (in.hasNext()) {
+                System.out.println(in.nextLine());
+            }
+            in.close();
+        } catch (FileNotFoundException notFound) {
+            System.out.println("[Error - readCount] File not found: " + notFound);
         }
-        return true;
     }
 
     private static void makeGraph(Map<String, Integer> posMap) {
@@ -243,22 +288,6 @@ public class Main {
             ChartUtilities.saveChartAsJPEG(pieChart, chart, 900, 900);
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
-        }
-    }
-
-    private static void readCount() {
-        // Read Results file for counts
-
-        try {
-            Scanner in = new Scanner(new FileReader(RESULTS_FILE));
-            System.out.println("\n----[ Using results from " + FILE_NAME + " ]----\n");
-
-            while (in.hasNext()) {
-                System.out.println(in.nextLine());
-            }
-            in.close();
-        } catch (FileNotFoundException notFound) {
-            System.out.println("[Error - readCount] File not found: " + notFound);
         }
     }
 
