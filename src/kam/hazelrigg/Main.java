@@ -14,23 +14,29 @@ import java.util.stream.Collectors;
 
 public class Main {
 
-    final private static String fileName = getFileName();
-    final private static String resultsFile = "results/" + fileName.substring(0, fileName.length() - 4) + "Results.txt";
+    final private static String FILE_NAME = getFileName();
+    final private static String RESULTS_FILE = "results/" + FILE_NAME.substring(0, FILE_NAME.length() - 4) + "Results.txt";
 
     // Set up tagger
     private static MaxentTagger tagger = new MaxentTagger("models/english-bidirectional-distsim.tagger");
 
     public static void main(String[] args) {
+
+        //long startTime = System.currentTimeMillis();
+
         if (hasResults()) {
-            System.out.println("[NOTE] " + fileName + " already has results");
+            System.out.println("[NOTE] " + FILE_NAME + " already has results");
             readCount();
         } else {
             Map<String, Map<String, Integer>> counts = wordCount();
-            writeCount(counts.get("wordFreq"), counts.get("posCount"));
+
+            writeCount(counts);
             readCount();
-            makeGraph(counts.get("posCount"));
+            makeGraph(counts.get("POS"));
         }
 
+        //long endTime = System.currentTimeMillis();
+        //System.out.println("\nTIME TO RUN: " + (endTime - startTime) + "ms");
     }
 
     private static String getFileName() {
@@ -51,7 +57,7 @@ public class Main {
         // Find out if a file already has a results file
 
         try {
-            File file = new File(resultsFile);
+            File file = new File(RESULTS_FILE);
             if (file.exists() && !file.isDirectory()) return true;
         } catch (NullPointerException nullptr) {
             return false;
@@ -63,36 +69,32 @@ public class Main {
         // Read Results file for counts
 
         try {
-            Scanner in = new Scanner(new FileReader(resultsFile));
-            System.out.println("\n----[ Using results from " + fileName + " ]----\n");
+            Scanner in = new Scanner(new FileReader(RESULTS_FILE));
+            System.out.println("\n----[ Using results from " + FILE_NAME + " ]----\n");
 
             while (in.hasNext()) {
                 System.out.println(in.nextLine());
             }
-
             in.close();
         } catch (FileNotFoundException notFound) {
             System.out.println("[Error - readCount] File not found: " + notFound);
         }
     }
 
-    private static void writeCount(Map<String, Integer> wordFreq, Map<String, Integer> wordType) {
+    private static void writeCount(Map<String, Map<String, Integer>> counts) {
         // Write the word counts to a file
 
         try {
-            BufferedWriter out = new BufferedWriter(new FileWriter(resultsFile));
-            System.out.println("[WRITE] " + resultsFile);
+            BufferedWriter out = new BufferedWriter(new FileWriter(RESULTS_FILE));
+            System.out.println("[WRITE] " + RESULTS_FILE);
 
             // Write word frequency
-            for (String word : wordFreq.keySet()) {
-                out.write(word + ", " + wordFreq.get(word) + "\n");
-            }
-
-            out.write("\n");
-
-            // Write POS tags to the bottom of the file
-            for (String type : wordType.keySet()) {
-                out.write(type + ", " + wordType.get(type) + "\n");
+            for (String id : counts.keySet()) {
+                out.write("====================[ " + id + " ]====================\n");
+                for (String key : counts.get(id).keySet()) {
+                    out.write(key + ", " + counts.get(id).get(key) + "\n");
+                }
+                out.write("\n");
             }
 
             out.close();
@@ -101,17 +103,25 @@ public class Main {
         }
     }
 
-
     private static Map<String, Map<String, Integer>> wordCount() {
         // Count the frequency of a words appearance
 
         Map<String, Map<String, Integer>> results = new HashMap<>();
+       // Map<String, Integer> z = new HashMap<>();
+
+        results.put("OTHER", null);
+        results.put("POS", null);
+        results.put("WORD", null);
+
+        /* THIS IS UGLY, FIND OUT HOW TO MAKE THIS BEAUTIFUL */
+        Map<String, Integer> POS = new HashMap<>();
+        Map<String, Integer> WORD = new HashMap<>();
+        Map<String, Integer> OTHER = new HashMap<>();
+
+        OTHER.put("Palindrome", 0);
 
         try {
-            Scanner in = new Scanner(new FileReader(fileName));
-
-            Map<String, Integer> wordFreq = new HashMap<>();
-            Map<String, Integer> posCount = new HashMap<>();
+            Scanner in = new Scanner(new FileReader(FILE_NAME));
 
             String stopWords = "this but are on that have the of to and a an in is it for ";
 
@@ -130,15 +140,27 @@ public class Main {
                     // Tag each word
                     String tagType = getTag(word);
 
-                    posCount = addFreq(posCount, tagType);
-                    wordFreq = addFreq(wordFreq, word);
+                    // Add counts and tags to corresponding maps
+                    WORD = addFreq(WORD, word);
+                    POS = addFreq(POS, tagType);
+
+                    results.put("WORD", WORD);
+                    results.put("POS", POS);
+
+                    if (isPalindrome(word)) {
+                        OTHER.put("Palindrome", OTHER.get("Palindrome") + 1);
+                    }
+
+                    results.put("OTHER", OTHER);
                 }
             }
+
             in.close();
 
-            // Sort maps before returning to make results easier to understand
-            results.put("wordFreq", sortByValue(wordFreq));
-            results.put("posCount", sortByValue(posCount));
+            // Sort each Map
+            for (String id : results.keySet()) {
+                results.put(id, sortByValue(results.get(id)));
+            }
 
             return results;
 
@@ -146,6 +168,16 @@ public class Main {
             System.out.println("[Error - wordCount] File not found: " + notFound);
             return results;
         }
+    }
+
+    private static Map<String, Integer> addFreq(Map<String, Integer> map, String key) {
+        // Add keys into map with a count
+
+        if (map.containsKey(key))
+            map.put(key, map.get(key) + 1);
+        else
+            map.put(key, 1);
+        return map;
     }
 
     private static String getTag(String word) {
@@ -182,14 +214,11 @@ public class Main {
         return posNoAbbrev;
     }
 
-    private static Map<String, Integer> addFreq(Map<String, Integer> map, String key) {
-        // Add keys into map with a count
-
-        if (map.containsKey(key))
-            map.put(key, map.get(key) + 1);
-        else
-            map.put(key, 1);
-        return map;
+    private static boolean isPalindrome(String str) {
+        for (int i = 0; i < str.length() / 2; i++) {
+            if (str.charAt(i) != str.charAt(str.length() - 1 - i)) return false;
+        }
+        return true;
     }
 
     private static void makeGraph(Map<String, Integer> posMap) {
@@ -203,7 +232,7 @@ public class Main {
         }
 
         JFreeChart chart = ChartFactory.createPieChart3D(
-                "Parts of Speech in " + fileName,
+                "Parts of Speech in " + FILE_NAME,
                 dataset,
                 false,
                 true,
@@ -218,7 +247,7 @@ public class Main {
         plot.setLabelFont(new Font("Ubuntu San Serif", Font.PLAIN, 10));
         plot.setDepthFactor(0.05f);
 
-        File pieChart = new File(resultsFile.replaceAll(".txt", "") + ".jpg");
+        File pieChart = new File(RESULTS_FILE.replaceAll(".txt", "") + ".jpg");
 
         try {
             ChartUtilities.saveChartAsJPEG(pieChart, chart, 900, 900);
@@ -228,7 +257,9 @@ public class Main {
     }
 
     private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
-        // Found on stack overflow
+        /* Found on stack overflow:
+            https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java#2581754
+        */
 
         return map.entrySet()
                 .stream()
