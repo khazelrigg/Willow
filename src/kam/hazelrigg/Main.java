@@ -8,18 +8,16 @@ import org.jfree.chart.plot.PiePlot3D;
 import org.jfree.data.general.DefaultPieDataset;
 
 import java.awt.*;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class Main {
 
@@ -38,14 +36,18 @@ public class Main {
         //long startTime = System.currentTimeMillis();
 
         if (hasResults()) {
-            System.out.println("[NOTE] " + FILE_NAME + " already has results");
+            System.out.println("[NOTE] " + FILE_NAME + " already has results!");
             readCount();
         } else {
-            Map<String, Map<String, Integer>> counts = wordCount();
-
-            writeCount(counts);
-            readCount();
-            makeGraph(counts.get("POS"));
+            try {
+                Map<String, Map<String, Integer>> counts = wordCount();
+                writeCount(counts);
+                readCount();
+                makeGraph(counts.get("POS"));
+            } catch (IOException ioe) {
+                System.out.println("[Error - Main] " + ioe);
+                System.exit(-1);
+            }
         }
 
         //long endTime = System.currentTimeMillis();
@@ -84,44 +86,32 @@ public class Main {
         return false;
     }
 
-    private static Map<String, Map<String, Integer>> wordCount() {
+    private static Map<String, Map<String, Integer>> wordCount() throws IOException {
         // Count the frequency of a words appearance
 
         Map<String, Map<String, Integer>> results = new HashMap<>();
-        // Map<String, Integer> z = new HashMap<>();
 
-        results.put("OTHER", null);
-        results.put("POS", null);
-        results.put("WORD", null);
+        FreqMap posFreq = new FreqMap();
+        FreqMap wordFreq = new FreqMap();
 
-        /* THIS IS UGLY, FIND OUT HOW TO MAKE THIS BEAUTIFUL */
-        Map<String, Integer> posMap = new HashMap<>();
-        Map<String, Integer> wordMap = new HashMap<>();
-        Map<String, Integer> otherMap = new HashMap<>();
+        HashMap<String, Integer> otherMap = new HashMap<>();
 
         otherMap.put("Palindrome", 0);
 
-        try {
-            Scanner in = new Scanner(new FileReader(FILE_NAME));
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
 
-            String stopWords = "this but are on that have the of to and a an in is it for ";
+            String stopWords = "which|was|what|has|have|this|that|the|of|to|and|a|an|as|are|on|in|is|it|so|for|be|been|by|but|";
 
-            while (in.hasNext()) {
+            while (br.readLine() != null) {
+
                 // Split line into separate words
-                String[] line = in.nextLine().split("\\s");
+                String[] line = br.readLine().split("\\s");
 
                 for (String word : line) {
-                    word = word.toLowerCase();
+                    word = word.toLowerCase().replaceAll("\\W", "");
 
                     // If the word is a stop word skip over it
-                    if (stopWords.contains(word + " ")) {
-                        continue;
-                    }
-
-                    // Remove punctuation from each word
-                    word = word.replaceAll("\\W", "");
-
-                    if (word.length() == 0) {
+                    if (word.length() == 0 || stopWords.contains(word + "|")) {
                         continue;
                     }
 
@@ -131,11 +121,12 @@ public class Main {
                     String tagType = getTag(word);
 
                     // Add counts and tags to corresponding maps
-                    wordMap = addFreq(wordMap, word);
-                    posMap = addFreq(posMap, tagType);
+                    posFreq.increaseFreq(tagType);
+                    wordFreq.increaseFreq(word);
 
-                    results.put("WORD", wordMap);
-                    results.put("POS", posMap);
+                    results.put("WORD", wordFreq.getFrequency());
+                    results.put("POS", posFreq.getFrequency());
+
 
                     if (isPalindrome(word)) {
                         otherMap.put("Palindrome", otherMap.get("Palindrome") + 1);
@@ -145,18 +136,10 @@ public class Main {
                 }
             }
 
-            in.close();
-
-            // Sort each Map
-            for (String id : results.keySet()) {
-                results.put(id, sortByValue(results.get(id)));
-            }
+            br.close();
 
             return results;
 
-        } catch (FileNotFoundException notFound) {
-            System.out.println("[Error - wordCount] File not found: " + notFound);
-            return results;
         }
     }
 
@@ -193,18 +176,6 @@ public class Main {
         }
 
         return posNoAbbrev;
-    }
-
-    private static Map<String, Integer> addFreq(Map<String, Integer> map, String key) {
-        // Add keys into map with a count
-
-        if (map.containsKey(key)) {
-            map.put(key, map.get(key) + 1);
-        } else {
-            map.put(key, 1);
-        }
-
-        return map;
     }
 
     private static boolean isPalindrome(String str) {
@@ -289,23 +260,6 @@ public class Main {
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
         }
-    }
-
-    private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
-        /* Found on stack overflow:
-            https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java#2581754
-        */
-
-        return map.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
-                //                                  Sort descending instead of ascending
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new
-                ));
     }
 
 }
