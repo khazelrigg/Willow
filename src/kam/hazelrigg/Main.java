@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 
 public class Main {
 
+    private static int totalWordCount = 0;
+
     final private static String FILE_NAME = getFileName();
     final private static String RESULTS_FILE = "results/" + FILE_NAME.substring(0, FILE_NAME.length() - 4) + "Results.txt";
 
@@ -39,75 +41,11 @@ public class Main {
         //System.out.println("\nTIME TO RUN: " + (endTime - startTime) + "ms");
     }
 
-    private static String getFileName() {
-        // Get a filename and check that the file exists
-
-        Scanner kb = new Scanner(System.in);
-        while (true) {
-            System.out.print("File path: ");
-            String input = kb.nextLine();
-            File file = new File(input);
-
-            if (file.exists() && !file.isDirectory()) return input;
-            else System.out.println("Try again, no file found at " + input);
-        }
-    }
-
-    private static boolean hasResults() {
-        // Find out if a file already has a results file
-
-        try {
-            File file = new File(RESULTS_FILE);
-            if (file.exists() && !file.isDirectory()) return true;
-        } catch (NullPointerException nullptr) {
-            return false;
-        }
-        return false;
-    }
-
-    private static void readCount() {
-        // Read Results file for counts
-
-        try {
-            Scanner in = new Scanner(new FileReader(RESULTS_FILE));
-            System.out.println("\n----[ Using results from " + FILE_NAME + " ]----\n");
-
-            while (in.hasNext()) {
-                System.out.println(in.nextLine());
-            }
-            in.close();
-        } catch (FileNotFoundException notFound) {
-            System.out.println("[Error - readCount] File not found: " + notFound);
-        }
-    }
-
-    private static void writeCount(Map<String, Map<String, Integer>> counts) {
-        // Write the word counts to a file
-
-        try {
-            BufferedWriter out = new BufferedWriter(new FileWriter(RESULTS_FILE));
-            System.out.println("[WRITE] " + RESULTS_FILE);
-
-            // Write word frequency
-            for (String id : counts.keySet()) {
-                out.write("====================[ " + id + " ]====================\n");
-                for (String key : counts.get(id).keySet()) {
-                    out.write(key + ", " + counts.get(id).get(key) + "\n");
-                }
-                out.write("\n");
-            }
-
-            out.close();
-        } catch (java.io.IOException ioExc) {
-            System.out.println("[Error - writeCount] Failed to write file: " + ioExc);
-        }
-    }
-
     private static Map<String, Map<String, Integer>> wordCount() {
         // Count the frequency of a words appearance
 
         Map<String, Map<String, Integer>> results = new HashMap<>();
-       // Map<String, Integer> z = new HashMap<>();
+        // Map<String, Integer> z = new HashMap<>();
 
         results.put("OTHER", null);
         results.put("POS", null);
@@ -130,12 +68,15 @@ public class Main {
                 String[] line = in.nextLine().split("\\s");
 
                 for (String word : line) {
+
                     word = word.toLowerCase();
                     if (stopWords.contains(word + " ")) continue; // If the word is a stop word skip over it
 
                     // Remove punctuation from each word
                     word = word.replaceAll("\\W", "");
                     if (word.length() == 0) continue;
+
+                    totalWordCount++;
 
                     // Tag each word
                     String tagType = getTag(word);
@@ -167,6 +108,55 @@ public class Main {
         } catch (FileNotFoundException notFound) {
             System.out.println("[Error - wordCount] File not found: " + notFound);
             return results;
+        }
+    }
+
+    private static String getFileName() {
+        // Get a filename and check that the file exists
+
+        Scanner kb = new Scanner(System.in);
+        while (true) {
+            System.out.print("File path: ");
+            String input = kb.nextLine();
+            File file = new File(input);
+
+            if (file.exists() && !file.isDirectory()) return input;
+            else System.out.println("Try again, no file found at " + input);
+        }
+    }
+
+    private static boolean hasResults() {
+        // Find out if a file already has a results file
+
+        try {
+            File file = new File(RESULTS_FILE);
+            if (file.exists() && !file.isDirectory()) return true;
+        } catch (NullPointerException nullptr) {
+            return false;
+        }
+        return false;
+    }
+
+    private static void writeCount(Map<String, Map<String, Integer>> counts) {
+        // Write the word counts to a file
+
+        try {
+            BufferedWriter out = new BufferedWriter(new FileWriter(RESULTS_FILE));
+            System.out.println("[WRITE] " + RESULTS_FILE);
+            out.write("Total word count (Excluding Stop Words): " + totalWordCount + "\n");
+
+            // Write counts information
+            for (String id : counts.keySet()) {
+                out.write("====================[ " + id + " ]====================\n");
+                for (String key : counts.get(id).keySet()) {
+                    out.write(key + ", " + counts.get(id).get(key) + "\n");
+                }
+                out.write("\n");
+            }
+
+            out.close();
+        } catch (java.io.IOException ioExc) {
+            System.out.println("[Error - writeCount] Failed to write file: " + ioExc);
         }
     }
 
@@ -253,6 +243,22 @@ public class Main {
             ChartUtilities.saveChartAsJPEG(pieChart, chart, 900, 900);
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
+        }
+    }
+
+    private static void readCount() {
+        // Read Results file for counts
+
+        try {
+            Scanner in = new Scanner(new FileReader(RESULTS_FILE));
+            System.out.println("\n----[ Using results from " + FILE_NAME + " ]----\n");
+
+            while (in.hasNext()) {
+                System.out.println(in.nextLine());
+            }
+            in.close();
+        } catch (FileNotFoundException notFound) {
+            System.out.println("[Error - readCount] File not found: " + notFound);
         }
     }
 
