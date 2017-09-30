@@ -11,7 +11,6 @@ import java.awt.*;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,38 +21,34 @@ import java.util.Scanner;
 public class Main {
 
     private static int totalWordCount = 0;
-
-    private static final String FILE_NAME = getFileName();
-    private static final String RESULTS_FILE =
-            "results/" + FILE_NAME.substring(0, FILE_NAME.length() - 4) + "Results.txt";
+    private static Boolean verbose = false;
 
     // Set up tagger
     private static MaxentTagger tagger =
             new MaxentTagger("models/english-bidirectional-distsim.tagger");
 
     public static void main(String[] args) {
-
-        //long startTime = System.currentTimeMillis();
-
-        if (hasResults()) {
-            System.out.println("[NOTE] " + FILE_NAME + " already has results!");
-            readCount();
-        } else {
-            try {
-                Map<String, Map<String, Integer>> counts = wordCount();
-                writeCount(counts);
-                readCount();
-                makeGraph(counts.get("POS"));
-            } catch (IOException ioe) {
-                System.out.println("[Error - Main] " + ioe);
-                System.exit(-1);
-            }
+        if (args.length != 0 && args[0].equals("-v")) {
+            verbose = true;
         }
 
-        //long endTime = System.currentTimeMillis();
-        //System.out.println("\nTIME TO RUN: " + (endTime - startTime) + "ms");
+        long startTime = System.currentTimeMillis();
+        File file = new File(getFileName());
+
+        if (file.isDirectory()) {
+            readDir(file);
+        } else if (file.isFile()){
+            readFile(file);
+        }
+
+        long endTime = System.currentTimeMillis();
+        System.out.println("\nTotal time elapsed " + (endTime - startTime) / 1000 + "sec.");
     }
 
+    /**
+     * Get a file/directory name from the user and ensure it is valid
+     * @return String containing the input if the input is a file/directory
+     */
     private static String getFileName() {
         // Get a filename and check that the file exists
 
@@ -63,7 +58,7 @@ public class Main {
             String input = kb.nextLine();
             File file = new File(input);
 
-            if (file.exists() && !file.isDirectory()) {
+            if (file.exists() ) {
                 return input;
             } else {
                 System.out.println("Try again, no file found at " + input);
@@ -71,24 +66,82 @@ public class Main {
         }
     }
 
-    private static boolean hasResults() {
-        // Find out if a file already has a results file
+    /**
+     * Reads and creates the data for an entire directory
+     * @param dir Directory to analyse
+     */
+    private static void readDir(File dir) {
 
-        try {
-            File file = new File(RESULTS_FILE);
-            if (file.exists() && !file.isDirectory()) {
-                return true;
+        for (File file : dir.listFiles()) {
+
+            // Call readDir recursively to read sub directories
+            if (file.isDirectory()) {
+                readDir(file);
+            } else {
+                readFile(file);
             }
-        } catch (NullPointerException nullptr) {
-            return false;
         }
-
-        return false;
     }
 
-    private static Map<String, Map<String, Integer>> wordCount() throws IOException {
-        // Count the frequency of a words appearance
+    /**
+     * Reads and creates the data for an input file
+     * @param file File to analyse
+     */
+    private static void readFile(File file) {
 
+        File resultFile = outputOfFile(file);
+
+        if (resultFile.exists()) {
+            System.out.println("[*] " + file.getName() + " already has results.");
+
+            if (verbose) {
+                printFile(resultFile);
+            }
+
+        } else {
+            try {
+                Map<String, Map<String, Integer>> count = wordCount(file);
+                writeCount(count, resultFile);
+
+                if (verbose) {
+                    printFile(resultFile);
+                }
+
+                makeGraph(count.get("POS"),
+                        new File("results/" + resultFile.getName().
+                                replaceAll(".txt", ".jpeg")));
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Converts an input file into its output file
+     * @param file The file to convert to an output
+     * @return The conversion of input file
+     */
+    private static File outputOfFile(File file) {
+
+        String fileName = file.getName();
+        // Remove extensions
+        fileName = "results/" +
+                fileName.substring(0, fileName.lastIndexOf(".")) +
+                "Results.txt";
+
+        return new File(fileName);
+    }
+
+    /**
+     * Counts parts of speech and general word counts of a file
+     * @param file The input file to be analyzed
+     * @return A map containing the type of information and then its values as a second map
+     * @throws IOException if the file is unable to be opened
+     */
+    private static Map<String, Map<String, Integer>> wordCount(File file) throws IOException {
+
+        System.out.println("[*] Starting " + file.getName());
         Map<String, Map<String, Integer>> results = new HashMap<>();
 
         FreqMap posFreq = new FreqMap();
@@ -98,20 +151,27 @@ public class Main {
 
         otherMap.put("Palindrome", 0);
 
-        try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 
             String stopWords = "which|was|what|has|have|this|that|the|of|to|and|a|an|as|are|on|in|is|it|so|for|be|been|by|but|";
 
-            while (br.readLine() != null) {
+            String line = br.readLine();
+            while (line != null) {
 
                 // Split line into separate words
-                String[] line = br.readLine().split("\\s");
+                if (line.length() == 0) {
+                    line = br.readLine();
+                    continue;
+                }
 
-                for (String word : line) {
+                String[] words = line.split("\\s");
+
+                for (String word : words) {
                     word = word.toLowerCase().replaceAll("\\W", "");
 
                     // If the word is a stop word skip over it
                     if (word.length() == 0 || stopWords.contains(word + "|")) {
+                        line = br.readLine();
                         continue;
                     }
 
@@ -133,51 +193,74 @@ public class Main {
                     }
 
                     results.put("OTHER", otherMap);
+                    line = br.readLine();
                 }
             }
 
             br.close();
 
+            System.out.println("[*] Finished " + file.getName() + "\n");
             return results;
 
         }
     }
 
+    /**
+     * Returns the part of speech of a word
+     * @param word The word to tag
+     * @return Tag of word
+     */
     private static String getTag(String word) {
-        // Get non abbreviated tags
-        Map<String, String> posAbbrev = nonAbbreviate();
+
+        Map<String, String> posAbbrev = nonAbbreviate(new File("posAbbreviations.txt"));
 
         // Tag word with its POS
         String tagged = tagger.tagString(word);
-        String tagType = tagged.substring(word.length()).replace("_", "")
+        String tagType = tagged.substring(word.length()).replaceAll("_", "")
                 .toLowerCase().trim();
 
         tagType = posAbbrev.get(tagType);
 
         if (tagType == null) {
-            System.out.println("[UNKNOWN TAG] " + word);
             tagType = "Unknown";
         }
 
         return tagType;
     }
 
-    private static HashMap<String, String> nonAbbreviate() {
+    /**
+     * Returns the non-abbreviated versions of abbreviations
+     * @param abbreviations ":" Separated file containing abbreviations and full text
+     * @return Hashmap containing the key as the abbreviation and the value as its full text
+     */
+    private static HashMap<String, String> nonAbbreviate(File abbreviations) {
+
         HashMap<String, String> posNoAbbrev = new HashMap<>();
         try {
-            Scanner in = new Scanner(new FileReader("posAbbreviations.txt"));
-            while (in.hasNextLine()) {
-                String[] line = in.nextLine().split(":");
-                posNoAbbrev.put(line[0].trim(), line[1].trim());
+            BufferedReader br =
+                    new BufferedReader(new FileReader(abbreviations));
+
+            String line = br.readLine();
+            while (line != null) {
+                String[] words = line.split(":");
+                posNoAbbrev.put(words[0].trim(), words[1].trim());
+                line = br.readLine();
             }
+
+            br.close();
             return posNoAbbrev;
-        } catch (FileNotFoundException notFound) {
-            System.out.println("[Error - nonAbbreviate] " + notFound);
+        } catch (IOException ioe) {
+            System.out.println("[Error - nonAbbreviate] " + ioe);
         }
 
         return posNoAbbrev;
     }
 
+    /**
+     * Returns whether or not a string is a palindrome
+     * @param str String to analyse
+     * @return True if the string is a palindrome
+     */
     private static boolean isPalindrome(String str) {
         for (int i = 0; i < str.length() / 2; i++) {
             if (str.charAt(i) != str.charAt(str.length() - 1 - i)) {
@@ -188,63 +271,90 @@ public class Main {
         return true;
     }
 
-    private static void writeCount(Map<String, Map<String, Integer>> counts) {
-        // Write the word counts to a file
+    /**
+     * Writes the counts of a Map to a file out
+     * @param counts The map to use as input
+     * @param out File to write
+     */
+    private static void writeCount(Map<String, Map<String, Integer>> counts, File out) {
+
+        if (verbose) {
+            System.out.println("[*] Writing counts to " + out.getName());
+        }
 
         try {
-            BufferedWriter out = new BufferedWriter(new FileWriter(RESULTS_FILE));
-            System.out.println("[WRITE] " + RESULTS_FILE);
-            out.write("Total word count (Excluding Stop Words): " + totalWordCount + "\n");
+            BufferedWriter br = new BufferedWriter(new FileWriter(out));
+            br.write("Total word count (Excluding Stop Words): " + totalWordCount + "\n");
 
             // Write counts information
             for (String id : counts.keySet()) {
-                out.write("====================[ " + id + " ]====================\n");
+                br.write("====================[ " + id + " ]====================\n");
                 for (String key : counts.get(id).keySet()) {
-                    out.write(key + ", " + counts.get(id).get(key) + "\n");
+                    br.write(key + ", " + counts.get(id).get(key) + "\n");
                 }
-                out.write("\n");
+                br.write("\n");
             }
 
-            out.close();
+            br.close();
         } catch (java.io.IOException ioExc) {
             System.out.println("[Error - writeCount] Failed to write file: " + ioExc);
         }
     }
 
-    private static void readCount() {
-        // Read Results file for counts
+    /** Prints the contents of a file
+     * @param file The file to print contents of
+     */
+    private static void printFile(File file) {
+
+        File resultsFile = new File
+                ("results/" + file.getName());
 
         try {
-            Scanner in = new Scanner(new FileReader(RESULTS_FILE));
-            System.out.println("\n----[ Using results from " + FILE_NAME + " ]----\n");
+            BufferedReader br = new BufferedReader(new FileReader(resultsFile));
+            System.out.println("\n----[ Using results from " + file.getName() + " ]----\n");
 
-            while (in.hasNext()) {
-                System.out.println(in.nextLine());
+            String line = br.readLine();
+            while (line != null) {
+                System.out.println(line);
+                line = br.readLine();
             }
-            in.close();
-        } catch (FileNotFoundException notFound) {
-            System.out.println("[Error - readCount] File not found: " + notFound);
+
+            br.close();
+        } catch (IOException ioe) {
+            System.out.println("[Error - printFile] File not found: " + ioe);
         }
     }
 
-    private static void makeGraph(Map<String, Integer> posMap) {
-        // Create an image representing the distribution of parts of speech
+    /**
+     * Create an image representation of parts of speech tag distribution in a Map
+     * @param posMap Map to use as input data
+     * @param out File to save image to
+     */
+    private static void makeGraph(Map<String, Integer> posMap, File out) {
 
-        DefaultPieDataset dataset = new DefaultPieDataset();
-
-        // Load POS data into dataset
-        for (String type : posMap.keySet()) {
-            dataset.setValue(type, posMap.get(type));
+        if (verbose) {
+            System.out.println("[*] Creating graph for " + out.getName());
         }
 
+        DefaultPieDataset dataSet = new DefaultPieDataset();
+
+        // Load POS data into data set
+        for (String type : posMap.keySet()) {
+            dataSet.setValue(type, posMap.get(type));
+        }
+
+        String title = "POS Distribution of " +
+                out.getName().substring(0, out.getName().lastIndexOf("Results"));
+
         JFreeChart chart = ChartFactory.createPieChart3D(
-                "Parts of Speech in " + FILE_NAME,
-                dataset,
+                title,
+                dataSet,
                 false,
                 true,
                 false);
 
         PiePlot3D plot = (PiePlot3D) chart.getPlot();
+
         plot.setBaseSectionOutlinePaint(new Color(0, 0, 0));
         plot.setDarkerSides(true);
         plot.setBackgroundPaint(new Color(204, 204, 204));
@@ -253,10 +363,8 @@ public class Main {
         plot.setLabelFont(new Font("Ubuntu San Serif", Font.PLAIN, 10));
         plot.setDepthFactor(0.05f);
 
-        File pieChart = new File(RESULTS_FILE.replaceAll(".txt", "") + ".jpg");
-
         try {
-            ChartUtilities.saveChartAsJPEG(pieChart, chart, 900, 900);
+            ChartUtilities.saveChartAsJPEG(out, chart, 900, 900);
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
         }
