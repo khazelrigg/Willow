@@ -72,8 +72,10 @@ public class Main {
      */
     private static void readDir(File dir) {
 
-        for (File file : dir.listFiles()) {
+        File[] files = dir.listFiles();
+        assert files != null;
 
+        for (File file : files) {
             // Call readDir recursively to read sub directories
             if (file.isDirectory()) {
                 readDir(file);
@@ -90,9 +92,10 @@ public class Main {
     private static void readFile(File file) {
 
         File resultFile = outputOfFile(file);
+        getTitle(file);
 
         if (resultFile.exists()) {
-            System.out.println("[*] " + file.getName() + " already has results.");
+            //System.out.println("[*] " + file.getName() + " already has results.");
 
             if (verbose) {
                 printFile(resultFile);
@@ -124,13 +127,56 @@ public class Main {
      */
     private static File outputOfFile(File file) {
 
-        String fileName = file.getName();
-        // Remove extensions
-        fileName = "results/" +
-                fileName.substring(0, fileName.lastIndexOf(".")) +
-                "Results.txt";
+        String[] title = getTitle(file);
+        String out = title[0] + " by " + title[1];
+        String fileName = "results/" + out + " Results.txt";
 
         return new File(fileName);
+    }
+
+    /**
+     * Returns the title and author of a book if one is found on the first line
+     * @param file File you want to get title of
+     * @return String array containing title and then author, if one is not found returns file name
+     */
+    private static String[] getTitle(File file) {
+        String title = "";
+        String author = "";
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String firstLine = br.readLine();
+
+            while (firstLine.length() < 3) {
+                firstLine = br.readLine();
+            }
+
+            if (firstLine.contains("The Project Gutenberg EBook of")) {
+                firstLine = firstLine.substring(31);
+            }
+
+            if (firstLine.contains("Project Gutenberg's") ||
+                    firstLine.contains("Project Gutenberg’s")) {
+                firstLine = firstLine.substring(20);
+            }
+
+            if (firstLine.contains("by")) {
+                title = firstLine.substring(0, firstLine.lastIndexOf("by")).trim();
+                author = firstLine.substring(firstLine.lastIndexOf("by") + 2).trim();
+            } else {
+                title = file.getName();
+                author = "";
+            }
+
+            if (title.endsWith(",")) {
+                title = title.substring(0, title.length() - 1);
+            }
+
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new String[]{title, author};
     }
 
     /**
