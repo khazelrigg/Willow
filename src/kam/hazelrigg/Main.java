@@ -24,7 +24,7 @@ public class Main {
     private static Boolean verbose = false;
 
     // Set up tagger
-    private static MaxentTagger tagger =
+    private static final MaxentTagger tagger =
             new MaxentTagger("models/english-bidirectional-distsim.tagger");
 
     public static void main(String[] args) {
@@ -42,7 +42,9 @@ public class Main {
         }
 
         long endTime = System.currentTimeMillis();
-        System.out.println("\nTotal time elapsed " + (endTime - startTime) / 1000 + "sec.");
+
+        System.out.println("\nTotal time elapsed " + (endTime - startTime) * 1000 + " sec.");
+
     }
 
     /**
@@ -91,11 +93,11 @@ public class Main {
      */
     private static void readFile(File file) {
 
-        File resultFile = outputOfFile(file);
+        File resultFile = new File(outputOfFile(file));
         getTitle(file);
 
         if (resultFile.exists()) {
-            //System.out.println("[*] " + file.getName() + " already has results.");
+            System.out.println("[*] " + file.getName() + " already has results.");
 
             if (verbose) {
                 printFile(resultFile);
@@ -111,7 +113,7 @@ public class Main {
                 }
 
                 makeGraph(count.get("POS"),
-                        new File("results/" + resultFile.getName().
+                        new File("results/img/" + resultFile.getName().
                                 replaceAll(".txt", ".jpeg")));
 
             } catch (IOException e) {
@@ -125,13 +127,20 @@ public class Main {
      * @param file The file to convert to an output
      * @return The conversion of input file
      */
-    private static File outputOfFile(File file) {
+    private static String outputOfFile(File file) {
 
         String[] title = getTitle(file);
         String out = title[0] + " by " + title[1];
-        String fileName = "results/" + out + " Results.txt";
+        String fileName = "results/txt/" + out + " Results.txt";
 
-        return new File(fileName);
+        boolean txt = new File("results/txt").mkdirs();
+        boolean img = new File("results/img").mkdirs();
+
+        if (!txt || !img) {
+            System.out.println("[Error - outputOfFile] Failed to create dirs");
+        }
+
+        return fileName;
     }
 
     /**
@@ -160,6 +169,7 @@ public class Main {
                 firstLine = firstLine.substring(20);
             }
 
+            // If the pattern "title by author" appears split at the word by
             if (firstLine.contains("by")) {
                 title = firstLine.substring(0, firstLine.lastIndexOf("by")).trim();
                 author = firstLine.substring(firstLine.lastIndexOf("by") + 2).trim();
@@ -187,7 +197,7 @@ public class Main {
      */
     private static Map<String, Map<String, Integer>> wordCount(File file) throws IOException {
 
-        System.out.println("[*] Starting " + file.getName());
+        System.out.println("[*] Analysing " + file.getName());
         Map<String, Map<String, Integer>> results = new HashMap<>();
 
         FreqMap posFreq = new FreqMap();
@@ -277,7 +287,7 @@ public class Main {
     /**
      * Returns the non-abbreviated versions of abbreviations
      * @param abbreviations ":" Separated file containing abbreviations and full text
-     * @return Hashmap containing the key as the abbreviation and the value as its full text
+     * @return Hash map containing the key as the abbreviation and the value as its full text
      */
     private static HashMap<String, String> nonAbbreviate(File abbreviations) {
 
@@ -329,7 +339,7 @@ public class Main {
         }
 
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter(out));
+            BufferedWriter br = new BufferedWriter(new FileWriter(new File("results/txt/" + out.getName())));
             br.write("Total word count (Excluding Stop Words): " + totalWordCount + "\n");
 
             // Write counts information
@@ -353,7 +363,7 @@ public class Main {
     private static void printFile(File file) {
 
         File resultsFile = new File
-                ("results/" + file.getName());
+                ("results/txt/" + file.getName());
 
         try {
             BufferedReader br = new BufferedReader(new FileReader(resultsFile));
@@ -410,7 +420,7 @@ public class Main {
         plot.setDepthFactor(0.05f);
 
         try {
-            ChartUtilities.saveChartAsJPEG(out, chart, 900, 900);
+            ChartUtilities.saveChartAsJPEG(new File("results/img/" + out.getName()), chart, 900, 900);
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
         }
