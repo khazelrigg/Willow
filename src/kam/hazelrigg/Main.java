@@ -20,7 +20,6 @@ import java.util.Scanner;
 
 public class Main {
 
-    private static int totalWordCount = 0;
     private static Boolean verbose = false;
 
     // Set up tagger
@@ -32,8 +31,8 @@ public class Main {
             verbose = true;
         }
 
-        long startTime = System.currentTimeMillis();
         File file = new File(getFileName());
+        long startTime = System.currentTimeMillis();
 
         if (file.isDirectory()) {
             readDir(file);
@@ -43,7 +42,7 @@ public class Main {
 
         long endTime = System.currentTimeMillis();
 
-        System.out.println("\nTotal time elapsed " + (endTime - startTime) * 1000 + " sec.");
+        System.out.println("\nTotal time elapsed " + ((endTime - startTime) / 1000)  + " sec.");
 
     }
 
@@ -131,16 +130,36 @@ public class Main {
 
         String[] title = getTitle(file);
         String out = title[0] + " by " + title[1];
-        String fileName = "results/txt/" + out + " Results.txt";
 
-        boolean txt = new File("results/txt").mkdirs();
-        boolean img = new File("results/img").mkdirs();
+        String fileName;
 
-        if (!txt || !img) {
-            System.out.println("[Error - outputOfFile] Failed to create dirs");
+        if (makeResultDirs()) {
+            fileName = "results/txt/" + out + " Results.txt";
+        } else {
+            fileName = out + "Results.txt";
         }
 
         return fileName;
+    }
+
+    /**
+     * Creates results directories
+     * @return True if directories already exist or were created, false if they were not
+     */
+    private static boolean makeResultDirs() {
+        File txt = new File("results/txt");
+        File img = new File("results/img");
+
+        if (!(txt.exists() || txt.mkdirs())) {
+            System.out.println("[Error] Could not create results directory 'txt'");
+            return false;
+        }
+        if (!(img.exists() || img.mkdirs())) {
+            System.out.println("[Error] Could not create results directory 'img'");
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -204,6 +223,7 @@ public class Main {
         FreqMap wordFreq = new FreqMap();
 
         HashMap<String, Integer> otherMap = new HashMap<>();
+        otherMap.put("Total Words",0);
 
         otherMap.put("Palindrome", 0);
 
@@ -231,7 +251,7 @@ public class Main {
                         continue;
                     }
 
-                    totalWordCount++;
+                    otherMap.put("Total Words", otherMap.get("Total Words") + 1);
 
                     // Tag each word
                     String tagType = getTag(word);
@@ -340,7 +360,7 @@ public class Main {
 
         try {
             BufferedWriter br = new BufferedWriter(new FileWriter(new File("results/txt/" + out.getName())));
-            br.write("Total word count (Excluding Stop Words): " + totalWordCount + "\n");
+            br.write("Total word count (Excluding Stop Words): " + counts.get("OTHER").get("Total Words") + "\n");
 
             // Write counts information
             for (String id : counts.keySet()) {
