@@ -7,7 +7,8 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot3D;
 import org.jfree.data.general.DefaultPieDataset;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -36,18 +37,19 @@ public class Main {
 
         if (file.isDirectory()) {
             readDir(file);
-        } else if (file.isFile()){
+        } else if (file.isFile()) {
             readFile(file);
         }
 
         long endTime = System.currentTimeMillis();
 
-        System.out.println("\nTotal time elapsed " + ((endTime - startTime) / 1000)  + " sec.");
+        System.out.println("\nTotal time elapsed " + ((endTime - startTime) / 1000) + " sec.");
 
     }
 
     /**
      * Get a file/directory name from the user and ensure it is valid
+     *
      * @return String containing the input if the input is a file/directory
      */
     private static String getFileName() {
@@ -59,7 +61,7 @@ public class Main {
             String input = kb.nextLine();
             File file = new File(input);
 
-            if (file.exists() ) {
+            if (file.exists()) {
                 return input;
             } else {
                 System.out.println("Try again, no file found at " + input);
@@ -69,6 +71,7 @@ public class Main {
 
     /**
      * Reads and creates the data for an entire directory
+     *
      * @param dir Directory to analyse
      */
     private static void readDir(File dir) {
@@ -88,6 +91,7 @@ public class Main {
 
     /**
      * Reads and creates the data for an input file
+     *
      * @param file File to analyse
      */
     private static void readFile(File file) {
@@ -123,6 +127,7 @@ public class Main {
 
     /**
      * Converts an input file into its output file
+     *
      * @param file The file to convert to an output
      * @return The conversion of input file
      */
@@ -144,6 +149,7 @@ public class Main {
 
     /**
      * Creates results directories
+     *
      * @return True if directories already exist or were created, false if they were not
      */
     private static boolean makeResultDirs() {
@@ -164,6 +170,7 @@ public class Main {
 
     /**
      * Returns the title and author of a book if one is found on the first line
+     *
      * @param file File you want to get title of
      * @return String array containing title and then author, if one is not found returns file name
      */
@@ -210,6 +217,7 @@ public class Main {
 
     /**
      * Counts parts of speech and general word counts of a file
+     *
      * @param file The input file to be analyzed
      * @return A map containing the type of information and then its values as a second map
      * @throws IOException if the file is unable to be opened
@@ -222,7 +230,6 @@ public class Main {
          */
 
 
-
         System.out.println("[*] Analysing " + file.getName());
         Map<String, Map<String, Integer>> results = new HashMap<>();
 
@@ -230,8 +237,7 @@ public class Main {
         FreqMap wordFreq = new FreqMap();
 
         HashMap<String, Integer> otherMap = new HashMap<>();
-        otherMap.put("Total Words",0);
-
+        otherMap.put("Total Words", 0);
         otherMap.put("Palindrome", 0);
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -288,6 +294,7 @@ public class Main {
 
     /**
      * Returns the part of speech of a word
+     *
      * @param line The word to tag
      * @return Tag of word
      */
@@ -299,7 +306,7 @@ public class Main {
         StringBuilder tags = new StringBuilder();
 
 
-        for(String word : tagLine.split("\\s")) {
+        for (String word : tagLine.split("\\s")) {
             if (word.replaceAll("\\W", "").length() > 2) {
                 String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
                 tag = posAbbrev.get(tag);
@@ -316,6 +323,7 @@ public class Main {
 
     /**
      * Returns the non-abbreviated versions of abbreviations
+     *
      * @param abbreviations ":" Separated file containing abbreviations and full text
      * @return Hash map containing the key as the abbreviation and the value as its full text
      */
@@ -344,6 +352,7 @@ public class Main {
 
     /**
      * Returns whether or not a string is a palindrome
+     *
      * @param str String to analyse
      * @return True if the string is a palindrome
      */
@@ -359,8 +368,9 @@ public class Main {
 
     /**
      * Writes the counts of a Map to a file out
+     *
      * @param counts The map to use as input
-     * @param out File to write
+     * @param out    File to write
      */
     private static void writeCount(Map<String, Map<String, Integer>> counts, File out) {
 
@@ -387,7 +397,9 @@ public class Main {
         }
     }
 
-    /** Prints the contents of a file
+    /**
+     * Prints the contents of a file
+     *
      * @param file The file to print contents of
      */
     private static void printFile(File file) {
@@ -413,8 +425,9 @@ public class Main {
 
     /**
      * Create an image representation of parts of speech tag distribution in a Map
+     *
      * @param posMap Map to use as input data
-     * @param out File to save image to
+     * @param out    File to save image to
      */
     private static void makeGraph(Map<String, Integer> posMap, File out) {
 
