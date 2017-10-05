@@ -216,6 +216,13 @@ public class Main {
      */
     private static Map<String, Map<String, Integer>> wordCount(File file) throws IOException {
 
+        /* Implement a stop when it reaches the end of a book
+         Books are marked at the end with "*** END OF THIS PROJECT GUTENBERG EBOOK titleofbook ***"
+         An if statement with a break will probably do it
+         */
+
+
+
         System.out.println("[*] Analysing " + file.getName());
         Map<String, Map<String, Integer>> results = new HashMap<>();
 
@@ -240,6 +247,13 @@ public class Main {
                     continue;
                 }
 
+                // Tag each word
+                for (String tag : getTag(line)) {
+                    posFreq.increaseFreq(tag);
+                }
+
+                results.put("POS", posFreq.getFrequency());
+
                 String[] words = line.split("\\s");
 
                 for (String word : words) {
@@ -252,17 +266,8 @@ public class Main {
                     }
 
                     otherMap.put("Total Words", otherMap.get("Total Words") + 1);
-
-                    // Tag each word
-                    String tagType = getTag(word);
-
-                    // Add counts and tags to corresponding maps
-                    posFreq.increaseFreq(tagType);
                     wordFreq.increaseFreq(word);
-
                     results.put("WORD", wordFreq.getFrequency());
-                    results.put("POS", posFreq.getFrequency());
-
 
                     if (isPalindrome(word)) {
                         otherMap.put("Palindrome", otherMap.get("Palindrome") + 1);
@@ -283,25 +288,30 @@ public class Main {
 
     /**
      * Returns the part of speech of a word
-     * @param word The word to tag
+     * @param line The word to tag
      * @return Tag of word
      */
-    private static String getTag(String word) {
+    private static String[] getTag(String line) {
 
         Map<String, String> posAbbrev = nonAbbreviate(new File("posAbbreviations.txt"));
+        String tagLine = tagger.tagString(line);
 
-        // Tag word with its POS
-        String tagged = tagger.tagString(word);
-        String tagType = tagged.substring(word.length()).replaceAll("_", "")
-                .toLowerCase().trim();
+        StringBuilder tags = new StringBuilder();
 
-        tagType = posAbbrev.get(tagType);
 
-        if (tagType == null) {
-            tagType = "Unknown";
+        for(String word : tagLine.split("\\s")) {
+            if (word.replaceAll("\\W", "").length() > 2) {
+                String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
+                tag = posAbbrev.get(tag);
+                tags.append(tag).append("|");
+
+                if (tag == null) {
+                    System.out.println("[NULL TAG] " + word + "\n\t" + tagLine + "\n\t" + word.substring(word.indexOf("_") + 1));
+                }
+            }
         }
 
-        return tagType;
+        return tags.toString().split("\\|");
     }
 
     /**
