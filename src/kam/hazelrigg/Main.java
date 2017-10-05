@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Main {
 
@@ -117,7 +119,16 @@ public class Main {
 
                 makeGraph(count.get("POS"),
                         new File("results/img/" + resultFile.getName().
-                                replaceAll(".txt", ".jpeg")));
+                                replaceAll(".txt", ".jpeg")), "POS distribution");
+
+                Map<String , Integer> monoVsPoly = new HashMap<>();
+                monoVsPoly.put("Monosyllabic", count.get("OTHER").get("Monosyllabic"));
+                monoVsPoly.put("Polysyllabic", count.get("OTHER").get("Polysyllabic"));
+
+                makeGraph(monoVsPoly, new File("results/img/" +
+                        resultFile.getName().replaceAll(".txt", "") + " Difficulty.jpeg"),
+                        "Difficulty");
+
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -229,16 +240,12 @@ public class Main {
          An if statement with a break will probably do it
          */
 
-
-        System.out.println("[*] Analysing " + file.getName());
+        System.out.println("[*] Analysing:\t" + file.getName());
         Map<String, Map<String, Integer>> results = new HashMap<>();
 
         FreqMap posFreq = new FreqMap();
         FreqMap wordFreq = new FreqMap();
-
-        HashMap<String, Integer> otherMap = new HashMap<>();
-        otherMap.put("Total Words", 0);
-        otherMap.put("Palindrome", 0);
+        FreqMap otherMap = new FreqMap();
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 
@@ -271,22 +278,28 @@ public class Main {
                         continue;
                     }
 
-                    otherMap.put("Total Words", otherMap.get("Total Words") + 1);
                     wordFreq.increaseFreq(word);
                     results.put("WORD", wordFreq.getFrequency());
 
                     if (isPalindrome(word)) {
-                        otherMap.put("Palindrome", otherMap.get("Palindrome") + 1);
+                        otherMap.increaseFreq("Palindrome");
                     }
 
-                    results.put("OTHER", otherMap);
+                    if (isMonosyllabic(word)) {
+                        otherMap.increaseFreq("Monosyllabic");
+                    } else {
+                        otherMap.increaseFreq("Polysyllabic");
+                    }
+
+                    otherMap.increaseFreq("Total words");
+                    results.put("OTHER", otherMap.getFrequency());
                     line = br.readLine();
                 }
             }
 
             br.close();
 
-            System.out.println("[*] Finished " + file.getName() + "\n");
+            System.out.println("[*] Finished:\t" + file.getName() + "\n");
             return results;
 
         }
@@ -310,11 +323,14 @@ public class Main {
             if (word.replaceAll("\\W", "").length() > 2) {
                 String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
                 tag = posAbbrev.get(tag);
+
+                // What to do if we have no tag
+                if (tag == null) {
+                    tag = "Unknown";
+                }
+
                 tags.append(tag).append("|");
 
-                if (tag == null) {
-                    System.out.println("[NULL TAG] " + word + "\n\t" + tagLine + "\n\t" + word.substring(word.indexOf("_") + 1));
-                }
             }
         }
 
@@ -367,6 +383,23 @@ public class Main {
     }
 
     /**
+     * Finds if a word is monosyllabic
+     * @param word word to count syllables of
+     * @return true if word is monosyllabic, false otherwise
+     */
+    private static boolean isMonosyllabic(String word) {
+        Pattern p = Pattern.compile("[aeiouy]+[^$e(,.:;!?)]");
+        Matcher m = p.matcher(word);
+
+        int syllables = 0;
+        while (m.find()){
+            syllables++;
+        }
+
+        return syllables == 1;
+    }
+
+    /**
      * Writes the counts of a Map to a file out
      *
      * @param counts The map to use as input
@@ -379,8 +412,13 @@ public class Main {
         }
 
         try {
-            BufferedWriter br = new BufferedWriter(new FileWriter(new File("results/txt/" + out.getName())));
-            br.write("Total word count (Excluding Stop Words): " + counts.get("OTHER").get("Total Words") + "\n");
+            BufferedWriter br =
+                    new BufferedWriter(new FileWriter(new File("results/txt/" + out.getName())));
+
+            br.write("====================[ Conclusions ]====================\n");
+            br.write(getStringDifficulty(counts.get("OTHER")));
+            
+            br.write("\n");
 
             // Write counts information
             for (String id : counts.keySet()) {
@@ -395,6 +433,22 @@ public class Main {
         } catch (java.io.IOException ioExc) {
             System.out.println("[Error - writeCount] Failed to write file: " + ioExc);
         }
+    }
+
+    /**
+     * Creates a string for writing in conclusion section of results file
+     * @param counts Map containing Mono vs Polysyllabic counts
+     * @return String that is formatted for being written directly to file
+     */
+    private static String getStringDifficulty(Map<String, Integer> counts) {
+        if (counts.get("Polysyllabic") >= counts.get("Monosyllabic")) {
+            return "Text is difficult, it has " + counts.get("Polysyllabic") +
+                    " polysyllabic words and " + counts.get("Monosyllabic") +
+                    " monosyllabic words.\n";
+        }
+        return "Text is simple, it has " + counts.get("Monosyllabic") +
+                " monosyllabic words and " + counts.get("Polysyllabic") +
+                " polysyllabic words.\n";
     }
 
     /**
@@ -429,7 +483,7 @@ public class Main {
      * @param posMap Map to use as input data
      * @param out    File to save image to
      */
-    private static void makeGraph(Map<String, Integer> posMap, File out) {
+    private static void makeGraph(Map<String, Integer> posMap, File out, String purpose) {
 
         if (verbose) {
             System.out.println("[*] Creating graph for " + out.getName());
@@ -442,7 +496,7 @@ public class Main {
             dataSet.setValue(type, posMap.get(type));
         }
 
-        String title = "POS Distribution of " +
+        String title = purpose + " of " +
                 out.getName().substring(0, out.getName().lastIndexOf("Results"));
 
         JFreeChart chart = ChartFactory.createPieChart3D(
