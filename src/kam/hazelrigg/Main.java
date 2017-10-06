@@ -98,7 +98,6 @@ public class Main {
     private static void readFile(File file) {
 
         File resultFile = new File(outputOfFile(file));
-        getTitle(file);
 
         if (resultFile.exists()) {
             System.out.println("[*] " + file.getName() + " already has results.");
@@ -143,7 +142,7 @@ public class Main {
      */
     private static String outputOfFile(File file) {
 
-        String[] title = getTitle(file);
+        String[] title = getBookTitle(file);
         String out = title[0] + " by " + title[1];
 
         String fileName;
@@ -184,7 +183,7 @@ public class Main {
      * @param file File you want to get title of
      * @return String array containing title and then author, if one is not found returns file name
      */
-    private static String[] getTitle(File file) {
+    private static String[] getBookTitle(File file) {
         String title = "";
         String author = "";
 
@@ -234,17 +233,14 @@ public class Main {
      */
     private static Map<String, Map<String, Integer>> wordCount(File file) throws IOException {
 
-        /* Implement a stop when it reaches the end of a book
-         Books are marked at the end with "*** END OF THIS PROJECT GUTENBERG EBOOK titleofbook ***"
-         An if statement with a break will probably do it
-         */
-
         System.out.println("[*] Analysing:\t" + file.getName());
         Map<String, Map<String, Integer>> results = new HashMap<>();
 
         FreqMap posFreq = new FreqMap();
         FreqMap wordFreq = new FreqMap();
         FreqMap otherMap = new FreqMap();
+
+        boolean atBook = false;
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 
@@ -258,6 +254,22 @@ public class Main {
                 if (line.length() == 0) {
                     line = br.readLine();
                     continue;
+                }
+
+                if (!atBook) {
+                    if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")) {
+                        atBook = true;
+                        line = br.readLine();
+                    } else {
+                        line = br.readLine();
+                        continue;
+                    }
+                }
+
+
+                if (line.contains("End of the Project Gutenberg EBook") ||
+                        line.contains("End of Project Gutenberg’s")) {
+                    break;
                 }
 
                 // Tag each word
