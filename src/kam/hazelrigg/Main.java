@@ -104,15 +104,11 @@ public class Main {
      */
     private static void readFile(File file) {
         current = new Book();
-        File resultFile = new File(outputOfFile(file));
+        File resultFile = new File(getOutputPath(file));
 
         // If we already have results there is no need to redo results
         if (resultFile.exists()) {
             System.out.println("☑ - " + file.getName() + " already has results.");
-
-            if (verbose) {
-                printFile(resultFile);
-            }
 
         } else {
             try {
@@ -122,22 +118,17 @@ public class Main {
                 // Write information into results file
                 writeCount(count, resultFile);
 
-                if (verbose) {
-                    printFile(resultFile);
-                }
-
                 // Create a parts of speech graph
                 makeGraph(count.get("POS"),
                         new File("results/img/" + resultFile.getName().
                                 replaceAll(".txt", ".jpeg")), "POS distribution");
 
                 // Create a difficulty graph
-                Map<String, Integer> monoVsPoly = new HashMap<>();
-                monoVsPoly.put("Monosyllabic", count.get("OTHER").get("Monosyllabic"));
-                monoVsPoly.put("Polysyllabic", count.get("OTHER").get("Polysyllabic"));
+                HashMap<String, Integer> difficultyMap = new HashMap<>(2);
+                difficultyMap.put("Monosyllabic", count.get("OTHER").get("Monosyllabic"));
+                difficultyMap.put("Polysyllabic", count.get("OTHER").get("Polysyllabic"));
 
-
-                makeGraph(monoVsPoly, new File("results/img/" +
+                makeGraph(difficultyMap, new File("results/img/" +
                                 resultFile.getName().replaceAll(".txt", "") + " Difficulty.jpeg"),
                         "Difficulty");
 
@@ -146,6 +137,11 @@ public class Main {
                 e.printStackTrace();
             }
         }
+
+        if (verbose) {
+            System.out.println(current);
+        }
+
     }
 
     /**
@@ -154,21 +150,18 @@ public class Main {
      * @param file The file to convert to an output
      * @return The conversion of input file
      */
-    private static String outputOfFile(File file) {
-        setBookTitle(file);
+    private static String getOutputPath(File file) {
+        current.getTitleFromText(file);
+        String title = current.getTitle();
 
-        String out = current.getTitle() + " by " + current.getAuthor();
-
-        String fileName;
+        String out = title + " by " + current.getAuthor();
 
         if (makeResultDirs()) {
             // If we have a results directory, which we should, put the output in there
-            fileName = "results/txt/" + out + " Results.txt";
+            return "results/txt/" + out + " Results.txt";
         } else {
-            fileName = out + "Results.txt";
+            return out + "Results.txt";
         }
-
-        return fileName;
     }
 
     /**
@@ -192,58 +185,6 @@ public class Main {
         }
 
         return true;
-    }
-
-    /**
-     * Sets the title and author of a book if one is found on the first line
-     *
-     * @param file File you want to get title of
-     */
-    private static void setBookTitle(File file) {
-        String title = "";
-        String author = "";
-
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String firstLine = br.readLine();
-
-            // If the first line is very short skip over it
-            while (firstLine.length() < 3) {
-                firstLine = br.readLine();
-            }
-
-            // Cases of Gutenberg books to check
-            if (firstLine.contains("The Project Gutenberg EBook of")) {
-                firstLine = firstLine.substring(31);
-                current.setGutenberg(true);
-            }
-
-            if (firstLine.contains("Project Gutenberg's") ||
-                    firstLine.contains("Project Gutenberg’s")) {
-                firstLine = firstLine.substring(20);
-                current.setGutenberg(true);
-            }
-
-            // If the pattern "title by author" appears split at the word 'by' to get author and title
-            if (firstLine.contains("by")) {
-                title = firstLine.substring(0, firstLine.lastIndexOf("by")).trim();
-                author = firstLine.substring(firstLine.lastIndexOf("by") + 2).trim();
-            } else {
-                title = file.getName();
-                author = "";
-            }
-
-            // Remove any trailing commas
-            if (title.endsWith(",")) {
-                title = title.substring(0, title.length() - 1);
-            }
-
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        current.setAuthor(author);
-        current.setTitle(title);
     }
 
     /**
@@ -355,6 +296,7 @@ public class Main {
             }
 
             br.close();
+            System.out.println(wordFreq);
 
             System.out.println("☑ - Finished:\t" + file.getName() + "\n");
             return results;
@@ -533,38 +475,12 @@ public class Main {
     }
 
     /**
-     * Prints the contents of a file to the terminal
-     *
-     * @param file The file to print contents of
-     */
-    private static void printFile(File file) {
-
-        File resultsFile = new File
-                ("results/txt/" + file.getName());
-
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(resultsFile));
-            System.out.println("\n----[ Using results from " + file.getName() + " ]----\n");
-
-            String line = br.readLine();
-            while (line != null) {
-                System.out.println(line);
-                line = br.readLine();
-            }
-
-            br.close();
-        } catch (IOException ioe) {
-            System.out.println("[Error - printFile] File not found: " + ioe);
-        }
-    }
-
-    /**
      * Create an image representation of parts of speech tag distribution in a Map
      *
-     * @param posMap Map to use as input data
+     * @param map Map to use as input data
      * @param out    File to save image to
      */
-    private static void makeGraph(Map<String, Integer> posMap, File out, String purpose) {
+    private static void makeGraph(Map<String, Integer> map, File out, String purpose) {
 
         if (verbose) {
             System.out.println("[*] Creating graph for " + out.getName());
@@ -573,8 +489,8 @@ public class Main {
         DefaultPieDataset dataSet = new DefaultPieDataset();
 
         // Load POS data into data set
-        for (String type : posMap.keySet()) {
-            dataSet.setValue(type, posMap.get(type));
+        for (String type : map.keySet()) {
+            dataSet.setValue(type, map.get(type));
         }
 
         String title = purpose + " of " +

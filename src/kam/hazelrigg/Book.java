@@ -1,9 +1,15 @@
 package kam.hazelrigg;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+
 public class Book {
     private String title;
     private String author;
     private boolean gutenberg;
+
 
     public Book() {
         this.title = "";
@@ -13,11 +19,53 @@ public class Book {
 
     /**
      * Get the title of a book
-     *
-     * @return The title of the book
+     * @param text File to find title of
      */
-    public String getTitle() {
-        return title;
+     void getTitleFromText(File text) {
+         String title = "";
+         String author = "";
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(text));
+            String firstLine = br.readLine();
+
+            // If the first line is very short skip over it
+            while (firstLine.length() < 3) {
+                firstLine = br.readLine();
+            }
+
+            // Cases of Gutenberg books to check
+            if (firstLine.contains("The Project Gutenberg EBook of")) {
+                firstLine = firstLine.substring(31);
+                this.gutenberg = true;
+            }
+
+            if (firstLine.contains("Project Gutenberg's") ||
+                    firstLine.contains("Project Gutenberg’s")) {
+                firstLine = firstLine.substring(20);
+                this.gutenberg = true;
+            }
+
+            // If the pattern "title by author" appears split at the word 'by' to get author and title
+            if (firstLine.contains("by")) {
+                title = firstLine.substring(0, firstLine.lastIndexOf("by")).trim();
+                author = firstLine.substring(firstLine.lastIndexOf("by") + 2).trim();
+            } else {
+                title = text.getName();
+                author = "";
+            }
+
+            // Remove any trailing commas
+            if (title.endsWith(",")) {
+                title = title.substring(0, title.length() - 1);
+            }
+
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        this.title = title;
+        this.author = author;
     }
 
     /**
@@ -27,6 +75,10 @@ public class Book {
      */
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getTitle() {
+        return this.title;
     }
 
     /**
@@ -64,4 +116,5 @@ public class Book {
     public void setGutenberg(boolean gutenberg) {
         this.gutenberg = gutenberg;
     }
+
 }

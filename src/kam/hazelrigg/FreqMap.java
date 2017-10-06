@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-class FreqMap {
+class FreqMap extends Book{
     private Map<String, Integer> frequency = new HashMap<>();
 
     static String stopWords = "|you|us|we|which|where|were|with|was|what|her|him|had|has|have|" +
@@ -24,6 +24,14 @@ class FreqMap {
         else {
             frequency.put(key, 1);
         }
+    }
+
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        for (String key : this.getFrequency().keySet()) {
+            result.append(String.format("%s → %d\n", key, this.frequency.get(key)));
+        }
+        return result.toString();
     }
 
     private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
