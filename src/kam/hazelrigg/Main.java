@@ -59,11 +59,14 @@ public class Main {
         // Get a filename and check that the file exists
 
         Scanner kb = new Scanner(System.in);
+
+        // Keep asking for input path until a valid one is found.
         while (true) {
             System.out.print("File path: ");
             String input = kb.nextLine();
             File file = new File(input);
 
+            // If the file exists it is a valid input
             if (file.exists()) {
                 return input;
             } else {
@@ -78,8 +81,10 @@ public class Main {
      * @param dir Directory to analyse
      */
     private static void readDir(File dir) {
-
+        // Create an array of files containing every file in the directory
         File[] files = dir.listFiles();
+
+        // getFileName ensures files is not null
         assert files != null;
 
         for (File file : files) {
@@ -101,6 +106,7 @@ public class Main {
         current = new Book();
         File resultFile = new File(outputOfFile(file));
 
+        // If we already have results there is no need to redo results
         if (resultFile.exists()) {
             System.out.println("☑ - " + file.getName() + " already has results.");
 
@@ -110,20 +116,26 @@ public class Main {
 
         } else {
             try {
+                // Get wordCount information from the input file
                 Map<String, Map<String, Integer>> count = wordCount(file);
+
+                // Write information into results file
                 writeCount(count, resultFile);
 
                 if (verbose) {
                     printFile(resultFile);
                 }
 
+                // Create a parts of speech graph
                 makeGraph(count.get("POS"),
                         new File("results/img/" + resultFile.getName().
                                 replaceAll(".txt", ".jpeg")), "POS distribution");
 
+                // Create a difficulty graph
                 Map<String, Integer> monoVsPoly = new HashMap<>();
                 monoVsPoly.put("Monosyllabic", count.get("OTHER").get("Monosyllabic"));
                 monoVsPoly.put("Polysyllabic", count.get("OTHER").get("Polysyllabic"));
+
 
                 makeGraph(monoVsPoly, new File("results/img/" +
                                 resultFile.getName().replaceAll(".txt", "") + " Difficulty.jpeg"),
@@ -144,11 +156,13 @@ public class Main {
      */
     private static String outputOfFile(File file) {
         setBookTitle(file);
+
         String out = current.getTitle() + " by " + current.getAuthor();
 
         String fileName;
 
         if (makeResultDirs()) {
+            // If we have a results directory, which we should, put the output in there
             fileName = "results/txt/" + out + " Results.txt";
         } else {
             fileName = out + "Results.txt";
@@ -163,8 +177,10 @@ public class Main {
      * @return True if directories already exist or were created, false if they were not
      */
     private static boolean makeResultDirs() {
+        // Create two files containing output directory path
         File txt = new File("results/txt");
         File img = new File("results/img");
+
 
         if (!(txt.exists() || txt.mkdirs())) {
             System.out.println("[Error] Could not create results directory 'txt'");
@@ -191,10 +207,12 @@ public class Main {
             BufferedReader br = new BufferedReader(new FileReader(file));
             String firstLine = br.readLine();
 
+            // If the first line is very short skip over it
             while (firstLine.length() < 3) {
                 firstLine = br.readLine();
             }
 
+            // Cases of Gutenberg books to check
             if (firstLine.contains("The Project Gutenberg EBook of")) {
                 firstLine = firstLine.substring(31);
                 current.setGutenberg(true);
@@ -206,7 +224,7 @@ public class Main {
                 current.setGutenberg(true);
             }
 
-            // If the pattern "title by author" appears split at the word by
+            // If the pattern "title by author" appears split at the word 'by' to get author and title
             if (firstLine.contains("by")) {
                 title = firstLine.substring(0, firstLine.lastIndexOf("by")).trim();
                 author = firstLine.substring(firstLine.lastIndexOf("by") + 2).trim();
@@ -215,6 +233,7 @@ public class Main {
                 author = "";
             }
 
+            // Remove any trailing commas
             if (title.endsWith(",")) {
                 title = title.substring(0, title.length() - 1);
             }
@@ -241,6 +260,7 @@ public class Main {
 
         Map<String, Map<String, Integer>> results = new HashMap<>();
 
+        // Maps to store information in
         FreqMap posFreq = new FreqMap();
         FreqMap wordFreq = new FreqMap();
         FreqMap otherMap = new FreqMap();
@@ -250,6 +270,7 @@ public class Main {
 
         boolean atBook = false;
 
+        // If book is not a Gutenberg text don't worry about a header
         if (!gutenberg) {
             System.out.println("✘ - " + file.getName() + " is not a Gutenberg Book.");
             atBook = true;
@@ -280,13 +301,13 @@ public class Main {
                 }
 
 
-                // Stop reading at the end of text
+                // Stop reading at the end of text if it is a Gutenberg text
                 if (gutenberg && line.contains("End of the Project Gutenberg EBook") ||
                         line.contains("End of Project Gutenberg’s")) {
                     break;
                 }
 
-                // Tag each word
+                // Tag each line in the file
                 for (String tag : getTag(line)) {
                     posFreq.increaseFreq(tag);
                 }
@@ -294,10 +315,14 @@ public class Main {
                 // Add POS Tags
                 results.put("POS", posFreq.getFrequency());
 
+                /* Begin the word count section by first
+                   Splitting the line into words
+                */
+
                 String[] words = line.split("\\s");
 
                 for (String word : words) {
-                    // Word prep
+                    // Word prep, make lowercase and remove punctuation
                     word = word.toLowerCase().replaceAll("\\W", "");
 
                     // If the word is a stop word skip over it
@@ -314,7 +339,7 @@ public class Main {
                         otherMap.increaseFreq("Palindrome");
                     }
 
-                    // Get difficulty
+                    // Get syllable lengths and add to the map
                     if (isMonosyllabic(word)) {
                         otherMap.increaseFreq("Monosyllabic");
                     } else {
@@ -344,7 +369,6 @@ public class Main {
      * @return Tag of word
      */
     private static String[] getTag(String line) {
-
         Map<String, String> posAbbrev = nonAbbreviate(new File("posAbbreviations.txt"));
         String tagLine = tagger.tagString(line);
 
@@ -352,6 +376,7 @@ public class Main {
 
 
         for (String word : tagLine.split("\\s")) {
+            // Split line into words with tags and then ignore short words
             if (word.replaceAll("\\W", "").length() > 2) {
                 String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
                 tag = posAbbrev.get(tag);
@@ -361,6 +386,7 @@ public class Main {
                     tag = "Unknown";
                 }
 
+                // Add the tag and | so we can split the string later
                 tags.append(tag).append("|");
 
             }
@@ -385,6 +411,7 @@ public class Main {
             String line = br.readLine();
             while (line != null) {
                 String[] words = line.split(":");
+                // Set key to abbreviation and value to non abbreviated
                 posNoAbbrev.put(words[0].trim(), words[1].trim());
                 line = br.readLine();
             }
@@ -479,7 +506,7 @@ public class Main {
      * @return String containing conclusion
      */
     private static String getConclusionString(Map<String, Map<String, Integer>> counts) {
-        String conclusion = "This " + getStringDifficulty(counts.get("OTHER"));
+        String conclusion = "This " + getDifficultyString(counts.get("OTHER"));
         conclusion += "The most frequently used word out of the " +
                 counts.get("WORD").entrySet().size() +
                 " unique words seen in the text was \"" +
@@ -494,7 +521,7 @@ public class Main {
      * @param counts Map containing Mono vs Polysyllabic counts
      * @return String that is formatted for being written directly to file
      */
-    private static String getStringDifficulty(Map<String, Integer> counts) {
+    private static String getDifficultyString(Map<String, Integer> counts) {
         if (counts.get("Polysyllabic") >= counts.get("Monosyllabic")) {
             return "text is a difficult read, it has " + counts.get("Polysyllabic") +
                     " polysyllabic words and " + counts.get("Monosyllabic") +
@@ -506,7 +533,7 @@ public class Main {
     }
 
     /**
-     * Prints the contents of a file
+     * Prints the contents of a file to the terminal
      *
      * @param file The file to print contents of
      */
