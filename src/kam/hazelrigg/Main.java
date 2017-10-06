@@ -23,11 +23,10 @@ import java.util.regex.Pattern;
 
 public class Main {
 
-    private static Boolean verbose = false;
-
     // Set up tagger
     private static final MaxentTagger tagger =
             new MaxentTagger("models/english-bidirectional-distsim.tagger");
+    private static Boolean verbose = false;
 
     public static void main(String[] args) {
         if (args.length != 0 && args[0].equals("-v")) {
@@ -121,12 +120,12 @@ public class Main {
                         new File("results/img/" + resultFile.getName().
                                 replaceAll(".txt", ".jpeg")), "POS distribution");
 
-                Map<String , Integer> monoVsPoly = new HashMap<>();
+                Map<String, Integer> monoVsPoly = new HashMap<>();
                 monoVsPoly.put("Monosyllabic", count.get("OTHER").get("Monosyllabic"));
                 monoVsPoly.put("Polysyllabic", count.get("OTHER").get("Polysyllabic"));
 
                 makeGraph(monoVsPoly, new File("results/img/" +
-                        resultFile.getName().replaceAll(".txt", "") + " Difficulty.jpeg"),
+                                resultFile.getName().replaceAll(".txt", "") + " Difficulty.jpeg"),
                         "Difficulty");
 
 
@@ -249,7 +248,8 @@ public class Main {
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 
-            String stopWords = "which|was|what|has|have|this|that|the|of|to|and|a|an|as|are|on|in|is|it|so|for|be|been|by|but|";
+            String stopWords = "|you|which|was|what|has|have|this|that|the|of|to|" +
+                    "and|a|an|as|are|on|i|in|is|it|so|for|be|been|by|but|";
 
             String line = br.readLine();
             while (line != null) {
@@ -384,6 +384,7 @@ public class Main {
 
     /**
      * Finds if a word is monosyllabic
+     *
      * @param word word to count syllables of
      * @return true if word is monosyllabic, false otherwise
      */
@@ -392,7 +393,7 @@ public class Main {
         Matcher m = p.matcher(word);
 
         int syllables = 0;
-        while (m.find()){
+        while (m.find()) {
             syllables++;
         }
 
@@ -416,8 +417,7 @@ public class Main {
                     new BufferedWriter(new FileWriter(new File("results/txt/" + out.getName())));
 
             br.write("====================[ Conclusions ]====================\n");
-            br.write(getStringDifficulty(counts.get("OTHER")));
-            
+            br.write(getConclusionString(counts));
             br.write("\n");
 
             // Write counts information
@@ -436,19 +436,36 @@ public class Main {
     }
 
     /**
+     * Creates a short conclusion based on text information
+     *
+     * @param counts Map with word frequencies
+     * @return String containing conclusion
+     */
+    private static String getConclusionString(Map<String, Map<String, Integer>> counts) {
+        String conclusion = "This " + getStringDifficulty(counts.get("OTHER"));
+        conclusion += "The most frequently used word out of the " +
+                counts.get("WORD").entrySet().size() +
+                " unique words seen in the text was \"" +
+                counts.get("WORD").entrySet().iterator().next().getKey() + "\".";
+
+        return conclusion + "\n";
+    }
+
+    /**
      * Creates a string for writing in conclusion section of results file
+     *
      * @param counts Map containing Mono vs Polysyllabic counts
      * @return String that is formatted for being written directly to file
      */
     private static String getStringDifficulty(Map<String, Integer> counts) {
         if (counts.get("Polysyllabic") >= counts.get("Monosyllabic")) {
-            return "Text is difficult, it has " + counts.get("Polysyllabic") +
+            return "text is a difficult read, it has " + counts.get("Polysyllabic") +
                     " polysyllabic words and " + counts.get("Monosyllabic") +
-                    " monosyllabic words.\n";
+                    " monosyllabic words. ";
         }
-        return "Text is simple, it has " + counts.get("Monosyllabic") +
+        return "text is a simple read, it has " + counts.get("Monosyllabic") +
                 " monosyllabic words and " + counts.get("Polysyllabic") +
-                " polysyllabic words.\n";
+                " polysyllabic words. ";
     }
 
     /**
