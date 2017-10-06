@@ -9,6 +9,10 @@ import java.util.stream.Collectors;
 class FreqMap {
     private Map<String, Integer> frequency = new HashMap<>();
 
+    static String stopWords = "|you|us|we|which|where|were|with|was|what|her|him|had|has|have|" +
+            "this|that|the|there|their|of|to|my|me|mine|if|or|and|a|an|as|are|on|i|in|is|it|so|" +
+            "for|be|been|by|but|from|";
+
     Map<String, Integer> getFrequency() {
         return sortByValue(this.frequency);
     }

@@ -28,6 +28,8 @@ public class Main {
             new MaxentTagger("models/english-bidirectional-distsim.tagger");
     private static Boolean verbose = false;
 
+    private static Book current = new Book();
+
     public static void main(String[] args) {
         if (args.length != 0 && args[0].equals("-v")) {
             verbose = true;
@@ -96,11 +98,11 @@ public class Main {
      * @param file File to analyse
      */
     private static void readFile(File file) {
-
+        current = new Book();
         File resultFile = new File(outputOfFile(file));
 
         if (resultFile.exists()) {
-            System.out.println("[*] " + file.getName() + " already has results.");
+            System.out.println("☑ - " + file.getName() + " already has results.");
 
             if (verbose) {
                 printFile(resultFile);
@@ -141,9 +143,8 @@ public class Main {
      * @return The conversion of input file
      */
     private static String outputOfFile(File file) {
-
-        String[] title = getBookTitle(file);
-        String out = title[0] + " by " + title[1];
+        setBookTitle(file);
+        String out = current.getTitle() + " by " + current.getAuthor();
 
         String fileName;
 
@@ -178,12 +179,11 @@ public class Main {
     }
 
     /**
-     * Returns the title and author of a book if one is found on the first line
+     * Sets the title and author of a book if one is found on the first line
      *
      * @param file File you want to get title of
-     * @return String array containing title and then author, if one is not found returns file name
      */
-    private static String[] getBookTitle(File file) {
+    private static void setBookTitle(File file) {
         String title = "";
         String author = "";
 
@@ -197,11 +197,13 @@ public class Main {
 
             if (firstLine.contains("The Project Gutenberg EBook of")) {
                 firstLine = firstLine.substring(31);
+                current.setGutenberg(true);
             }
 
             if (firstLine.contains("Project Gutenberg's") ||
                     firstLine.contains("Project Gutenberg’s")) {
                 firstLine = firstLine.substring(20);
+                current.setGutenberg(true);
             }
 
             // If the pattern "title by author" appears split at the word by
@@ -221,7 +223,8 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new String[]{title, author};
+        current.setAuthor(author);
+        current.setTitle(title);
     }
 
     /**
@@ -233,21 +236,29 @@ public class Main {
      */
     private static Map<String, Map<String, Integer>> wordCount(File file) throws IOException {
 
-        System.out.println("[*] Analysing:\t" + file.getName());
+        System.out.println("☐ - Analysing:\t" + file.getName());
+
+
         Map<String, Map<String, Integer>> results = new HashMap<>();
 
         FreqMap posFreq = new FreqMap();
         FreqMap wordFreq = new FreqMap();
         FreqMap otherMap = new FreqMap();
 
+        Boolean gutenberg = current.isGutenberg();
+
+
         boolean atBook = false;
+
+        if (!gutenberg) {
+            System.out.println("✘ - " + file.getName() + " is not a Gutenberg Book.");
+            atBook = true;
+        }
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 
-            String stopWords = "|you|which|was|what|has|have|this|that|the|of|to|" +
-                    "and|a|an|as|are|on|i|in|is|it|so|for|be|been|by|but|";
-
             String line = br.readLine();
+
             while (line != null) {
 
                 // Split line into separate words
@@ -256,8 +267,10 @@ public class Main {
                     continue;
                 }
 
-                if (!atBook) {
-                    if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")) {
+                // Wait to start reading text until we pass Gutenberg header
+                if (gutenberg && !atBook) {
+                    if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK") ||
+                            line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
                         atBook = true;
                         line = br.readLine();
                     } else {
@@ -267,7 +280,8 @@ public class Main {
                 }
 
 
-                if (line.contains("End of the Project Gutenberg EBook") ||
+                // Stop reading at the end of text
+                if (gutenberg && line.contains("End of the Project Gutenberg EBook") ||
                         line.contains("End of Project Gutenberg’s")) {
                     break;
                 }
@@ -277,19 +291,22 @@ public class Main {
                     posFreq.increaseFreq(tag);
                 }
 
+                // Add POS Tags
                 results.put("POS", posFreq.getFrequency());
 
                 String[] words = line.split("\\s");
 
                 for (String word : words) {
+                    // Word prep
                     word = word.toLowerCase().replaceAll("\\W", "");
 
                     // If the word is a stop word skip over it
-                    if (word.length() == 0 || stopWords.contains(word + "|")) {
+                    if (word.length() == 0 || FreqMap.stopWords.contains(word + "|")) {
                         line = br.readLine();
                         continue;
                     }
 
+                    // Increase word count and then put into results
                     wordFreq.increaseFreq(word);
                     results.put("WORD", wordFreq.getFrequency());
 
@@ -297,21 +314,24 @@ public class Main {
                         otherMap.increaseFreq("Palindrome");
                     }
 
+                    // Get difficulty
                     if (isMonosyllabic(word)) {
                         otherMap.increaseFreq("Monosyllabic");
                     } else {
                         otherMap.increaseFreq("Polysyllabic");
                     }
 
+                    // Put Other map into results map
                     otherMap.increaseFreq("Total words");
                     results.put("OTHER", otherMap.getFrequency());
+
                     line = br.readLine();
                 }
             }
 
             br.close();
 
-            System.out.println("[*] Finished:\t" + file.getName() + "\n");
+            System.out.println("☑ - Finished:\t" + file.getName() + "\n");
             return results;
 
         }
@@ -422,6 +442,11 @@ public class Main {
 
         if (verbose) {
             System.out.println("[*] Writing counts to " + out.getName());
+        }
+
+        if (counts.keySet().size() == 0) {
+            System.out.println("[Error - writeCount] Counts are empty for file: " + out.getName());
+            System.exit(9);
         }
 
         try {
