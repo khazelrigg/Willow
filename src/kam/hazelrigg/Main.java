@@ -76,13 +76,12 @@ public class Main {
      */
     private static void readFile(File file) {
         Book book1 = new Book();
-
+        book1.setTitleFromText(file);
         // If we already have results there is no need to redo results
         if (book1.resultsFileExists()) {
             System.out.println("☑ - " + file.getName() + " already has results.");
 
         } else {
-            book1.setTitleFromText(file);
             book1.setPath(file);
             book1.analyseText();
             book1.writeFrequencies();

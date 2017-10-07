@@ -1,55 +1,14 @@
 package kam.hazelrigg;
 
-import edu.stanford.nlp.tagger.maxent.MaxentTagger;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class TextTools {
-
-    // Set up tagger
-    private static final MaxentTagger tagger =
-            new MaxentTagger("models/english-bidirectional-distsim.tagger");
-
-    /**
-     * Returns the part of speech of a word
-     *
-     * @param line The word to tag
-     * @return Tag of word
-     */
-    static String[] getTag(String line) {
-        Map<String, String> posAbbrev = nonAbbreviate(new File("posAbbreviations.txt"));
-        String tagLine = tagger.tagString(line);
-
-        StringBuilder tags = new StringBuilder();
-
-
-        for (String word : tagLine.split("\\s")) {
-            // Split line into words with tags and then ignore short words
-            if (word.replaceAll("\\W", "").length() > 2) {
-                String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
-                tag = posAbbrev.get(tag);
-
-                // What to do if we have no tag
-                if (tag == null) {
-                    tag = "Unknown";
-                }
-
-                // Add the tag and | so we can split the string later
-                tags.append(tag).append("|");
-
-            }
-        }
-
-        return tags.toString().split("\\|");
-    }
-
 
     /**
      * Returns whether or not a string is a palindrome
@@ -91,7 +50,7 @@ class TextTools {
      * @param abbreviations ":" Separated file containing abbreviations and full text
      * @return Hash map containing the key as the abbreviation and the value as its full text
      */
-    private static HashMap<String, String> nonAbbreviate(File abbreviations) {
+     static HashMap<String, String> nonAbbreviate(File abbreviations) {
 
         HashMap<String, String> posNoAbbrev = new HashMap<>();
         try {

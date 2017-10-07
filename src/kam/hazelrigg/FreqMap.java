@@ -23,14 +23,11 @@ class FreqMap {
     public String toString() {
 
         StringBuilder result = new StringBuilder();
-
-        frequency.forEach((key, value) -> result.append(String.format("%s → %d\n", key, value)));
+        for (HashMap.Entry<String, Integer> entry : frequency.entrySet()) {
+            result.append(String.format("%s → %d\n", entry.getKey(), entry.getValue()));
+        }
 
         return result.toString();
-    }
-
-    void sortMaps() {
-
     }
 
 }

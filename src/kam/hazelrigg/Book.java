@@ -1,11 +1,14 @@
 package kam.hazelrigg;
 
+import edu.stanford.nlp.tagger.maxent.MaxentTagger;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 
 public class Book {
     private String title;
@@ -16,7 +19,11 @@ public class Book {
     private FreqMap wordFreq;
 
     private FreqMap difficultyMap;
+    private static HashMap<String, String> posAbbrev = TextTools.nonAbbreviate(new File("posAbbreviations.txt"));
 
+    // Set up tagger
+    private static final MaxentTagger tagger =
+            new MaxentTagger("models/english-left3words-distsim.tagger");
 
     public Book() {
         this.title = "";
@@ -62,13 +69,12 @@ public class Book {
             String fullTitle = title + " by " + author;
 
             System.out.println("☐ - Starting analysis of " + fullTitle);
-            String line = br.readLine();
+            long startTime = System.currentTimeMillis();
             Boolean atBook = false;
 
-            while (line != null) {
+            for (String line; (line = br.readLine()) != null;) {
                 // Skip empty lines
                 if (line.isEmpty()) {
-                    line = br.readLine();
                     continue;
                 }
 
@@ -79,7 +85,6 @@ public class Book {
                         atBook = true;
                         line = br.readLine();
                     } else {
-                        line = br.readLine();
                         continue;
                     }
                 }
@@ -93,11 +98,11 @@ public class Book {
                 }
 
                 // Tag each line
-                for (String tag : TextTools.getTag(line)) {
+                String[] tagLine = getTag(line);
+                for (String tag : tagLine) {
                     if (tag.isEmpty()) {
                         continue;
                     }
-
                     posFreq.increaseFreq(tag);
                 }
 
@@ -122,12 +127,10 @@ public class Book {
                     wordFreq.increaseFreq(word);
 
                 }
-
-                line = br.readLine();
             }
             br.close();
-
-            System.out.println("☑ - Finished analysis of " + fullTitle + "\n");
+            long endTime = System.currentTimeMillis();
+            System.out.println("☑ - Finished analysis of " + fullTitle + " in " + (endTime - startTime) + "ms.\n");
 
         } catch (IOException e) {
             System.out.println("Couldn't find file at " + path);
@@ -170,12 +173,44 @@ public class Book {
         }
     }
 
+
+    /**
+     * Returns the part of speech of a word
+     *
+     * @param line The word to tag
+     * @return Tag of word
+     */
+     private static String[] getTag(String line) {
+         String tagLine = tagger.tagString(line);
+
+         StringBuilder tags = new StringBuilder();
+
+         for (String word : tagLine.split("\\s")) {
+            // Split line into words with tags and then ignore short words
+
+            if (word.replaceAll("\\W", "").length() > 2) {
+                String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
+                tag = posAbbrev.get(tag);
+
+                // What to do if we have no tag
+                if (tag == null) {
+                    tag = "Unknown";
+                }
+
+                // Add the tag and | so we can split the string later
+                tags.append(tag).append("|");
+
+            }
+         }
+
+        return tags.toString().split("\\|");
+     }
+
     /**
      * Returns whether or not a file already has a results file
      *
      * @return True if the file has results already
      */
-
     boolean resultsFileExists() {
         File results = new File("results/txt/" + title + " by " + author + " Results.txt");
         return results.exists();
