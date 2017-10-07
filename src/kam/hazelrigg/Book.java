@@ -1,7 +1,13 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PiePlot3D;
+import org.jfree.data.general.DefaultPieDataset;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -10,11 +16,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 
+import static org.jfree.chart.ChartFactory.createPieChart3D;
+
 public class Book {
     // Set up tagger
     private static final MaxentTagger tagger =
             new MaxentTagger("models/english-left3words-distsim.tagger");
-    private static HashMap<String, String> posAbbrev = TextTools.nonAbbreviate(new File("posAbbreviations.txt"));
+
+    // Get POS abbreviation values
+    private static HashMap<String, String> posAbbrev =
+            TextTools.nonAbbreviate(new File("posAbbreviations.txt"));
+
     private String title;
     private String author;
     private File path;
@@ -60,7 +72,7 @@ public class Book {
      * @param line The word to tag
      * @return Tag of word
      */
-    private static String[] getTag(String line) {
+    private static String[] getSentenceTags(String line) {
         String tagLine = tagger.tagString(line);
 
         StringBuilder tags = new StringBuilder();
@@ -86,8 +98,13 @@ public class Book {
         return tags.toString().split("\\|");
     }
 
-    public void setPath(File text) {
-        this.path = text;
+    /**
+     * Set the path for the text file
+     *
+     * @param path path of text
+     */
+    void setPath(File path) {
+        this.path = path;
     }
 
     /**
@@ -128,7 +145,7 @@ public class Book {
                 }
 
                 // Tag each line
-                String[] tagLine = getTag(line);
+                String[] tagLine = getSentenceTags(line);
                 for (String tag : tagLine) {
                     if (tag.isEmpty()) {
                         continue;
@@ -142,7 +159,7 @@ public class Book {
                     word = word.toLowerCase().replaceAll("\\W", "");
 
                     // Skip punctuation and stop words
-                    if (word.isEmpty() || FreqMap.stopWords.contains(word + "|")) {
+                    if (word.isEmpty() || TextTools.isStopWord(word)) {
                         continue;
                     }
 
@@ -200,6 +217,69 @@ public class Book {
                 System.exit(3);
             }
 
+        }
+    }
+
+    /**
+     * Creates a parts of speech distribution pie graph
+     */
+    void makePOSGraph() {
+        makeGraph("POS Distribution", posFreq);
+    }
+
+    /**
+     * Creates a difficulty pie graph that uses syllable 
+     */
+    void makeDifficultyMap() {
+        makeGraph("Difficulty", difficultyMap);
+    }
+
+    /**
+     * Creates a graph using JFreeChart that is saved to a jpg
+     * @param purpose Purpose of the graph, used in title of graph
+     * @param freq FreqMap to use values off
+     */
+    private void makeGraph(String purpose, FreqMap freq) {
+
+        DefaultPieDataset dataSet = new DefaultPieDataset();
+        String outPath;
+
+        // Create results directories
+        if (new File("results/img/").isDirectory()) {
+            outPath = "results/img/" + title + " by " + author + " " + purpose + " Results.jpeg";
+        } else {
+            System.out.println("[Error] Failed to create results directories");
+            outPath = title + " by " + author + " " + purpose + "Results.jpeg";
+        }
+
+        // Load POS data into data set
+        for (String type : freq.getFrequency().keySet()) {
+            dataSet.setValue(type, freq.get(type));
+        }
+
+        String title = purpose + " of " + this.title + " by " + this.author;
+
+        JFreeChart chart = createPieChart3D(
+                title,
+                dataSet,
+                false,
+                true,
+                false);
+
+        PiePlot3D plot = (PiePlot3D) chart.getPlot();
+
+        plot.setBaseSectionOutlinePaint(new Color(0, 0, 0));
+        plot.setDarkerSides(true);
+        plot.setBackgroundPaint(new Color(204, 204, 204));
+        plot.setLabelBackgroundPaint(new Color(255, 255, 255));
+        plot.setStartAngle(90f);
+        plot.setLabelFont(new Font("Ubuntu San Serif", Font.PLAIN, 10));
+        plot.setDepthFactor(0.05f);
+
+        try {
+            ChartUtilities.saveChartAsJPEG(new File(outPath), chart, 900, 900);
+        } catch (IOException ioe) {
+            System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
         }
     }
 
@@ -265,6 +345,10 @@ public class Book {
         this.author = author;
     }
 
+    /**
+     * Gets the title of a Book
+     * @return title of the book
+     */
     public String getTitle() {
         return this.title;
     }

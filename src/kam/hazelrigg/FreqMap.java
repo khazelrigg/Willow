@@ -11,11 +11,14 @@ import java.util.stream.Collectors;
 import static java.util.Map.Entry.comparingByValue;
 
 class FreqMap {
-    static String stopWords = "|you|us|we|which|where|were|with|was|what|her|him|had|has|have|" +
-            "this|that|the|there|their|of|to|my|me|mine|if|or|and|a|an|as|are|on|i|in|is|it|so|" +
-            "for|be|been|by|but|from|";
+
     private HashMap<String, Integer> frequency = new HashMap<>();
 
+    /**
+     * Increases the value of a key by 1
+     *
+     * @param key Key to increase value of
+     */
     void increaseFreq(String key) {
         if (frequency.containsKey(key)) {
             frequency.put(key, frequency.get(key) + 1);
@@ -24,10 +27,39 @@ class FreqMap {
         }
     }
 
+    /**
+     * Gets the size of a FreqMap's entry set
+     *
+     * @return size of the FreqMap
+     */
     int getSize() {
         return frequency.entrySet().size();
     }
 
+    /**
+     * Returns the FreqMap as a HashMap
+     *
+     * @return HashMap version of FreqMap
+     */
+    HashMap<String, Integer> getFrequency() {
+        return frequency;
+    }
+
+    /**
+     * Gets the value of a key
+     *
+     * @param key key to get value of
+     * @return value of the key
+     */
+    int get(String key) {
+        return frequency.get(key);
+    }
+
+    /**
+     * Creates a string that contains keys and values separated with arrows
+     *
+     * @return String of FreqMap
+     */
     public String toString() {
 
         StringBuilder result = new StringBuilder();
@@ -37,6 +69,9 @@ class FreqMap {
         return result.toString();
     }
 
+    /**
+     * Sorts the FreqMap in descending order by its values
+     */
     private void sortByValue() {
 
         // https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java

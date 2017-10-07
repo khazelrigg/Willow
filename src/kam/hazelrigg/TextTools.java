@@ -11,12 +11,25 @@ import java.util.regex.Pattern;
 class TextTools {
 
     /**
+     * Returns whether or not a word is a stop word
+     * @param word Word to look at
+     * @return true if the word is a stop word, false otherwise
+     */
+    static boolean isStopWord(String word) {
+        String stopWords = "|you|us|we|which|where|were|with|was|what|her|him|had|has|have|" +
+                "this|that|the|there|their|of|to|my|me|mine|if|or|and|a|an|as|are|on|i|in|is|" +
+                "it|so|for|be|been|by|but|from|";
+
+        return stopWords.contains(word + "|");
+    }
+
+    /**
      * Returns whether or not a string is a palindrome
      *
      * @param str String to analyse
      * @return True if the string is a palindrome
      */
-    public static boolean isPalindrome(String str) {
+    boolean isPalindrome(String str) {
         for (int i = 0; i < str.length() / 2; i++) {
             if (str.charAt(i) != str.charAt(str.length() - 1 - i)) {
                 return false;

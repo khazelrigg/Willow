@@ -25,6 +25,8 @@ public class Runner extends Thread {
         } else {
             book.analyseText();
             book.writeFrequencies();
+            book.makePOSGraph();
+            book.makeDifficultyMap();
         }
 
         this.running = false;

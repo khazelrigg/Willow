@@ -69,48 +69,4 @@ public class Main {
         }
     }
 
-
-    /*
-    private static void makeGraph(HashMap<String, Integer> map, File out, String purpose) {
-
-        if (verbose) {
-            System.out.println("[*] Creating graph for " + out.getName());
-        }
-
-        DefaultPieDataset dataSet = new DefaultPieDataset();
-
-        // Load POS data into data set
-        for (String type : map.keySet()) {
-            dataSet.setValue(type, map.get(type));
-        }
-
-        String title = purpose + " of " +
-                out.getName().substring(0, out.getName().lastIndexOf("Results"));
-
-        JFreeChart chart = ChartFactory.createPieChart3D(
-                title,
-                dataSet,
-                false,
-                true,
-                false);
-
-        PiePlot3D plot = (PiePlot3D) chart.getPlot();
-
-        plot.setBaseSectionOutlinePaint(new Color(0, 0, 0));
-        plot.setDarkerSides(true);
-        plot.setBackgroundPaint(new Color(204, 204, 204));
-        plot.setLabelBackgroundPaint(new Color(255, 255, 255));
-        plot.setStartAngle(90f);
-        plot.setLabelFont(new Font("Ubuntu San Serif", Font.PLAIN, 10));
-        plot.setDepthFactor(0.05f);
-
-        try {
-            ChartUtilities.saveChartAsJPEG(new File("results/img/" + out.getName()), chart, 900, 900);
-        } catch (IOException ioe) {
-            System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
-        }
-    }
-    */
-
-
 }
