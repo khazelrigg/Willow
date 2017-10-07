@@ -30,7 +30,6 @@ public class Main {
                 }
             }
         } else {
-            System.out.println("Single file");
             Book book = new Book();
             book.setTitleFromText(path);
             book.setPath(path);

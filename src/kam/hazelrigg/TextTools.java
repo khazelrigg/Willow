@@ -50,7 +50,7 @@ class TextTools {
      * @param abbreviations ":" Separated file containing abbreviations and full text
      * @return Hash map containing the key as the abbreviation and the value as its full text
      */
-     static HashMap<String, String> nonAbbreviate(File abbreviations) {
+    static HashMap<String, String> nonAbbreviate(File abbreviations) {
 
         HashMap<String, String> posNoAbbrev = new HashMap<>();
         try {

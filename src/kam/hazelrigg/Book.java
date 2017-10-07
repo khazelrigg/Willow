@@ -11,19 +11,17 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class Book {
+    // Set up tagger
+    private static final MaxentTagger tagger =
+            new MaxentTagger("models/english-left3words-distsim.tagger");
+    private static HashMap<String, String> posAbbrev = TextTools.nonAbbreviate(new File("posAbbreviations.txt"));
     private String title;
     private String author;
     private File path;
     private boolean gutenberg;
     private FreqMap posFreq;
     private FreqMap wordFreq;
-
     private FreqMap difficultyMap;
-    private static HashMap<String, String> posAbbrev = TextTools.nonAbbreviate(new File("posAbbreviations.txt"));
-
-    // Set up tagger
-    private static final MaxentTagger tagger =
-            new MaxentTagger("models/english-left3words-distsim.tagger");
 
     public Book() {
         this.title = "";
@@ -56,6 +54,38 @@ public class Book {
         return true;
     }
 
+    /**
+     * Returns the part of speech of a word
+     *
+     * @param line The word to tag
+     * @return Tag of word
+     */
+    private static String[] getTag(String line) {
+        String tagLine = tagger.tagString(line);
+
+        StringBuilder tags = new StringBuilder();
+
+        for (String word : tagLine.split("\\s")) {
+            // Split line into words with tags and then ignore short words
+
+            if (word.replaceAll("\\W", "").length() > 2) {
+                String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
+                tag = posAbbrev.get(tag);
+
+                // What to do if we have no tag
+                if (tag == null) {
+                    tag = "Unknown";
+                }
+
+                // Add the tag and | so we can split the string later
+                tags.append(tag).append("|");
+
+            }
+        }
+
+        return tags.toString().split("\\|");
+    }
+
     public void setPath(File text) {
         this.path = text;
     }
@@ -72,7 +102,7 @@ public class Book {
             long startTime = System.currentTimeMillis();
             Boolean atBook = false;
 
-            for (String line; (line = br.readLine()) != null;) {
+            for (String line; (line = br.readLine()) != null; ) {
                 // Skip empty lines
                 if (line.isEmpty()) {
                     continue;
@@ -172,39 +202,6 @@ public class Book {
 
         }
     }
-
-
-    /**
-     * Returns the part of speech of a word
-     *
-     * @param line The word to tag
-     * @return Tag of word
-     */
-     private static String[] getTag(String line) {
-         String tagLine = tagger.tagString(line);
-
-         StringBuilder tags = new StringBuilder();
-
-         for (String word : tagLine.split("\\s")) {
-            // Split line into words with tags and then ignore short words
-
-            if (word.replaceAll("\\W", "").length() > 2) {
-                String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
-                tag = posAbbrev.get(tag);
-
-                // What to do if we have no tag
-                if (tag == null) {
-                    tag = "Unknown";
-                }
-
-                // Add the tag and | so we can split the string later
-                tags.append(tag).append("|");
-
-            }
-         }
-
-        return tags.toString().split("\\|");
-     }
 
     /**
      * Returns whether or not a file already has a results file
