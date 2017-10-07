@@ -19,6 +19,7 @@ import java.util.HashMap;
 import static org.jfree.chart.ChartFactory.createPieChart3D;
 
 public class Book {
+
     // Set up tagger
     private static final MaxentTagger tagger =
             new MaxentTagger("models/english-left3words-distsim.tagger");
@@ -45,70 +46,69 @@ public class Book {
     }
 
     /**
-     * Creates results directories for files to be saved to
+     * Get the title of a book
      *
-     * @return True if both directories are successfully created
+     * @param text File to find title of
      */
-    private static boolean makeResultDirs() {
+    void setTitleFromText(File text) {
+        String title = "";
+        String author = "";
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(text));
+            String firstLine = br.readLine();
 
-        File txt = new File("results/txt");
-        File img = new File("results/img");
-
-        if (!(txt.exists() || txt.mkdirs())) {
-            System.out.println("[Error] Could not create results directory 'txt'");
-            return false;
-        }
-        if (!(img.exists() || img.mkdirs())) {
-            System.out.println("[Error] Could not create results directory 'img'");
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Returns the part of speech of a word
-     *
-     * @param line The word to tag
-     * @return Tag of word
-     */
-    private static String[] getSentenceTags(String line) {
-        String tagLine = tagger.tagString(line);
-
-        StringBuilder tags = new StringBuilder();
-
-        for (String word : tagLine.split("\\s")) {
-            // Split line into words with tags and then ignore short words
-
-            if (word.replaceAll("\\W", "").length() > 2) {
-                String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
-                tag = posAbbrev.get(tag);
-
-                // What to do if we have no tag
-                if (tag == null) {
-                    tag = "Unknown";
-                }
-
-                // Add the tag and | so we can split the string later
-                tags.append(tag).append("|");
-
+            // If the first line is very short skip over it
+            while (firstLine.length() < 3) {
+                firstLine = br.readLine();
             }
+
+            // Cases of Gutenberg books to check
+            if (firstLine.contains("The Project Gutenberg EBook of")) {
+                firstLine = firstLine.substring(31);
+                this.gutenberg = true;
+            }
+
+            if (firstLine.contains("Project Gutenberg's") ||
+                    firstLine.contains("Project Gutenberg’s")) {
+                firstLine = firstLine.substring(20);
+                this.gutenberg = true;
+            }
+
+            // If the pattern "title by author" appears split at the word 'by' to get author and title
+            if (firstLine.contains("by")) {
+                title = firstLine.substring(0, firstLine.lastIndexOf("by")).trim();
+                author = firstLine.substring(firstLine.lastIndexOf("by") + 2).trim();
+            } else {
+                title = text.getName();
+                author = "";
+            }
+
+            // Remove any trailing commas
+            if (title.endsWith(",")) {
+                title = title.substring(0, title.length() - 1);
+            }
+
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        return tags.toString().split("\\|");
+        this.title = title;
+        this.author = author;
     }
 
     /**
-     * Set the path for the text file
+     * Returns whether or not a file already has a results file
      *
-     * @param path path of text
+     * @return True if the file has results already
      */
-    void setPath(File path) {
-        this.path = path;
+    boolean resultsFileExists() {
+        File results = new File("results/txt/" + title + " by " + author + " Results.txt");
+        return results.exists();
     }
 
     /**
-     * Creates the frequencies of the book
+     * Reads a text file and tags each line for parts of speech as well as counts word frequencies
      */
     void analyseText() {
 
@@ -187,6 +187,38 @@ public class Book {
     }
 
     /**
+     * Returns the part of speech of a word
+     *
+     * @param line The word to tag
+     * @return Tag of word
+     */
+    private static String[] getSentenceTags(String line) {
+        String tagLine = tagger.tagString(line);
+
+        StringBuilder tags = new StringBuilder();
+
+        for (String word : tagLine.split("\\s")) {
+            // Split line into words with tags and then ignore short words
+
+            if (word.replaceAll("\\W", "").length() > 2) {
+                String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
+                tag = posAbbrev.get(tag);
+
+                // What to do if we have no tag
+                if (tag == null) {
+                    tag = "Unknown";
+                }
+
+                // Add the tag and | so we can split the string later
+                tags.append(tag).append("|");
+
+            }
+        }
+
+        return tags.toString().split("\\|");
+    }
+
+    /**
      * Writes frequencies of book into a text file
      */
     void writeFrequencies() {
@@ -221,6 +253,28 @@ public class Book {
     }
 
     /**
+     * Creates results directories for files to be saved to
+     *
+     * @return True if both directories are successfully created
+     */
+    private static boolean makeResultDirs() {
+
+        File txt = new File("results/txt");
+        File img = new File("results/img");
+
+        if (!(txt.exists() || txt.mkdirs())) {
+            System.out.println("[Error] Could not create results directory 'txt'");
+            return false;
+        }
+        if (!(img.exists() || img.mkdirs())) {
+            System.out.println("[Error] Could not create results directory 'img'");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Creates a parts of speech distribution pie graph
      */
     void makePOSGraph() {
@@ -228,7 +282,7 @@ public class Book {
     }
 
     /**
-     * Creates a difficulty pie graph that uses syllable 
+     * Creates a difficulty pie graph that uses syllable
      */
     void makeDifficultyMap() {
         makeGraph("Difficulty", difficultyMap);
@@ -236,8 +290,9 @@ public class Book {
 
     /**
      * Creates a graph using JFreeChart that is saved to a jpg
+     *
      * @param purpose Purpose of the graph, used in title of graph
-     * @param freq FreqMap to use values off
+     * @param freq    FreqMap to use values off
      */
     private void makeGraph(String purpose, FreqMap freq) {
 
@@ -283,108 +338,26 @@ public class Book {
         }
     }
 
-    /**
-     * Returns whether or not a file already has a results file
-     *
-     * @return True if the file has results already
-     */
-    boolean resultsFileExists() {
-        File results = new File("results/txt/" + title + " by " + author + " Results.txt");
-        return results.exists();
+    void setPath(File path) {
+        this.path = path;
     }
 
-    /**
-     * Get the title of a book
-     *
-     * @param text File to find title of
-     */
-    void setTitleFromText(File text) {
-        String title = "";
-        String author = "";
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(text));
-            String firstLine = br.readLine();
-
-            // If the first line is very short skip over it
-            while (firstLine.length() < 3) {
-                firstLine = br.readLine();
-            }
-
-            // Cases of Gutenberg books to check
-            if (firstLine.contains("The Project Gutenberg EBook of")) {
-                firstLine = firstLine.substring(31);
-                this.gutenberg = true;
-            }
-
-            if (firstLine.contains("Project Gutenberg's") ||
-                    firstLine.contains("Project Gutenberg’s")) {
-                firstLine = firstLine.substring(20);
-                this.gutenberg = true;
-            }
-
-            // If the pattern "title by author" appears split at the word 'by' to get author and title
-            if (firstLine.contains("by")) {
-                title = firstLine.substring(0, firstLine.lastIndexOf("by")).trim();
-                author = firstLine.substring(firstLine.lastIndexOf("by") + 2).trim();
-            } else {
-                title = text.getName();
-                author = "";
-            }
-
-            // Remove any trailing commas
-            if (title.endsWith(",")) {
-                title = title.substring(0, title.length() - 1);
-            }
-
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        this.title = title;
-        this.author = author;
-    }
-
-    /**
-     * Gets the title of a Book
-     * @return title of the book
-     */
     public String getTitle() {
         return this.title;
     }
 
-    /**
-     * Set the title of a book
-     *
-     * @param title Title to use
-     */
     public void setTitle(String title) {
         this.title = title;
     }
 
-    /**
-     * Get the author of a book
-     *
-     * @return The author's name
-     */
     public String getAuthor() {
         return author;
     }
 
-    /**
-     * Set the author of a book
-     *
-     * @param author Author to use
-     */
     public void setAuthor(String author) {
         this.author = author;
     }
 
-    /**
-     * Return if book is a Gutenberg text
-     *
-     * @return True if it is a Gutenberg text, false otherwise
-     */
     public boolean isGutenberg() {
         return gutenberg;
     }

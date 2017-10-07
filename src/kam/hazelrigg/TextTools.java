@@ -12,6 +12,7 @@ class TextTools {
 
     /**
      * Returns whether or not a word is a stop word
+     *
      * @param word Word to look at
      * @return true if the word is a stop word, false otherwise
      */
@@ -21,22 +22,6 @@ class TextTools {
                 "it|so|for|be|been|by|but|from|";
 
         return stopWords.contains(word + "|");
-    }
-
-    /**
-     * Returns whether or not a string is a palindrome
-     *
-     * @param str String to analyse
-     * @return True if the string is a palindrome
-     */
-    boolean isPalindrome(String str) {
-        for (int i = 0; i < str.length() / 2; i++) {
-            if (str.charAt(i) != str.charAt(str.length() - 1 - i)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -85,6 +70,22 @@ class TextTools {
         }
 
         return posNoAbbrev;
+    }
+
+    /**
+     * Returns whether or not a string is a palindrome
+     *
+     * @param str String to analyse
+     * @return True if the string is a palindrome
+     */
+    boolean isPalindrome(String str) {
+        for (int i = 0; i < str.length() / 2; i++) {
+            if (str.charAt(i) != str.charAt(str.length() - 1 - i)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 

@@ -43,7 +43,6 @@ public class Main {
 
     }
 
-
     /**
      * Get a file/directory name from the user and ensure it is valid
      *

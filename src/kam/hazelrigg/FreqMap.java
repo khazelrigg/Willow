@@ -27,11 +27,6 @@ class FreqMap {
         }
     }
 
-    /**
-     * Gets the size of a FreqMap's entry set
-     *
-     * @return size of the FreqMap
-     */
     int getSize() {
         return frequency.entrySet().size();
     }
