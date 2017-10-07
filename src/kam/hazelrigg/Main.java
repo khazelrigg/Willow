@@ -9,6 +9,7 @@ public class Main {
     public static void main(String[] args) {
 
         File path = new File(getFileName());
+
         if (path.isDirectory()) {
             File[] files = path.listFiles();
 
@@ -21,14 +22,17 @@ public class Main {
             }
 
             for (Runner runner : runners) {
+                runner.thread.start();
+
                 while (runner.running) {
                     try {
-                        Thread.sleep(10);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
             }
+
         } else {
             Book book = new Book();
             book.setTitleFromText(path);

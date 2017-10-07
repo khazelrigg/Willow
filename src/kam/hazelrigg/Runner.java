@@ -13,10 +13,8 @@ public class Runner extends Thread {
         this.file = file;
         this.book = new Book();
         this.book.setPath(file);
-        thread.start();
     }
 
-    @Override
     public void run() {
         this.running = true;
 
