@@ -1,6 +1,14 @@
 package kam.hazelrigg;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import static java.util.Map.Entry.comparingByValue;
 
 class FreqMap {
     static String stopWords = "|you|us|we|which|where|were|with|was|what|her|him|had|has|have|" +
@@ -23,11 +31,19 @@ class FreqMap {
     public String toString() {
 
         StringBuilder result = new StringBuilder();
-        for (HashMap.Entry<String, Integer> entry : frequency.entrySet()) {
-            result.append(String.format("%s → %d\n", entry.getKey(), entry.getValue()));
-        }
+        sortByValue();
+        frequency.forEach((key, value) -> result.append(String.format("%s → %d\n", key, value)));
 
         return result.toString();
+    }
+
+    private void sortByValue() {
+        List<Entry<String, Integer>> toSort = new ArrayList<>();
+        toSort.addAll(frequency.entrySet());
+        toSort.sort(comparingByValue(Collections.reverseOrder()));
+        frequency = toSort.stream().collect
+                (Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
+
     }
 
 }
