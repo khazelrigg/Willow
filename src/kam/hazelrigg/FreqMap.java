@@ -1,55 +1,36 @@
 package kam.hazelrigg;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-class FreqMap extends Book{
-    private Map<String, Integer> frequency = new HashMap<>();
-
+class FreqMap {
     static String stopWords = "|you|us|we|which|where|were|with|was|what|her|him|had|has|have|" +
             "this|that|the|there|their|of|to|my|me|mine|if|or|and|a|an|as|are|on|i|in|is|it|so|" +
             "for|be|been|by|but|from|";
-
-    Map<String, Integer> getFrequency() {
-        return sortByValue(this.frequency);
-    }
+    private HashMap<String, Integer> frequency = new HashMap<>();
 
     void increaseFreq(String key) {
         if (frequency.containsKey(key)) {
             frequency.put(key, frequency.get(key) + 1);
-        }
-        else {
+        } else {
             frequency.put(key, 1);
         }
     }
 
+    int getSize() {
+        return frequency.entrySet().size();
+    }
+
     public String toString() {
+
         StringBuilder result = new StringBuilder();
-        for (String key : this.getFrequency().keySet()) {
-            result.append(String.format("%s → %d\n", key, this.frequency.get(key)));
-        }
+
+        frequency.forEach((key, value) -> result.append(String.format("%s → %d\n", key, value)));
+
         return result.toString();
     }
 
-    private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
-        /* Found on stack overflow:
-            https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java#2581754
-        */
+    void sortMaps() {
 
-        return map.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
-                //                                  Sort descending instead of ascending
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new
-                ));
     }
-
 
 }

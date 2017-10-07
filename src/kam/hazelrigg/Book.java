@@ -1,29 +1,194 @@
 package kam.hazelrigg;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 public class Book {
     private String title;
     private String author;
+    private File path;
     private boolean gutenberg;
+    private FreqMap posFreq;
+    private FreqMap wordFreq;
+
+    private FreqMap difficultyMap;
 
 
     public Book() {
         this.title = "";
         this.author = "";
         this.gutenberg = false;
+        this.posFreq = new FreqMap();
+        this.wordFreq = new FreqMap();
+        this.difficultyMap = new FreqMap();
+    }
+
+    /**
+     * Creates results directories for files to be saved to
+     *
+     * @return True if both directories are successfully created
+     */
+    private static boolean makeResultDirs() {
+
+        File txt = new File("results/txt");
+        File img = new File("results/img");
+
+        if (!(txt.exists() || txt.mkdirs())) {
+            System.out.println("[Error] Could not create results directory 'txt'");
+            return false;
+        }
+        if (!(img.exists() || img.mkdirs())) {
+            System.out.println("[Error] Could not create results directory 'img'");
+            return false;
+        }
+
+        return true;
+    }
+
+    public void setPath(File text) {
+        this.path = text;
+    }
+
+    /**
+     * Creates the frequencies of the book
+     */
+    void analyseText() {
+
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String fullTitle = title + " by " + author;
+
+            System.out.println("☐ - Starting analysis of " + fullTitle);
+            String line = br.readLine();
+            Boolean atBook = false;
+
+            while (line != null) {
+                // Skip empty lines
+                if (line.isEmpty()) {
+                    line = br.readLine();
+                    continue;
+                }
+
+                // Skip over the Gutenberg headers
+                if (gutenberg && !atBook) {
+                    if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK") ||
+                            line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
+                        atBook = true;
+                        line = br.readLine();
+                    } else {
+                        line = br.readLine();
+                        continue;
+                    }
+                }
+
+                // Stop at the Gutenberg footer
+                if (gutenberg) {
+                    if (line.contains("End of the Project Gutenberg EBook") ||
+                            line.contains("End of Project Gutenberg’s")) {
+                        break;
+                    }
+                }
+
+                // Tag each line
+                for (String tag : TextTools.getTag(line)) {
+                    if (tag.isEmpty()) {
+                        continue;
+                    }
+
+                    posFreq.increaseFreq(tag);
+                }
+
+                // Word counts
+                for (String word : line.split("\\s")) {
+                    // Make word lowercase and strip punctuation
+                    word = word.toLowerCase().replaceAll("\\W", "");
+
+                    // Skip punctuation and stop words
+                    if (word.isEmpty() || FreqMap.stopWords.contains(word + "|")) {
+                        continue;
+                    }
+
+                    // Add difficulty information
+                    if (TextTools.getSyllableCount(word) == 1) {
+                        difficultyMap.increaseFreq("Monosyllabic");
+                    } else {
+                        difficultyMap.increaseFreq("Polysyllabic");
+                    }
+
+                    // Increase word frequency
+                    wordFreq.increaseFreq(word);
+
+                }
+
+                line = br.readLine();
+            }
+            br.close();
+
+            System.out.println("☑ - Finished analysis of " + fullTitle + "\n");
+
+        } catch (IOException e) {
+            System.out.println("Couldn't find file at " + path);
+        }
+
+
+    }
+
+    /**
+     * Writes frequencies of book into a text file
+     */
+    void writeFrequencies() {
+        if (posFreq.getSize() > 0) {
+            String outPath;
+
+            // Create results directories
+            if (!makeResultDirs()) {
+                System.out.println("[Error] Failed to create results directories");
+                outPath = title + " by " + author + " Results.txt";
+            } else {
+                outPath = "results/txt/" + title + " by " + author + " Results.txt";
+            }
+
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outPath)))) {
+
+                // Write word frequencies
+                bw.write("==================[ Word ]==================\n");
+                bw.write(wordFreq.toString());
+
+                // Write pos frequencies
+                bw.write("\n================[ POS Tags ]================\n");
+                bw.write(posFreq.toString());
+
+                bw.close();
+            } catch (IOException e) {
+                System.out.println("Error writing frequencies");
+                System.exit(3);
+            }
+
+        }
+    }
+
+    /**
+     * Returns whether or not a file already has a results file
+     *
+     * @return True if the file has results already
+     */
+
+    boolean resultsFileExists() {
+        File results = new File("results/txt/" + title + " by " + author + " Results.txt");
+        return results.exists();
     }
 
     /**
      * Get the title of a book
+     *
      * @param text File to find title of
      */
-     void getTitleFromText(File text) {
-         String title = "";
-         String author = "";
+    void setTitleFromText(File text) {
+        String title = "";
+        String author = "";
         try {
             BufferedReader br = new BufferedReader(new FileReader(text));
             String firstLine = br.readLine();
@@ -68,6 +233,10 @@ public class Book {
         this.author = author;
     }
 
+    public String getTitle() {
+        return this.title;
+    }
+
     /**
      * Set the title of a book
      *
@@ -75,10 +244,6 @@ public class Book {
      */
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getTitle() {
-        return this.title;
     }
 
     /**
@@ -116,5 +281,4 @@ public class Book {
     public void setGutenberg(boolean gutenberg) {
         this.gutenberg = gutenberg;
     }
-
 }
