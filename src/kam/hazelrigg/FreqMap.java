@@ -38,6 +38,9 @@ class FreqMap {
     }
 
     private void sortByValue() {
+
+        // https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java
+
         List<Entry<String, Integer>> toSort = new ArrayList<>();
         toSort.addAll(frequency.entrySet());
         toSort.sort(comparingByValue(Collections.reverseOrder()));

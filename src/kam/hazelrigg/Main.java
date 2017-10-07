@@ -1,26 +1,45 @@
 package kam.hazelrigg;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        File file = new File(getFileName());
-        long startTime = System.currentTimeMillis();
+        File path = new File(getFileName());
+        if (path.isDirectory()) {
+            File[] files = path.listFiles();
 
-        if (file.isDirectory()) {
-            readDir(file);
-        } else if (file.isFile()) {
-            readFile(file);
+            ArrayList<Runner> runners = new ArrayList<>();
+
+            if (files != null) {
+                for (File file : files) {
+                    runners.add(new Runner(file));
+                }
+            }
+
+            for (Runner runner : runners) {
+                while (runner.running) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else {
+            System.out.println("Single file");
+            Book book = new Book();
+            book.setTitleFromText(path);
+            book.setPath(path);
+            book.analyseText();
+            book.writeFrequencies();
         }
 
-        long endTime = System.currentTimeMillis();
-
-        System.out.println("\nTotal time elapsed " + ((endTime - startTime) / 1000) + " sec.");
-
     }
+
 
     /**
      * Get a file/directory name from the user and ensure it is valid
@@ -47,47 +66,6 @@ public class Main {
         }
     }
 
-    /**
-     * Reads and creates the data for an entire directory
-     *
-     * @param dir Directory to analyse
-     */
-    private static void readDir(File dir) {
-        // Create an array of files containing every file in the directory
-        File[] files = dir.listFiles();
-
-        // getFileName ensures files is not null
-        assert files != null;
-
-        for (File file : files) {
-            // Call readDir recursively to read sub directories
-            if (file.isDirectory()) {
-                readDir(file);
-            } else {
-                readFile(file);
-            }
-        }
-    }
-
-    /**
-     * Reads and creates the data for an input file
-     *
-     * @param file File to analyse
-     */
-    private static void readFile(File file) {
-        Book book1 = new Book();
-        book1.setTitleFromText(file);
-        // If we already have results there is no need to redo results
-        if (book1.resultsFileExists()) {
-            System.out.println("☑ - " + file.getName() + " already has results.");
-
-        } else {
-            book1.setPath(file);
-            book1.analyseText();
-            book1.writeFrequencies();
-        }
-
-    }
 
     /*
     private static void makeGraph(HashMap<String, Integer> map, File out, String purpose) {

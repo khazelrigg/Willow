@@ -130,7 +130,7 @@ public class Book {
             }
             br.close();
             long endTime = System.currentTimeMillis();
-            System.out.println("☑ - Finished analysis of " + fullTitle + " in " + (endTime - startTime) + "ms.\n");
+            System.out.println("\n☑ - Finished analysis of " + fullTitle + " in " + (endTime - startTime) / 1000 + "s.");
 
         } catch (IOException e) {
             System.out.println("Couldn't find file at " + path);
