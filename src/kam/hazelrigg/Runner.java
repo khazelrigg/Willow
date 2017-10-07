@@ -2,7 +2,7 @@ package kam.hazelrigg;
 
 import java.io.File;
 
-public class Runner extends Thread{
+public class Runner extends Thread {
     public Book book;
     public File file;
     public Thread thread;
