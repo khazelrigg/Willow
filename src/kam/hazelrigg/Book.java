@@ -30,6 +30,7 @@ class Book {
     private String title;
     private String author;
     private File path;
+    private int wordCount;
     private boolean gutenberg;
     private final FreqMap posFreq;
     private final FreqMap wordFreq;
@@ -154,6 +155,7 @@ class Book {
 
                 // Word counts
                 for (String word : line.split("\\s")) {
+                    wordCount++;
                     // Make word lowercase and strip punctuation
                     word = word.toLowerCase().replaceAll("\\W", "");
 
@@ -223,17 +225,17 @@ class Book {
      */
     void writeFrequencies() {
         if (posFreq.getSize() > 0) {
-            String outPath;
+            File out;
 
             // Create results directories
             if (!makeResultDirs()) {
                 System.out.println("[Error] Failed to create results directories");
-                outPath = title + " by " + author + " Results.txt";
+                out = new File(title + " by " + author + " Results.txt");
             } else {
-                outPath = "results/txt/" + title + " by " + author + " Results.txt";
+                out = new File("results/txt/" + title + " by " + author + " Results.txt");
             }
 
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outPath)))) {
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
 
                 // Write word frequencies
                 bw.write("==================[ Word ]==================\n");
@@ -284,7 +286,7 @@ class Book {
     /**
      * Creates a difficulty pie graph that uses syllable.
      */
-    void makeDifficultyMap() {
+    void makeDifficultyGraph() {
         makeGraph("Difficulty", difficultyMap);
     }
 
@@ -336,6 +338,85 @@ class Book {
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
         }
+    }
+
+    void writeConclusion() {
+        File out;
+        // Create results directories
+        if (!makeResultDirs()) {
+            System.out.println("[Error] Failed to create results directories");
+            out = new File("Conclusion of " + title + " by " + author + ".txt");
+        } else {
+            out = new File("results/txt/Conclusion of " + title + " by " + author + ".txt");
+        }
+
+
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(out));
+            bw.write("This is an automatically generated conclusion."
+                    + " Some information may be incorrect.\n\n");
+
+            bw.write(title + " by " + author + "\n\n");
+
+            bw.write("This piece is considered a " + classifyLength()
+                    + " based on Nebula Award classifications.\n");
+
+            bw.write("It is most likely " + classifyDifficulty()
+                    + " to read due to its ratio of polysyllabic words to monosyllabic words.\n");
+
+            bw.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public File getPath() {
+        return path;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    private String classifyLength() {
+        /*
+        Classification 	Word count
+        Novel 	40,000 words or over
+        Novella 	17,500 to 39,999 words
+        Novelette 	7,500 to 17,499 words
+        Short story 	under 7,500 words
+        */
+
+        if (wordCount < 7500) {
+            return "short story";
+        }
+
+        if (wordCount < 17500) {
+            return "novelette";
+        }
+
+        if (wordCount < 40000) {
+            return "novella";
+        }
+
+        return "novel";
+
+    }
+
+    private String classifyDifficulty() {
+        int mono = difficultyMap.get("Monosyllabic");
+        int poly = difficultyMap.get("Polysyllabic");
+
+        if (mono < poly) {
+            return "easy";
+        }
+
+        return "difficult";
     }
 
     void setPath(File path) {

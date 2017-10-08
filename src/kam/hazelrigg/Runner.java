@@ -28,7 +28,8 @@ class Runner extends Thread {
             book.analyseText();
             book.writeFrequencies();
             book.makePosGraph();
-            book.makeDifficultyMap();
+            book.makeDifficultyGraph();
+            book.writeConclusion();
         }
 
         this.running = false;
