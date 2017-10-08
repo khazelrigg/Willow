@@ -2,36 +2,36 @@ package kam.hazelrigg;
 
 import java.io.File;
 
-public class Runner extends Thread {
+class Runner extends Thread {
 
-    public Book book;
-    public File file;
-    public Thread thread;
-    public boolean running = false;
+  private final Book book;
+  private final File file;
+  final Thread thread;
+  public boolean running = false;
 
-    Runner(File file) {
-        thread = new Thread(this);
-        this.file = file;
-        this.book = new Book();
-        this.book.setPath(file);
+  Runner(File file) {
+    thread = new Thread(this);
+    this.file = file;
+    this.book = new Book();
+    this.book.setPath(file);
+  }
+
+  @Override
+  public void run() {
+    this.running = true;
+
+    book.setTitleFromText(file);
+
+    if (book.resultsFileExists()) {
+      System.out.println("☑ - " + file.getName() + " already has results");
+    } else {
+      book.analyseText();
+      book.writeFrequencies();
+      book.makePosGraph();
+      book.makeDifficultyMap();
     }
 
-    @Override
-    public void run() {
-        this.running = true;
-
-        book.setTitleFromText(file);
-
-        if (book.resultsFileExists()) {
-            System.out.println("☑ - " + file.getName() + " already has results");
-        } else {
-            book.analyseText();
-            book.writeFrequencies();
-            book.makePOSGraph();
-            book.makeDifficultyMap();
-        }
-
-        this.running = false;
-    }
+    this.running = false;
+  }
 
 }
