@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import java.net.URL?>
+
+<?import javafx.scene.text.TextFlow?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="kam.hazelrigg.Viewer"
+            prefHeight="400.0" prefWidth="600.0">
+
+
+    <BorderPane AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+
+        <top>
+            <VBox>
+                <MenuBar>
+                    <Menu text="File">
+                        <MenuItem text="Open File">
+                        </MenuItem>
+
+                        <MenuItem text="Open Folder">
+
+                        </MenuItem>
+                    </Menu>
+
+                </MenuBar>
+
+                <ToolBar>
+                    <ToggleButton>
+                        <graphic>
+                            <ImageView>
+                                <Image url="https://github.com/iconic/open-iconic/blob/master/png/document-2x.png?raw=true">
+                                </Image>
+                            </ImageView>
+                        </graphic>
+                    </ToggleButton>
+
+                    <ToggleButton>
+                        <graphic>
+                            <ImageView>
+                                <Image url="https://github.com/iconic/open-iconic/blob/master/png/pie-chart-2x.png?raw=true">
+                                </Image>
+                            </ImageView>
+                        </graphic>
+                    </ToggleButton>
+                </ToolBar>
+
+            </VBox>
+        </top>
+
+        <center>
+            <TextFlow>
+                <Text />
+            </TextFlow>
+        </center>
+
+
+        <bottom>
+            <HBox id="statusBar">
+                <Label text="Open a file..."></Label>
+            </HBox>
+        </bottom>
+
+    </BorderPane>
+
+    <stylesheets>
+        <URL value="@viewer.css" />
+    </stylesheets>
+</AnchorPane>

@@ -1,0 +1,9 @@
+.root {
+    -fx-background-color: #FAFAFA;
+}
+
+#statusBar {
+    -fx-padding: 5px;
+    -fx-background-color: #F5F5F5;
+    -fx-effect: dropshadow(gaussian, black, 2, 0, 0, 0);
+}
