@@ -1,36 +1,36 @@
-cc 	 :   Coordinating conjunction
-cd 	 :   Cardinal number
-dt 	 :   Determiner
-ex 	 :   Existential there
-fw 	 :   Foreign word
-in 	 :   Preposition or subordinating conjunction
-jj 	 :   Adjective
-jjr  : 	 Adjective, comparative
-jjs  :	 Adjective, superlative
-ls   :   List item marker
-md 	 :   Modal
-nn 	 :   Noun, singular or mass
-nns  :	 Noun, plural
-nnp  :	 Proper noun, singular
-nnps :	 Proper noun, plural
-pdt  :	 Predeterminer
-pos  :	 Possessive ending
-prp  :	 Personal pronoun
-prp$ :	 Possessive pronoun
-rb 	 :   Adverb
-rer  :	 Adverb, comparative
-rbs  :	 Adverb, superlative
-rp 	 :   Particle
-sym  :	 Symbol
-to 	 :   to
-uh 	 :   Interjection
-vb 	 :   Verb, base form
-vbd  :	 Verb, past tense
-vbg  :	 Verb, gerund or present participle
-vbn  :	 Verb, past participle
-vbp  :	 Verb, non-3rd person singular present
-vbz  :	 Verb, 3rd person singular present
-wdt  :	 Wh-determiner
-wp 	 :   Wh-pronoun
-wp$  :	 Possessive wh pronoun
-wrp  :	 Wh-adverb
+cc 	 :   Coordinating conjunction                 > 178, 36, 55
+cd 	 :   Cardinal number                          > 255, 214, 51
+dt 	 :   Determiner                               > 89, 132, 153
+ex 	 :   Existential there                        > 255, 51, 133
+fw 	 :   Foreign word                             > 178, 131, 36
+in 	 :   Preposition or subordinating conjunction > 148, 234, 255
+jj 	 :   Adjective                                > 166, 33, 122
+jjr  : 	 Adjective, comparative                   > 255, 160, 51
+jjs  :	 Adjective, superlative                   > 96, 166, 161
+ls   :   List item marker                         > 255, 51, 214
+md 	 :   Modal                                    > 255, 133, 51
+nn 	 :   Noun, singular or mass                   > 148, 255, 219
+nns  :	 Noun, plural                             > 187, 51, 255
+nnp  :	 Proper noun, singular                    > 57, 68, 79
+nnps :	 Proper noun, plural                      > 85, 142, 41
+pdt  :	 Predeterminer                            > 129, 243, 252
+pos  :	 Possessive ending                        > 134, 54, 77
+prp  :	 Personal pronoun                         > 96, 189, 104
+prp$ :	 Possessive pronoun                       > 77, 72, 0
+rb 	 :   Adverb                                   > 123, 231, 213
+rer  :	 Adverb, comparative                      > 78, 62, 90
+rbs  :	 Adverb, superlative                      > 90, 62, 78
+rp 	 :   Particle                                 > 34, 123, 213
+sym  :	 Symbol                                   > 204, 24, 42
+to 	 :   to                                       > 84, 122, 66
+uh 	 :   Interjection                             > 133, 33, 13
+vb 	 :   Verb, base form                          > 178, 118, 178
+vbd  :	 Verb, past tense                         > 142, 41, 120
+vbg  :	 Verb, gerund or present participle       > 213, 200, 9
+vbn  :	 Verb, past participle                    > 12, 12, 80
+vbp  :	 Verb, non-3rd person singular present    > 142, 1, 1
+vbz  :	 Verb, 3rd person singular present        > 124, 124, 90
+wdt  :	 Wh-determiner                            > 12, 87, 190
+wp 	 :   Wh-pronoun                               > 54, 219, 180
+wp$  :	 Possessive wh pronoun                    > 120, 180, 240
+wrp  :	 Wh-adverb                                > 4, 4, 0

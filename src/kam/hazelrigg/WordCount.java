@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-class WordCount {
+public class WordCount {
 
     public static void main(String[] args) {
 
@@ -41,6 +41,30 @@ class WordCount {
             book.writeFrequencies();
         }
 
+    }
+
+    public static void openDirectory(File dir) {
+        File[] files = dir.listFiles();
+
+        ArrayList<Runner> runners = new ArrayList<>();
+
+        if (files != null) {
+            for (File file : files) {
+                runners.add(new Runner(file));
+            }
+        }
+
+        for (Runner runner : runners) {
+            runner.thread.start();
+
+            while (runner.running) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     /**

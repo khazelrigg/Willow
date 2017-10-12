@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -37,6 +36,7 @@ class FreqMap {
      * @return HashMap version of FreqMap
      */
     HashMap<String, Integer> getFrequency() {
+        sortByValue();
         return frequency;
     }
 
@@ -71,12 +71,11 @@ class FreqMap {
 
         // https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java
 
-        List<Entry<String, Integer>> toSort = new ArrayList<>();
+        ArrayList<Entry<String, Integer>> toSort = new ArrayList<>();
         toSort.addAll(frequency.entrySet());
         toSort.sort(comparingByValue(Collections.reverseOrder()));
         frequency = toSort.stream()
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
-
     }
 
 }

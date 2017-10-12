@@ -1,8 +1,9 @@
 package kam.hazelrigg;
 
 import java.io.File;
+import java.util.ArrayList;
 
-class Runner extends Thread {
+public class Runner extends Thread {
 
     private final Book book;
     private final File file;
@@ -14,7 +15,33 @@ class Runner extends Thread {
         this.file = file;
         this.book = new Book();
         this.book.setPath(file);
+
     }
+
+    public static void openDirectory(File dir) {
+        File[] files = dir.listFiles();
+
+        ArrayList<Runner> runners = new ArrayList<>();
+
+        if (files != null) {
+            for (File file : files) {
+                runners.add(new Runner(file));
+            }
+        }
+
+        for (Runner runner : runners) {
+            runner.thread.start();
+
+            while (runner.running) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 
     @Override
     public void run() {
@@ -28,8 +55,8 @@ class Runner extends Thread {
             book.analyseText();
             book.writeFrequencies();
             book.makePosGraph();
-            book.makeDifficultyGraph();
-            book.writeConclusion();
+            //book.makeDifficultyGraph();
+            //book.writeConclusion();
         }
 
         this.running = false;

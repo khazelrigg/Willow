@@ -18,7 +18,7 @@ import java.util.HashMap;
 
 import static org.jfree.chart.ChartFactory.createPieChart3D;
 
-class Book {
+public class Book {
     // Set up tagger
     private static final MaxentTagger tagger =
             new MaxentTagger("models/english-left3words-distsim.tagger");
@@ -50,7 +50,7 @@ class Book {
      *
      * @param text File to find title of
      */
-    void setTitleFromText(File text) {
+    public void setTitleFromText(File text) {
         String title = "";
         String author = "";
         try {
@@ -103,14 +103,17 @@ class Book {
      * @return True if the file has results already
      */
     boolean resultsFileExists() {
-        File results = new File("results/txt/" + title + " by " + author + " Results.txt");
-        return results.exists();
+        return getResultsFile().exists();
+    }
+
+    private File getResultsFile() {
+        return new File("results/txt/" + title + " by " + author + " Results.txt");
     }
 
     /**
      * Reads a text file and tags each line for parts of speech as well as counts word frequencies.
      */
-    void analyseText() {
+    public void analyseText() {
 
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             String fullTitle = title + " by " + author;
@@ -223,7 +226,7 @@ class Book {
     /**
      * Writes frequencies of book into a text file.
      */
-    void writeFrequencies() {
+    public void writeFrequencies() {
         if (posFreq.getSize() > 0) {
             File out;
 
@@ -279,14 +282,14 @@ class Book {
     /**
      * Creates a parts of speech distribution pie graph.
      */
-    void makePosGraph() {
+    public void makePosGraph() {
         makeGraph("POS Distribution", posFreq);
     }
 
     /**
      * Creates a difficulty pie graph that uses syllable.
      */
-    void makeDifficultyGraph() {
+    public void makeDifficultyGraph() {
         makeGraph("Difficulty", difficultyMap);
     }
 
@@ -309,9 +312,12 @@ class Book {
             outPath = title + " by " + author + " " + purpose + "Results.jpeg";
         }
 
+
         // Load POS data into data set
-        for (String type : freq.getFrequency().keySet()) {
-            dataSet.setValue(type, freq.get(type));
+        HashMap<String, Integer> map = freq.getFrequency();
+
+        for (String type : map.keySet()) {
+            dataSet.setValue(type, map.get(type));
         }
 
         String title = purpose + " of " + this.title + " by " + this.author;
@@ -324,6 +330,7 @@ class Book {
                 false);
 
         PiePlot3D plot = (PiePlot3D) chart.getPlot();
+        plot = setColors(plot);
 
         plot.setBaseSectionOutlinePaint(new Color(0, 0, 0));
         plot.setDarkerSides(true);
@@ -333,6 +340,7 @@ class Book {
         plot.setLabelFont(new Font("Ubuntu San Serif", Font.PLAIN, 10));
         plot.setDepthFactor(0.05f);
 
+        // Save the chart to jpeg
         try {
             ChartUtilities.saveChartAsJPEG(new File(outPath), chart, 900, 900);
         } catch (IOException ioe) {
@@ -340,7 +348,42 @@ class Book {
         }
     }
 
-    void writeConclusion() {
+    private PiePlot3D setColors(PiePlot3D chart) {
+
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(new File(("posAbbreviations.txt"))));
+
+            String line = br.readLine();
+            chart.setSectionPaint("Monosyllabic", new Color(77, 77, 77));
+            chart.setSectionPaint("Polysyllabic", new Color(241, 88, 84));
+
+            while (line != null) {
+                String label = line.substring(line.indexOf(":") + 1, line.indexOf(">")).trim();
+
+                String colorRGB = line.substring(line.indexOf(">") + 1).trim();
+                Color color = toColor(colorRGB);
+
+                chart.setSectionPaint(label, color);
+
+                line = br.readLine();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return chart;
+    }
+
+    private Color toColor(String line) {
+        int r = Integer.parseInt(line.substring(0, line.indexOf(",")).trim());
+        int g = Integer.parseInt(line.substring(line.indexOf(",") + 1, line.lastIndexOf(",")).trim());
+        int b = Integer.parseInt(line.substring(line.lastIndexOf(",") + 1).trim());
+
+        return new Color(r, g, b);
+    }
+
+    public void writeConclusion() {
         File out;
         // Create results directories
         if (!makeResultDirs()) {
@@ -408,6 +451,10 @@ class Book {
 
     }
 
+    public FreqMap getWordFreq() {
+        return wordFreq;
+    }
+
     private String classifyDifficulty() {
         int mono = difficultyMap.get("Monosyllabic");
         int poly = difficultyMap.get("Polysyllabic");
@@ -419,7 +466,7 @@ class Book {
         return "difficult";
     }
 
-    void setPath(File path) {
+    public void setPath(File path) {
         this.path = path;
     }
 

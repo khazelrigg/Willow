@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import java.net.URL?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8.0.162-ea" fx:controller="kam.hazelrigg.viewer.ViewController">
+
+        <top>
+            <VBox>
+
+                <MenuBar id="menuBar">
+                    <Menu text="File">
+                        <MenuItem text="Open File" onAction="#openFile"/>
+                        <MenuItem text="Open Folder" onAction="#openFolder"/>
+                    </Menu>
+                </MenuBar>
+
+                <ToolBar id="toolBar">
+                    <ToggleButton fx:id="writeDocument">
+                        <graphic>
+                            <ImageView>
+                                <Image url="https://github.com/iconic/open-iconic/blob/master/png/document-2x.png?raw=true" />
+                            </ImageView>
+                        </graphic>
+                    </ToggleButton>
+
+                    <ToggleButton fx:id="writeCharts">
+                        <graphic>
+                            <ImageView>
+                                <Image url="https://github.com/iconic/open-iconic/blob/master/png/pie-chart-2x.png?raw=true" />
+
+                            </ImageView>
+                        </graphic>
+                    </ToggleButton>
+
+                    <Separator/>
+
+                    <Pane HBox.hgrow="ALWAYS"/>
+
+                    <Button onAction="#run">
+                        <graphic>
+                            <ImageView>
+                                <Image url="https://github.com/iconic/open-iconic/blob/master/png/media-play-2x.png?raw=true" />
+
+                            </ImageView>
+                        </graphic>
+                    </Button>
+
+                </ToolBar>
+
+            </VBox>
+
+        </top>
+
+        <center>
+            <HBox>
+                <ScrollPane fx:id="center" />
+                <ImageView  fx:id="graph" />
+            </HBox>
+        </center>
+
+        <bottom>
+            <HBox id="statusBar">
+                <Label id="statusText" fx:id="statusLabel" text="Open a file..."/>
+            </HBox>
+        </bottom>
+
+
+
+    <stylesheets>
+        <URL value="@viewer.css" />
+    </stylesheets>
+</BorderPane>

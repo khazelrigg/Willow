@@ -59,7 +59,7 @@ class TextTools {
             while (line != null) {
                 String[] words = line.split(":");
                 // Set key to abbreviation and value to non abbreviated
-                posNoAbbrev.put(words[0].trim(), words[1].trim());
+                posNoAbbrev.put(words[0].trim(), words[1].substring(0, words[1].lastIndexOf(">")).trim());
                 line = br.readLine();
             }
 
