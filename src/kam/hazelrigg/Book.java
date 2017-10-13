@@ -375,14 +375,6 @@ public class Book {
         return chart;
     }
 
-    private Color toColor(String line) {
-        int r = Integer.parseInt(line.substring(0, line.indexOf(",")).trim());
-        int g = Integer.parseInt(line.substring(line.indexOf(",") + 1, line.lastIndexOf(",")).trim());
-        int b = Integer.parseInt(line.substring(line.lastIndexOf(",") + 1).trim());
-
-        return new Color(r, g, b);
-    }
-
     public void writeConclusion() {
         File out;
         // Create results directories
