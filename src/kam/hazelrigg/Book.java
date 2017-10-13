@@ -110,6 +110,27 @@ public class Book {
         return new File("results/txt/" + title + " by " + author + " Results.txt");
     }
 
+    private void tagFile(String text) {
+        // Tag the entire file
+        String[] taggedFile = tagger.tagString(text).split("\\s");
+
+        for (String taggedWord : taggedFile) {
+            // Ignore punctuation
+            if (taggedWord.replaceAll("\\W", "").length() > 2) {
+                String tag = taggedWord.substring(taggedWord.indexOf("_") + 1).toLowerCase();
+                tag = posAbbrev.get(tag);
+
+                if (tag == null) {
+                    continue;
+                }
+
+                posFreq.increaseFreq(tag);
+            }
+        }
+
+
+    }
+
     /**
      * Reads a text file and tags each line for parts of speech as well as counts word frequencies.
      */
@@ -121,8 +142,10 @@ public class Book {
             System.out.println("☐ - Starting analysis of " + fullTitle);
             long startTime = System.currentTimeMillis();
             Boolean atBook = false;
+            StringBuilder text = new StringBuilder();
 
             for (String line; (line = br.readLine()) != null; ) {
+
                 // Skip empty lines
                 if (line.isEmpty()) {
                     continue;
@@ -147,15 +170,7 @@ public class Book {
                     }
                 }
 
-                // Tag each line
-                String[] tagLine = getSentenceTags(line);
-                for (String tag : tagLine) {
-                    if (tag.isEmpty()) {
-                        continue;
-                    }
-                    posFreq.increaseFreq(tag);
-                }
-
+                text.append(line);
                 // Word counts
                 for (String word : line.split("\\s")) {
                     wordCount++;
@@ -180,47 +195,17 @@ public class Book {
                 }
             }
             br.close();
+
+            tagFile(text.toString());
+
             long endTime = System.currentTimeMillis();
             System.out.println(
                     "\n☑ - Finished analysis of " + fullTitle + " in " + (endTime - startTime) / 1000 + "s.");
-
         } catch (IOException e) {
             System.out.println("Couldn't find file at " + path);
         }
 
 
-    }
-
-    /**
-     * Returns the part of speech of a word.
-     *
-     * @param line The word to tag
-     * @return Tag of word
-     */
-    private static String[] getSentenceTags(String line) {
-        String tagLine = tagger.tagString(line);
-
-        StringBuilder tags = new StringBuilder();
-
-        for (String word : tagLine.split("\\s")) {
-            // Split line into words with tags and then ignore short words
-
-            if (word.replaceAll("\\W", "").length() > 2) {
-                String tag = word.substring(word.indexOf("_") + 1).toLowerCase();
-                tag = posAbbrev.get(tag);
-
-                // What to do if we have no tag
-                if (tag == null) {
-                    tag = "Unknown";
-                }
-
-                // Add the tag and | so we can split the string later
-                tags.append(tag).append("|");
-
-            }
-        }
-
-        return tags.toString().split("\\|");
     }
 
     /**
@@ -239,9 +224,12 @@ public class Book {
             }
 
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
+                // Write conclusion
+                bw.write("===============[ Conclusion ]===============\n");
+                bw.write(writeConclusion());
 
                 // Write word frequencies
-                bw.write("==================[ Word ]==================\n");
+                bw.write("\n==================[ Word ]==================\n");
                 bw.write(wordFreq.toString());
 
                 // Write pos frequencies
@@ -375,35 +363,15 @@ public class Book {
         return chart;
     }
 
-    public void writeConclusion() {
-        File out;
-        // Create results directories
-        if (!makeResultDirs()) {
-            System.out.println("[Error] Failed to create results directories");
-            out = new File("Conclusion of " + title + " by " + author + ".txt");
-        } else {
-            out = new File("results/txt/Conclusion of " + title + " by " + author + ".txt");
-        }
+    private String writeConclusion() {
 
-
-        try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(out));
-            bw.write("This is an automatically generated conclusion."
-                    + " Some information may be incorrect.\n\n");
-
-            bw.write(title + " by " + author + "\n\n");
-
-            bw.write("This piece is considered a " + classifyLength()
-                    + " based on Nebula Award classifications.\n");
-
-            bw.write("It is most likely " + classifyDifficulty()
-                    + " to read due to its ratio of polysyllabic words to monosyllabic words.\n");
-
-            bw.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return "This is an automatically generated conclusion."
+                    + " Some information may be incorrect.\n\n"
+                    + title + " by " + author + "\n\n"
+                    + "This piece is considered a " + classifyLength()
+                    + " based on Nebula Award classifications.\n"
+                    + "It is most likely " + classifyDifficulty()
+                    + " to read due to its ratio of polysyllabic words to monosyllabic words.\n";
     }
 
     public String getTitle() {
@@ -441,10 +409,6 @@ public class Book {
 
         return "novel";
 
-    }
-
-    public FreqMap getWordFreq() {
-        return wordFreq;
     }
 
     private String classifyDifficulty() {
