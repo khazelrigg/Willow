@@ -1,6 +1,7 @@
 package kam.hazelrigg.viewer;
 
 import javafx.event.ActionEvent;
+import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
@@ -17,8 +18,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
+import java.util.ResourceBundle;
 
-public class ViewController {
+public class ViewController implements Initializable{
 
     public ToggleButton writeDocument;
     public ToggleButton writeCharts;
@@ -98,4 +101,11 @@ public class ViewController {
         }
         center.setContent(text);
     }
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        writeCharts.setSelected(true);
+        writeDocument.setSelected(true);
+    }
+
 }
