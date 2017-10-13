@@ -4,7 +4,7 @@ dt   :   Determiner                               > #FFE066
 ex   :   Existential there                        > #494A48
 fw   :   Foreign word                             > #70C1B3
 in   :   Preposition or subordinating conjunction > #70C1B3
-jj   :   Adjective                                > #F25F5C
+jj   :   Adjective                                > #247BA0
 jjr  :   Adjective, comparative                   > #AA7CAB
 jjs  :   Adjective, superlative                   > #247BA0
 ls   :   List item marker                         > #494A48
@@ -15,7 +15,7 @@ nnp  :   Proper noun, singular                    > #494A48
 nnps :   Proper noun, plural                      > #FFE066
 pdt  :   Predeterminer                            > #F25F5C
 pos  :   Possessive ending                        > #A9FFCB
-prp  :   Personal pronoun                         > #247BA0
+prp  :   Personal pronoun                         > #E5989B
 prp$ :   Possessive pronoun                       > #A9FFCB
 rb   :   Adverb                                   > #AA7CAB
 rer  :   Adverb, comparative                      > #AA7CAB
@@ -24,11 +24,11 @@ rp   :   Particle                                 > #70C1B3
 sym  :   Symbol                                   > #A9FFCB
 to   :   to                                       > #AA7CAB
 uh   :   Interjection                             > #FFE066
-vb   :   Verb, base form                          > #FFE066
+vb   :   Verb, base form                          > #E5989B
 vbd  :   Verb, past tense                         > #494A48
 vbg  :   Verb, gerund or present participle       > #494A48
 vbn  :   Verb, past participle                    > #247BA0
-vbp  :   Verb, non-3rd person singular present    > #494A48
+vbp  :   Verb, non-3rd person singular present    > #E5989B
 vbz  :   Verb, 3rd person singular present        > #F25F5C
 wdt  :   Wh-determiner                            > #A9FFCB
 wp   :   Wh-pronoun                               > #247BA0
