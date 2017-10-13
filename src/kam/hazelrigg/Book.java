@@ -361,8 +361,8 @@ public class Book {
             while (line != null) {
                 String label = line.substring(line.indexOf(":") + 1, line.indexOf(">")).trim();
 
-                String colorRGB = line.substring(line.indexOf(">") + 1).trim();
-                Color color = toColor(colorRGB);
+                String hexColor = line.substring(line.indexOf(">") + 1).trim();
+                Color color = Color.decode(hexColor);
 
                 chart.setSectionPaint(label, color);
 
