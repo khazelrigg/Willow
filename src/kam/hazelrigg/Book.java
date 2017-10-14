@@ -330,7 +330,7 @@ public class Book {
 
         // Save the chart to jpeg
         try {
-            ChartUtilities.saveChartAsJPEG(new File(outPath), chart, 900, 900);
+            ChartUtilities.saveChartAsJPEG(new File(outPath), chart, 1000, 1000);
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
         }

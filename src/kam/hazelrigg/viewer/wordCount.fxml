@@ -10,6 +10,7 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -32,17 +33,38 @@
 
                 <ToolBar id="toolBar">
                     <ToggleButton fx:id="writeDocument">
+                        <tooltip>
+                            <Tooltip text="Write frequencies to disk" />
+                        </tooltip>
+
                         <graphic>
                             <ImageView>
-                                <Image url="https://github.com/iconic/open-iconic/blob/master/png/document-2x.png?raw=true" />
+                                <Image url="@icons/document.png" />
                             </ImageView>
                         </graphic>
                     </ToggleButton>
 
-                    <ToggleButton fx:id="writeCharts">
+                    <ToggleButton fx:id="posCharts">
+                        <tooltip>
+                            <Tooltip text="Write parts-of-speech chart to disk" />
+                        </tooltip>
+
                         <graphic>
                             <ImageView>
-                                <Image url="https://github.com/iconic/open-iconic/blob/master/png/pie-chart-2x.png?raw=true" />
+                                <Image url="@icons/piechart.png" />
+
+                            </ImageView>
+                        </graphic>
+                    </ToggleButton>
+
+                    <ToggleButton fx:id="diffCharts">
+                        <tooltip>
+                            <Tooltip text="Write difficulty chart to disk" />
+                        </tooltip>
+
+                        <graphic>
+                            <ImageView>
+                                <Image url="@icons/question.png" />
 
                             </ImageView>
                         </graphic>
@@ -55,7 +77,7 @@
                     <Button onAction="#run">
                         <graphic>
                             <ImageView>
-                                <Image url="https://github.com/iconic/open-iconic/blob/master/png/media-play-2x.png?raw=true" />
+                                <Image url="@icons/run.png" />
 
                             </ImageView>
                         </graphic>
@@ -70,7 +92,15 @@
         <center>
             <HBox>
                 <ScrollPane fx:id="center" />
-                <ImageView  fx:id="graph" />
+
+                <ScrollPane>
+                    <VBox>
+                        <ImageView fx:id="graph" />
+                        <ImageView fx:id="difficulty" />
+                    </VBox>
+                </ScrollPane>
+
+
             </HBox>
         </center>
 

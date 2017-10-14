@@ -1,6 +1,5 @@
 package kam.hazelrigg.viewer;
 
-import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -24,20 +23,21 @@ import java.util.ResourceBundle;
 public class ViewController implements Initializable{
 
     public ToggleButton writeDocument;
-    public ToggleButton writeCharts;
+    public ToggleButton posCharts;
+    public ToggleButton diffCharts;
     public ScrollPane center;
     public ImageView graph;
+    public ImageView difficulty;
+    public Label statusLabel;
 
     private Book book = new Book();
-
-    public Label statusLabel;
     private Stage chooserPane = new Stage();
 
     private void updateStatusLabel(String text) {
         statusLabel.setText(text);
     }
 
-    public void openFile(ActionEvent actionEvent) {
+    public void openFile() {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(chooserPane);
         if (file != null) {
@@ -48,7 +48,7 @@ public class ViewController implements Initializable{
     }
 
 
-    public void openFolder(ActionEvent actionEvent) {
+    public void openFolder() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File dir = directoryChooser.showDialog(chooserPane);
         if (dir != null) {
@@ -57,18 +57,20 @@ public class ViewController implements Initializable{
         }
     }
 
-    public void run(ActionEvent actionEvent) {
+    public void run() {
         if (book.getPath().isDirectory()) {
             updateStatusLabel("Analysing dir: " + book.getPath());
             WordCount.openDirectory(book.getPath());
         } else {
             updateStatusLabel("Analysing file: " + book.getTitle());
             book.analyseText();
+
             if (writeDocument.isSelected()) {
                 book.writeFrequencies();
                 readFileToCenter(new File("results/txt/" + book.getTitle() + " by " + book.getAuthor() + " Results.txt"));
             }
-            if (writeCharts.isSelected()) {
+
+            if (posCharts.isSelected()) {
                 book.makePosGraph();
 
                 System.out.println("results/img/"
@@ -81,6 +83,15 @@ public class ViewController implements Initializable{
 
                 graph.setImage(posGraph);
             }
+
+            if (diffCharts.isSelected()) {
+                book.makeDifficultyGraph();
+                Image diffGraph = new Image("file:results/img/"
+                        + book.getTitle() + " by " + book.getAuthor()
+                        + " Difficulty Results.jpeg");
+                difficulty.setImage(diffGraph);
+            }
+
             updateStatusLabel("Displaying results for: " + book.getTitle());
         }
     }
@@ -104,8 +115,9 @@ public class ViewController implements Initializable{
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        writeCharts.setSelected(true);
         writeDocument.setSelected(true);
+        posCharts.setSelected(true);
+        diffCharts.setSelected(true);
     }
 
 }
