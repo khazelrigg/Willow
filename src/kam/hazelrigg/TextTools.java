@@ -1,9 +1,8 @@
 package kam.hazelrigg;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,15 +44,17 @@ class TextTools {
     /**
      * Returns the non-abbreviated versions of abbreviations.
      *
-     * @param abbreviations ":" Separated file containing abbreviations and full text
      * @return Hash map containing the key as the abbreviation and the value as its full text
      */
-    static HashMap<String, String> nonAbbreviate(File abbreviations) {
+    static HashMap<String, String> nonAbbreviate() {
+        InputStreamReader inputStreamReader =
+                new InputStreamReader(TextTools.class.getResourceAsStream("/txt/posAbbreviations.txt"));
 
         HashMap<String, String> posNoAbbrev = new HashMap<>();
+
         try {
             BufferedReader br =
-                    new BufferedReader(new FileReader(abbreviations));
+                    new BufferedReader(inputStreamReader);
 
             String line = br.readLine();
             while (line != null) {
