@@ -7,10 +7,10 @@ public class Runner extends Thread {
 
     private final Book book;
     private final File file;
-    final Thread thread;
+    private final Thread thread;
     public boolean running = false;
 
-    Runner(File file) {
+    private Runner(File file) {
         thread = new Thread(this);
         this.file = file;
         this.book = new Book();
@@ -18,8 +18,12 @@ public class Runner extends Thread {
 
     }
 
-    public static void openDirectory(File dir) {
-        File[] files = dir.listFiles();
+    /**
+     * Opens a directory analysing each file on its own thread
+     * @param directory Directory to open
+     */
+    public static void openDirectory(File directory) {
+        File[] files = directory.listFiles();
 
         ArrayList<Runner> runners = new ArrayList<>();
 
@@ -55,8 +59,7 @@ public class Runner extends Thread {
             book.analyseText();
             book.writeFrequencies();
             book.makePosGraph();
-            //book.makeDifficultyGraph();
-            //book.writeConclusion();
+            book.makeDifficultyGraph();
         }
 
         this.running = false;

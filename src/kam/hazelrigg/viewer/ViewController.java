@@ -15,7 +15,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import kam.hazelrigg.Book;
-import kam.hazelrigg.WordCount;
+import kam.hazelrigg.Runner;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class ViewController implements Initializable{
+public class ViewController implements Initializable {
 
     //TODO respond to clicks on file list if a directory is opened
 
@@ -51,6 +51,9 @@ public class ViewController implements Initializable{
         statusLabel.setText(text);
     }
 
+    /**
+     * Selects a file using fileChooser
+     */
     public void openFile() {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(chooserPane);
@@ -61,6 +64,9 @@ public class ViewController implements Initializable{
         }
     }
 
+    /**
+     * Selects a folder using directoryChooser
+     */
     public void openFolder() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File dir = directoryChooser.showDialog(chooserPane);
@@ -70,10 +76,13 @@ public class ViewController implements Initializable{
         }
     }
 
+    /**
+     * Runs analysis on file(s) and updates gui
+     */
     public void run() {
         if (book.getPath().isDirectory()) {
             updateStatusLabel("Analysing dir: " + book.getPath());
-            WordCount.openDirectory(book.getPath());
+            Runner.openDirectory(book.getPath());
 
             setListOfFiles(book.getPath().listFiles());
 
@@ -96,6 +105,10 @@ public class ViewController implements Initializable{
         }
     }
 
+    /**
+     * Creates a list of files in a directory
+     * @param fileArray Array of files in a directory
+     */
     private void setListOfFiles(File[] fileArray) {
         ListView<String> listView = new ListView<>();
         ObservableList<String> files = FXCollections.observableArrayList();
@@ -108,7 +121,6 @@ public class ViewController implements Initializable{
 
         resultsFileListContainer.getChildren().add(listView);
     }
-
 
     //TODO get rid of absolute path for images
     private void showPosChart() {
@@ -131,11 +143,14 @@ public class ViewController implements Initializable{
 
     }
 
-
-    private void readFileToCenter(File result) {
+    /**
+     * Reads file into a Text to be displayed
+     * @param input file to read in
+     */
+    private void readFileToCenter(File input) {
         Text text = new Text("");
-        if (result.exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(result))) {
+        if (input.exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(input))) {
                 String line = br.readLine();
                 //System.out.println(line);
                 while (line != null) {
