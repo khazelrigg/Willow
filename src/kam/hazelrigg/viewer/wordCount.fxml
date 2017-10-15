@@ -32,7 +32,7 @@
                 </MenuBar>
 
                 <ToolBar id="toolBar">
-                    <ToggleButton fx:id="writeDocument">
+                    <ToggleButton fx:id="writeDocumentToggle">
                         <tooltip>
                             <Tooltip text="Write frequencies to disk" />
                         </tooltip>
@@ -44,7 +44,7 @@
                         </graphic>
                     </ToggleButton>
 
-                    <ToggleButton fx:id="posCharts">
+                    <ToggleButton fx:id="posChartToggle">
                         <tooltip>
                             <Tooltip text="Write parts-of-speech chart to disk" />
                         </tooltip>
@@ -57,7 +57,7 @@
                         </graphic>
                     </ToggleButton>
 
-                    <ToggleButton fx:id="diffCharts">
+                    <ToggleButton fx:id="diffChartToggle">
                         <tooltip>
                             <Tooltip text="Write difficulty chart to disk" />
                         </tooltip>
@@ -91,15 +91,17 @@
 
         <center>
             <HBox>
-                <ScrollPane fx:id="center" />
+
+                <HBox fx:id="resultsFileListContainer" />
+
+                <ScrollPane fx:id="resultsFileScroll" />
 
                 <ScrollPane>
                     <VBox>
-                        <ImageView fx:id="graph" />
-                        <ImageView fx:id="difficulty" />
+                        <ImageView fx:id="posChartImageView" />
+                        <ImageView fx:id="difficultyImageView" />
                     </VBox>
                 </ScrollPane>
-
 
             </HBox>
         </center>

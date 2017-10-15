@@ -1,11 +1,15 @@
 package kam.hazelrigg.viewer;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -22,12 +26,22 @@ import java.util.ResourceBundle;
 
 public class ViewController implements Initializable{
 
-    public ToggleButton writeDocument;
-    public ToggleButton posCharts;
-    public ToggleButton diffCharts;
-    public ScrollPane center;
-    public ImageView graph;
-    public ImageView difficulty;
+    //TODO respond to clicks on file list if a directory is opened
+
+    // Top bars
+    public ToggleButton writeDocumentToggle;
+    public ToggleButton posChartToggle;
+    public ToggleButton diffChartToggle;
+
+    // Content
+    public HBox resultsFileListContainer;
+
+    public ScrollPane resultsFileScroll;
+
+    public ImageView posChartImageView;
+    public ImageView difficultyImageView;
+
+    // Bottom status
     public Label statusLabel;
 
     private Book book = new Book();
@@ -47,7 +61,6 @@ public class ViewController implements Initializable{
         }
     }
 
-
     public void openFolder() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File dir = directoryChooser.showDialog(chooserPane);
@@ -61,40 +74,63 @@ public class ViewController implements Initializable{
         if (book.getPath().isDirectory()) {
             updateStatusLabel("Analysing dir: " + book.getPath());
             WordCount.openDirectory(book.getPath());
+
+            setListOfFiles(book.getPath().listFiles());
+
         } else {
             updateStatusLabel("Analysing file: " + book.getTitle());
             book.analyseText();
-
-            if (writeDocument.isSelected()) {
+            updateStatusLabel("Displaying results for: " + book.getTitle());
+            if (writeDocumentToggle.isSelected()) {
                 book.writeFrequencies();
                 readFileToCenter(new File("results/txt/" + book.getTitle() + " by " + book.getAuthor() + " Results.txt"));
             }
 
-            if (posCharts.isSelected()) {
-                book.makePosGraph();
-
-                System.out.println("results/img/"
-                        + book.getTitle() + " by " + book.getAuthor()
-                        + " POS Distribution Results.jpeg");
-
-                Image posGraph = new Image("file:results/img/"
-                        + book.getTitle() + " by " + book.getAuthor()
-                        + " POS Distribution Results.jpeg");
-
-                graph.setImage(posGraph);
+            if (posChartToggle.isSelected()) {
+                showPosChart();
             }
 
-            if (diffCharts.isSelected()) {
-                book.makeDifficultyGraph();
-                Image diffGraph = new Image("file:results/img/"
-                        + book.getTitle() + " by " + book.getAuthor()
-                        + " Difficulty Results.jpeg");
-                difficulty.setImage(diffGraph);
+            if (diffChartToggle.isSelected()) {
+                showDifficultyChart();
             }
-
-            updateStatusLabel("Displaying results for: " + book.getTitle());
         }
     }
+
+    private void setListOfFiles(File[] fileArray) {
+        ListView<String> listView = new ListView<>();
+        ObservableList<String> files = FXCollections.observableArrayList();
+
+        for (File file : fileArray) {
+            files.add(file.getName().replace(".txt", ""));
+        }
+
+        listView.setItems(files);
+
+        resultsFileListContainer.getChildren().add(listView);
+    }
+
+
+    //TODO get rid of absolute path for images
+    private void showPosChart() {
+        book.makePosGraph();
+
+        Image posGraph = new Image("file:results/img/"
+                + book.getTitle() + " by " + book.getAuthor()
+                + " POS Distribution Results.jpeg");
+
+        posChartImageView.setImage(posGraph);
+    }
+
+    private void showDifficultyChart() {
+        book.makeDifficultyGraph();
+
+        Image difficultyChart = new Image("file:results/img/" + book.getTitle() + " by "
+                + book.getAuthor() + " Difficulty Results.jpeg");
+
+        difficultyImageView.setImage(difficultyChart);
+
+    }
+
 
     private void readFileToCenter(File result) {
         Text text = new Text("");
@@ -110,14 +146,15 @@ public class ViewController implements Initializable{
                 e.printStackTrace();
             }
         }
-        center.setContent(text);
+        resultsFileScroll.setContent(text);
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        writeDocument.setSelected(true);
-        posCharts.setSelected(true);
-        diffCharts.setSelected(true);
+        writeDocumentToggle.setSelected(true);
+        posChartToggle.setSelected(true);
+        diffChartToggle.setSelected(true);
+        resultsFileScroll.setFitToWidth(true);
     }
 
 }
