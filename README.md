@@ -1,8 +1,15 @@
-# wordCount
+Word Count
+==========
+
+**Word Count** is a Java application built using Stanford's Core NLP library with the main purpose 
+of analysing a file to generate parts of speech distribution charts.
+
 ---
-Given an input file wordCount will return word counts and parts of speech distribution that is visualised by JFreeChart as a pie chart.
+
+### Usage:
+WordCount is best run through the command line using the WordCount class as the current JavaFX 
+application is currently missing lots of functionality.
 
 
-## Example outputs put side by side
-
-![Comparison](https://i.imgur.com/9QGhCRz.jpg)
+### License:
+This project is licensed under the Apache 2.0 license
