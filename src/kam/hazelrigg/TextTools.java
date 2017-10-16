@@ -47,8 +47,9 @@ class TextTools {
      * @return Hash map containing the key as the abbreviation and the value as its full text
      */
     static HashMap<String, String> nonAbbreviate() {
+
         InputStreamReader inputStreamReader =
-                new InputStreamReader(TextTools.class.getResourceAsStream("/txt/posAbbreviations.txt"));
+                new InputStreamReader(TextTools.class.getResourceAsStream("posAbbreviations.txt"));
 
         HashMap<String, String> posNoAbbrev = new HashMap<>();
 

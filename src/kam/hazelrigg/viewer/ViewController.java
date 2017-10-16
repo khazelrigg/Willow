@@ -1,26 +1,20 @@
 package kam.hazelrigg.viewer;
 
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import kam.hazelrigg.Book;
 import kam.hazelrigg.Runner;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -34,9 +28,7 @@ public class ViewController implements Initializable {
     public ToggleButton diffChartToggle;
 
     // Content
-    public HBox resultsFileListContainer;
-
-    public ScrollPane resultsFileScroll;
+    public ListView resultsFileListView;
 
     public ImageView posChartImageView;
     public ImageView difficultyImageView;
@@ -45,6 +37,7 @@ public class ViewController implements Initializable {
     public Label statusLabel;
 
     private Book book = new Book();
+    private File directory = null;
     private Stage chooserPane = new Stage();
 
     private void updateStatusLabel(String text) {
@@ -58,8 +51,10 @@ public class ViewController implements Initializable {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(chooserPane);
         if (file != null) {
+            directory = null;
             book.setPath(file);
             book.setTitleFromText(file);
+            addFileToList(file);
             updateStatusLabel("Opened " + book.getTitle());
         }
     }
@@ -71,7 +66,7 @@ public class ViewController implements Initializable {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File dir = directoryChooser.showDialog(chooserPane);
         if (dir != null) {
-            book.setPath(dir);
+            directory = dir;
             updateStatusLabel("Opened " + dir.getName());
         }
     }
@@ -80,27 +75,33 @@ public class ViewController implements Initializable {
      * Runs analysis on file(s) and updates gui
      */
     public void run() {
-        if (book.getPath().isDirectory()) {
-            updateStatusLabel("Analysing dir: " + book.getPath());
-            Runner.openDirectory(book.getPath());
-
-            setListOfFiles(book.getPath().listFiles());
-
+        if (directory != null) {
+            updateStatusLabel("Analysing dir: " + directory);
+            Runner.openDirectory(directory);
+            setListOfFiles(directory.listFiles());
         } else {
             updateStatusLabel("Analysing file: " + book.getTitle());
-            book.analyseText();
-            updateStatusLabel("Displaying results for: " + book.getTitle());
-            if (writeDocumentToggle.isSelected()) {
-                book.writeFrequencies();
-                readFileToCenter(new File("results/txt/" + book.getTitle() + " by " + book.getAuthor() + " Results.txt"));
-            }
 
-            if (posChartToggle.isSelected()) {
+            if (book.resultsFileExists()) {
                 showPosChart();
-            }
-
-            if (diffChartToggle.isSelected()) {
                 showDifficultyChart();
+            } else {
+
+                book.analyseText();
+                updateStatusLabel("Displaying results for: " + book.getTitle());
+                if (writeDocumentToggle.isSelected()) {
+                    book.writeFrequencies();
+                }
+
+                if (posChartToggle.isSelected()) {
+                    book.makePosGraph();
+                    showPosChart();
+                }
+
+                if (diffChartToggle.isSelected()) {
+                    book.makeDifficultyGraph();
+                    showDifficultyChart();
+                }
             }
         }
     }
@@ -110,22 +111,29 @@ public class ViewController implements Initializable {
      * @param fileArray Array of files in a directory
      */
     private void setListOfFiles(File[] fileArray) {
-        ListView<String> listView = new ListView<>();
-        ObservableList<String> files = FXCollections.observableArrayList();
 
         for (File file : fileArray) {
-            files.add(file.getName().replace(".txt", ""));
+            //TODO add logic to avoid adding items twice if single files were opened beforehand
+            addFileToList(file);
         }
+    }
 
-        listView.setItems(files);
-
-        resultsFileListContainer.getChildren().add(listView);
+    /**
+     * Add a single file to sidebar list of files
+     * @param file file to add
+     */
+    private void addFileToList(File file) {
+        ObservableList files = resultsFileListView.getItems();
+        book.setTitleFromText(file);
+        files.add(book.getTitle() + " by " + book.getAuthor());
+        resultsFileListView.setItems(files);
     }
 
     //TODO get rid of absolute path for images
     private void showPosChart() {
-        book.makePosGraph();
-
+        System.out.println("Showing POS chart: file:results/img/"
+                + book.getTitle() + " by " + book.getAuthor()
+                + " POS Distribution Results.jpeg");
         Image posGraph = new Image("file:results/img/"
                 + book.getTitle() + " by " + book.getAuthor()
                 + " POS Distribution Results.jpeg");
@@ -134,8 +142,6 @@ public class ViewController implements Initializable {
     }
 
     private void showDifficultyChart() {
-        book.makeDifficultyGraph();
-
         Image difficultyChart = new Image("file:results/img/" + book.getTitle() + " by "
                 + book.getAuthor() + " Difficulty Results.jpeg");
 
@@ -143,33 +149,30 @@ public class ViewController implements Initializable {
 
     }
 
-    /**
-     * Reads file into a Text to be displayed
-     * @param input file to read in
-     */
-    private void readFileToCenter(File input) {
-        Text text = new Text("");
-        if (input.exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(input))) {
-                String line = br.readLine();
-                //System.out.println(line);
-                while (line != null) {
-                    text.setText(text.getText() + line + "\n");
-                    line = br.readLine();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        resultsFileScroll.setContent(text);
-    }
-
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         writeDocumentToggle.setSelected(true);
         posChartToggle.setSelected(true);
         diffChartToggle.setSelected(true);
-        resultsFileScroll.setFitToWidth(true);
     }
 
+    public void updateViewer() {
+        switchActiveBook(resultsFileListView.getSelectionModel().getSelectedItem().toString());
+    }
+
+    private void switchActiveBook(String file) {
+
+        Task task = new Task<Void>() {
+            @Override
+            public Void call() {
+                book.setTitle(file.split(" by ")[0]);
+                book.setAuthor(file.split(" by ")[1]);
+                showPosChart();
+                showDifficultyChart();
+                return null;
+            }
+        };
+
+        new Thread(task).start();
+    }
 }
