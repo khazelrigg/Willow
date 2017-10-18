@@ -34,7 +34,7 @@ public class Runner extends Thread {
         for (Runner runner : runners) {
             runner.thread.start();
 
-            while (runner.running) {
+            while (running) {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -47,7 +47,7 @@ public class Runner extends Thread {
 
     @Override
     public void run() {
-        this.running = true;
+        running = true;
 
         book.setTitleFromText(file);
 
@@ -60,7 +60,7 @@ public class Runner extends Thread {
             book.makeDifficultyGraph();
         }
 
-        this.running = false;
+        running = false;
     }
 
 }

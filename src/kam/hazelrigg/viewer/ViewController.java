@@ -48,6 +48,7 @@ public class ViewController implements Initializable {
     public void openFile() {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(chooserPane);
+
         if (file != null) {
             directory = null;
             book.setPath(file);
@@ -62,6 +63,12 @@ public class ViewController implements Initializable {
      */
     public void openFolder() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle("Open folder");
+        directoryChooser.setInitialDirectory(
+                new File(System.getProperty("user.home"))
+        );
+
+
         File dir = directoryChooser.showDialog(chooserPane);
         if (dir != null) {
             directory = dir;
@@ -77,7 +84,6 @@ public class ViewController implements Initializable {
             long startTime = System.currentTimeMillis();
 
             updateStatusLabel("Analysing dir: " + directory);
-            System.out.println(directory.getName());
             Runner.openDirectory(directory);
             setListOfFiles(directory.listFiles());
 
@@ -107,13 +113,11 @@ public class ViewController implements Initializable {
                     showDifficultyChart();
                 }
 
-                for (Runner runner : Runner.runners) {
-                    while (runner.running) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                while (Runner.running) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }
 
@@ -128,7 +132,6 @@ public class ViewController implements Initializable {
      * @param fileArray Array of files in a directory
      */
     private void setListOfFiles(File[] fileArray) {
-
         for (File file : fileArray) {
             //TODO add logic to avoid adding items twice if single files were opened beforehand
             addFileToList(file);
@@ -148,9 +151,6 @@ public class ViewController implements Initializable {
 
     //TODO get rid of absolute path for images
     private void showPosChart() {
-        System.out.println("Showing POS chart: file:results/img/"
-                + book.getTitle() + " by " + book.getAuthor()
-                + " POS Distribution Results.jpeg");
         Image posGraph = new Image("file:results/img/"
                 + book.getTitle() + " by " + book.getAuthor()
                 + " POS Distribution Results.jpeg");
