@@ -68,7 +68,6 @@ class FreqMap {
      * Sorts the FreqMap in descending order by its values.
      */
     private void sortByValue() {
-
         // https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java
 
         ArrayList<Entry<String, Integer>> toSort = new ArrayList<>();

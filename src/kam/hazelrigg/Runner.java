@@ -9,7 +9,6 @@ public class Runner extends Thread {
     private final File file;
     private final Thread thread;
     public static boolean running = false;
-    public static ArrayList<Runner>  runners = new ArrayList<>();
 
     private Runner(File file) {
         thread = new Thread(this);
@@ -24,15 +23,22 @@ public class Runner extends Thread {
      */
     public static void openDirectory(File directory) {
         File[] files = directory.listFiles();
+        ArrayList<Runner> runners = new ArrayList<>();
 
         if (files != null) {
             for (File file : files) {
-                runners.add(new Runner(file));
+                if (file.isDirectory()) {
+                    openDirectory(file);
+                    continue;
+                } else {
+                    runners.add(new Runner(file));
+                }
             }
         }
 
+
         for (Runner runner : runners) {
-            runner.thread.start();
+            runner.start();
 
             while (running) {
                 try {
@@ -44,16 +50,15 @@ public class Runner extends Thread {
         }
     }
 
-
     @Override
     public void run() {
         running = true;
-
         book.setTitleFromText(file);
 
         if (book.resultsFileExists()) {
             System.out.println("☑ - " + file.getName() + " already has results");
         } else {
+            // Execute the following when running
             book.analyseText();
             book.writeFrequencies();
             book.makePosGraph();
