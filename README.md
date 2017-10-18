@@ -1,6 +1,8 @@
 Word Count
 ==========
 
+![build](https://travis-ci.org/khazelrigg/wordCount.svg?branch=master)
+
 **Word Count** is a Java application built using Stanford's Core NLP library with the main purpose 
 of analysing a file to generate parts of speech distribution charts.
 
