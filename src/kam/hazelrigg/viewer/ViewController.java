@@ -19,9 +19,6 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class ViewController implements Initializable {
-
-    //TODO respond to clicks on file list if a directory is opened
-
     // Top bars
     public ToggleButton writeDocumentToggle;
     public ToggleButton posChartToggle;
@@ -35,6 +32,7 @@ public class ViewController implements Initializable {
 
     // Bottom status
     public Label statusLabel;
+    public Label timerLabel;
 
     private Book book = new Book();
     private File directory = null;
@@ -76,17 +74,23 @@ public class ViewController implements Initializable {
      */
     public void run() {
         if (directory != null) {
+            long startTime = System.currentTimeMillis();
+
             updateStatusLabel("Analysing dir: " + directory);
+            System.out.println(directory.getName());
             Runner.openDirectory(directory);
             setListOfFiles(directory.listFiles());
+
+            long endTime = System.currentTimeMillis();
+            timerLabel.setText("Finished in " + (endTime - startTime) / 1000 + " secs.");
         } else {
+            long startTime = System.currentTimeMillis();
             updateStatusLabel("Analysing file: " + book.getTitle());
 
             if (book.resultsFileExists()) {
                 showPosChart();
                 showDifficultyChart();
             } else {
-
                 book.analyseText();
                 updateStatusLabel("Displaying results for: " + book.getTitle());
                 if (writeDocumentToggle.isSelected()) {
@@ -102,6 +106,19 @@ public class ViewController implements Initializable {
                     book.makeDifficultyGraph();
                     showDifficultyChart();
                 }
+
+                for (Runner runner : Runner.runners) {
+                    while (runner.running) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+                long endTime = System.currentTimeMillis();
+                timerLabel.setText((endTime - startTime) / 1000 + " secs.");
             }
         }
     }

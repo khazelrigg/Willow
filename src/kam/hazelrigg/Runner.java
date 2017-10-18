@@ -8,14 +8,14 @@ public class Runner extends Thread {
     private final Book book;
     private final File file;
     private final Thread thread;
-    public boolean running = false;
+    public static boolean running = false;
+    public static ArrayList<Runner>  runners = new ArrayList<>();
 
     private Runner(File file) {
         thread = new Thread(this);
         this.file = file;
         this.book = new Book();
         this.book.setPath(file);
-
     }
 
     /**
@@ -24,8 +24,6 @@ public class Runner extends Thread {
      */
     public static void openDirectory(File directory) {
         File[] files = directory.listFiles();
-
-        ArrayList<Runner> runners = new ArrayList<>();
 
         if (files != null) {
             for (File file : files) {

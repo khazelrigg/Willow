@@ -106,6 +106,8 @@
         <bottom>
             <HBox id="statusBar">
                 <Label id="statusText" fx:id="statusLabel" text="Open a file..."/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Label fx:id="timerLabel" text="0 secs."/>
             </HBox>
         </bottom>
 
