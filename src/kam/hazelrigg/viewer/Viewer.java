@@ -3,6 +3,7 @@ package kam.hazelrigg.viewer;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 
@@ -20,7 +21,7 @@ public class Viewer extends Application{
 
         stage.setTitle("Word Count");
         stage.setScene(new Scene(FXMLLoader.load(getClass().getResource("wordCount.fxml")), width, height));
-        //TODO set stage icon - https://stackoverflow.com/questions/10121991/javafx-application-icon#10122335
+        stage.getIcons().add(new Image(Viewer.class.getResourceAsStream("icons/bookshelf.png")));
         stage.show();
     }
 
