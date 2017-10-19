@@ -2,7 +2,7 @@ package kam.hazelrigg.viewer;
 
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.fxml.Initializable;
+import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ToggleButton;
@@ -15,17 +15,15 @@ import kam.hazelrigg.Book;
 import kam.hazelrigg.Runner;
 
 import java.io.File;
-import java.net.URL;
-import java.util.ResourceBundle;
 
-public class ViewController implements Initializable {
+public class ViewController {
     // Top bars
     public ToggleButton writeDocumentToggle;
     public ToggleButton posChartToggle;
     public ToggleButton diffChartToggle;
 
     // Content
-    public ListView resultsFileListView;
+    public ListView<String> resultsFileListView;
 
     public ImageView posChartImageView;
     public ImageView difficultyImageView;
@@ -37,10 +35,6 @@ public class ViewController implements Initializable {
     private Book book = new Book();
     private File directory = null;
     private Stage chooserPane = new Stage();
-
-    private void updateStatusLabel(String text) {
-        statusLabel.setText(text);
-    }
 
     /**
      * Selects a file using fileChooser
@@ -54,7 +48,7 @@ public class ViewController implements Initializable {
             book.setPath(file);
             book.setTitleFromText(file);
             addFileToList(file);
-            updateStatusLabel("Opened " + book.getTitle());
+            statusLabel.setText("Opened " + book.getTitle());
         }
     }
 
@@ -72,7 +66,7 @@ public class ViewController implements Initializable {
         File dir = directoryChooser.showDialog(chooserPane);
         if (dir != null) {
             directory = dir;
-            updateStatusLabel("Opened " + dir.getName());
+            statusLabel.setText("Opened " + dir.getName());
         }
     }
 
@@ -83,7 +77,7 @@ public class ViewController implements Initializable {
         if (directory != null) {
             long startTime = System.currentTimeMillis();
 
-            updateStatusLabel("Analysing dir: " + directory);
+            statusLabel.setText("Analysing dir: " + directory);
             Runner.openDirectory(directory);
             setListOfFiles(directory.listFiles());
 
@@ -91,14 +85,15 @@ public class ViewController implements Initializable {
             timerLabel.setText("Finished in " + (endTime - startTime) / 1000 + " secs.");
         } else {
             long startTime = System.currentTimeMillis();
-            updateStatusLabel("Analysing file: " + book.getTitle());
+            statusLabel.setText("Analysing file: " + book.getTitle());
 
             if (book.resultsFileExists()) {
                 showPosChart();
                 showDifficultyChart();
             } else {
                 book.analyseText();
-                updateStatusLabel("Displaying results for: " + book.getTitle());
+                statusLabel.setText("Displaying results for: " + book.getTitle());
+
                 if (writeDocumentToggle.isSelected()) {
                     book.writeFrequencies();
                 }
@@ -133,7 +128,6 @@ public class ViewController implements Initializable {
      */
     private void setListOfFiles(File[] fileArray) {
         for (File file : fileArray) {
-            //TODO add logic to avoid adding items twice if single files were opened beforehand
             addFileToList(file);
         }
     }
@@ -143,43 +137,47 @@ public class ViewController implements Initializable {
      * @param file file to add
      */
     private void addFileToList(File file) {
-        ObservableList files = resultsFileListView.getItems();
+        //TODO add logic to avoid adding items twice if single files were opened beforehand
+
+        ObservableList<String> files = resultsFileListView.getItems();
         book.setTitleFromText(file);
-        files.add(book.getTitle() + " by " + book.getAuthor());
-        resultsFileListView.setItems(files);
+
+        if (!files.contains(book.getName())) {
+            files.add(book.getName());
+            resultsFileListView.setItems(files);
+        }
     }
 
     //TODO get rid of absolute path for images
     private void showPosChart() {
-        Image posGraph = new Image("file:results/img/"
-                + book.getTitle() + " by " + book.getAuthor()
+        Image posGraph = new Image("file:results/img/" + book.getName()
                 + " POS Distribution Results.jpeg");
 
         posChartImageView.setImage(posGraph);
     }
 
     private void showDifficultyChart() {
-        Image difficultyChart = new Image("file:results/img/" + book.getTitle() + " by "
-                + book.getAuthor() + " Difficulty Results.jpeg");
+        Image difficultyChart = new Image("file:results/img/" + book.getName()
+                + " Difficulty Results.jpeg");
 
         difficultyImageView.setImage(difficultyChart);
 
     }
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
+    @FXML
+    public void initialize() {
         writeDocumentToggle.setSelected(true);
         posChartToggle.setSelected(true);
         diffChartToggle.setSelected(true);
     }
 
     public void updateViewer() {
-        switchActiveBook(resultsFileListView.getSelectionModel().getSelectedItem().toString());
+        switchActiveBook(resultsFileListView.getSelectionModel().getSelectedItem());
     }
 
     private void switchActiveBook(String file) {
 
-        Task task = new Task<Void>() {
+        Task<Void> task = new Task<Void>() {
             @Override
             public Void call() {
                 book.setTitle(file.split(" by ")[0]);

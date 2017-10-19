@@ -7,11 +7,10 @@ public class Runner extends Thread {
 
     private final Book book;
     private final File file;
-    private final Thread thread;
     public static boolean running = false;
 
     private Runner(File file) {
-        thread = new Thread(this);
+        new Thread(this);
         this.file = file;
         this.book = new Book();
         this.book.setPath(file);
@@ -29,7 +28,6 @@ public class Runner extends Thread {
             for (File file : files) {
                 if (file.isDirectory()) {
                     openDirectory(file);
-                    continue;
                 } else {
                     runners.add(new Runner(file));
                 }
