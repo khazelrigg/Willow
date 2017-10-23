@@ -27,6 +27,7 @@ public class Runner extends Thread {
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory()) {
+                    Book.makeResultDirs(file);
                     openDirectory(file);
                 } else {
                     runners.add(new Runner(file));
