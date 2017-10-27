@@ -10,7 +10,7 @@ public class WordCount {
         File path = new File(getFileName());
 
         if (path.isDirectory()) {
-            Runner.openDirectory(path);
+            BatchRunner.startRunners(path);
         } else {
             Book book = new Book();
             book.setTitleFromText(path);

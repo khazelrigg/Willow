@@ -11,6 +11,7 @@ import javafx.scene.image.ImageView;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import kam.hazelrigg.BatchRunner;
 import kam.hazelrigg.Book;
 import kam.hazelrigg.Runner;
 
@@ -78,7 +79,7 @@ public class ViewController {
             long startTime = System.currentTimeMillis();
 
             statusLabel.setText("Analysing dir: " + directory);
-            Runner.openDirectory(directory);
+            BatchRunner.startRunners(directory);
             setListOfFiles(directory.listFiles());
 
             long endTime = System.currentTimeMillis();
@@ -128,6 +129,9 @@ public class ViewController {
      */
     private void setListOfFiles(File[] fileArray) {
         for (File file : fileArray) {
+            if (file.isDirectory()) {
+                setListOfFiles(file.listFiles()); 
+            }
             addFileToList(file);
         }
     }
