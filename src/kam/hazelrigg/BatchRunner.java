@@ -23,14 +23,30 @@ public class BatchRunner {
 
         for (File file : filesInDir != null ? filesInDir : new File[0]) {
             if (file.isDirectory()) {
+                // Get into subdirs
                 Book.makeResultDirs(file);
-                openDirectory(file);
+                openDirectory(file, file.getName());
             }
             else {
                 runners.add(new Runner(file));
             }
         }
-
     }
+
+    private static void openDirectory(File directory, String sub) {
+        File[] filesInDir = directory.listFiles();
+
+        for (File file : filesInDir != null ? filesInDir : new File[0]) {
+            if (file.isDirectory()) {
+                // Get into subdirs
+                Book.makeResultDirs(file);
+                openDirectory(file);
+            }
+            else {
+                runners.add(new Runner(file, sub));
+            }
+        }
+    }
+
 
 }

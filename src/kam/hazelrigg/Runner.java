@@ -15,6 +15,14 @@ public class Runner extends Thread {
         this.book.setPath(file);
     }
 
+    Runner(File file, String subDir) {
+        new Thread(this);
+        this.file = file;
+        this.book = new Book();
+        this.book.setPath(file);
+        this.book.setSubdir(subDir);
+    }
+
     @Override
     public void run() {
         running = true;
