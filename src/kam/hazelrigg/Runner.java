@@ -20,23 +20,29 @@ public class Runner extends Thread {
         this.file = file;
         this.book = new Book();
         this.book.setPath(file);
-        this.book.setSubdir(subDir);
+        this.book.setSubdirectory(subDir);
+    }
+
+    /**
+     * Actions to perform with each book
+     */
+    private void runBook() {
+        book.analyseText();
+        book.writeFrequencies();
+        book.makePosGraph();
+        book.makeDifficultyGraph();
     }
 
     @Override
     public void run() {
         running = true;
         book.setTitleFromText(file);
+        System.out.println("Thread " + currentThread().getId() + " is reading " + book.getTitle());
 
-        System.out.println("Starting thread for " + file.getName());
         if (book.resultsFileExists()) {
             System.out.println("☑ - " + file.getName() + " already has results");
         } else {
-            // Execute the following when running
-            book.analyseText();
-            book.writeFrequencies();
-            book.makePosGraph();
-            book.makeDifficultyGraph();
+            runBook();
         }
 
         running = false;

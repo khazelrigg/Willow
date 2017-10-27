@@ -141,9 +141,8 @@ public class ViewController {
      * @param file file to add
      */
     private void addFileToList(File file) {
-        //TODO add logic to avoid adding items twice if single files were opened beforehand
-
         ObservableList<String> files = resultsFileListView.getItems();
+        //TODO add logic to avoid adding items twice if single files were opened beforehand
         book.setTitleFromText(file);
 
         if (!files.contains(book.getName())) {
@@ -179,6 +178,10 @@ public class ViewController {
         switchActiveBook(resultsFileListView.getSelectionModel().getSelectedItem());
     }
 
+    /**
+     * Changes the current book by updating images
+     * @param file File to switch to
+     */
     private void switchActiveBook(String file) {
 
         Task<Void> task = new Task<Void>() {

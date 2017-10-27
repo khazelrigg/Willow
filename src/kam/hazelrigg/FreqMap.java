@@ -1,10 +1,6 @@
 package kam.hazelrigg;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -25,10 +21,6 @@ class FreqMap {
         } else {
             frequency.put(key, 1);
         }
-    }
-
-    int getSize() {
-        return frequency.entrySet().size();
     }
 
     /**
@@ -65,12 +57,6 @@ class FreqMap {
         return result.toString();
     }
 
-    String[] getSortedByKey() {
-        String[] keys = frequency.keySet().toArray(new String[frequency.size()]);
-        Arrays.sort(keys);
-        return keys;
-    }
-
     /**
      * Sorts the FreqMap in descending order by its values.
      */
@@ -84,4 +70,13 @@ class FreqMap {
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
     }
 
+    int getSize() {
+        return frequency.entrySet().size();
+    }
+
+    String[] getSortedByKey() {
+        String[] keys = frequency.keySet().toArray(new String[frequency.size()]);
+        Arrays.sort(keys);
+        return keys;
+    }
 }
