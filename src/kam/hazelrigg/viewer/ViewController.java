@@ -96,7 +96,7 @@ public class ViewController {
                 statusLabel.setText("Displaying results for: " + book.getTitle());
 
                 if (writeDocumentToggle.isSelected()) {
-                    book.writeFrequencies();
+                    book.writeText();
                 }
 
                 if (posChartToggle.isSelected()) {

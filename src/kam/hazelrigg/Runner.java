@@ -28,7 +28,7 @@ public class Runner extends Thread {
      */
     private void runBook() {
         book.analyseText();
-        book.writeFrequencies();
+        book.writeText();
         book.makePosGraph();
         book.makeDifficultyGraph();
     }
@@ -37,7 +37,6 @@ public class Runner extends Thread {
     public void run() {
         running = true;
         book.setTitleFromText(file);
-        System.out.println("Thread " + currentThread().getId() + " is reading " + book.getTitle());
 
         if (book.resultsFileExists()) {
             System.out.println("☑ - " + file.getName() + " already has results");

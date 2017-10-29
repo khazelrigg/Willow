@@ -1,6 +1,10 @@
 package kam.hazelrigg;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -41,6 +45,12 @@ class FreqMap {
      */
     int get(String key) {
         return frequency.get(key);
+    }
+
+    String getTopThree() {
+        sortByValue();
+        String[] values = frequency.keySet().toArray(new String[frequency.size()]);
+        return values[0] + ", " + values[1] + ", " + values[2];
     }
 
     /**

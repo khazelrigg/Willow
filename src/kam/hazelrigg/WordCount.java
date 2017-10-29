@@ -7,7 +7,9 @@ public class WordCount {
 
     public static void main(String[] args) {
 
-        File path = new File(getFileName());
+        //File path = new File(getFileName());
+        File path = new File("Books");
+
 
         if (path.isDirectory()) {
             BatchRunner.startRunners(path);
@@ -16,7 +18,7 @@ public class WordCount {
             book.setTitleFromText(path);
             book.setPath(path);
             book.analyseText();
-            book.writeFrequencies();
+            book.writeText();
         }
 
     }

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.commons.lang3.text.WordUtils.wrap;
 import static org.jfree.chart.ChartFactory.createPieChart3D;
 
 public class Book {
@@ -273,7 +274,9 @@ public class Book {
     /**
      * Writes frequencies of book into a text file.
      */
-    public void writeFrequencies() {
+    public void writeText() {
+        //TODO Look into template for generating these files
+
         if (posFreq.getSize() > 0) {
             File out;
 
@@ -285,25 +288,47 @@ public class Book {
                 if (subdirectory.equals("")) {
                     out = new File("results/txt/" + getName() + " Results.txt");
                 } else {
-                    out = new File("results/txt/" + subdirectory + "/" + getName() + " Results.txt");
+                    out = new File("results/txt/" + subdirectory + "/" + getName()
+                            + " Results.txt");
                 }
             }
 
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
+                bw.write("Auto generated results for ");
+                if (author.isEmpty()) {
+                    bw.write(title + "\n");
+                } else {
+                    bw.write(title + " by " + author + "\n");
+                }
+
+                // Write stats
+                bw.write("\n==================[ Stats ]==================\n");
+                bw.write("Total Words: " + wordCount);
+                bw.write("\nUnique Words: " + wordFreq.getSize());
+                bw.write("\nPolysyllabic Words: " + difficultyMap.get("Polysyllabic"));
+                bw.write("\nMonosyllabic Words: " + difficultyMap.get("Monosyllabic"));
+                bw.write("\nTotal Syllables: " + syllableCount);
+                bw.write("\nTotal Sentences: " + sentenceCount);
+                bw.write("\nFlesch-Kincaid Grade: " + getReadingEaseLevel());
+                bw.write("\nClassified Length: " + classifyLength());
+
+                bw.write("Top 3 words: " + wordFreq.getTopThree() + "\n");
+
                 // Write conclusion
-                bw.write("=================[ Conclusion ]================\n");
-                bw.write(writeConclusion());
-
-                // Write word frequencies
-                bw.write("\n===================[ Word ]==================\n");
-                bw.write(wordFreq.toString());
-
-                bw.write("\n===============[ Concordance ]===============\n");
-                bw.write(createConcordance() + "\n");
+                bw.write("\n================[ Conclusion ]===============\n");
+                bw.write(writeConclusion() + "\n");
 
                 // Write pos frequencies
                 bw.write("\n=================[ POS Tags ]================\n");
                 bw.write(posFreq.toString());
+
+                // Write concordance
+                bw.write("\n===============[ Concordance ]===============\n");
+                bw.write(createConcordance() + "\n");
+
+                // Write word frequencies
+                bw.write("\n===================[ Word ]==================\n");
+                bw.write(wordFreq.toString());
 
                 bw.close();
             } catch (IOException e) {
@@ -414,18 +439,31 @@ public class Book {
     }
 
     private String writeConclusion() {
+        StringBuilder conclusion = new StringBuilder();
+
         String classifiedLength = classifyLength();
         String gradeLevel = getReadingEaseLevel();
         String difficulty = classifyDifficulty();
 
-        return "This is an automatically generated conclusion. Some information may be incorrect."
-                + "\n\n" + getName() + "\n\n This piece is considered a " + classifiedLength
-                + " based on Nebula Award classifications, it has a total word count of " + wordCount + " words."
-                + "\n The Flesch–Kincaid reading ease test would classify this book as being at the " + gradeLevel
-                + " level.\n It is most likely " + difficulty + " to read due to its ratio of polysyllabic ["
-                + difficultyMap.get("Polysyllabic") + "] words to monosyllabic [" + difficultyMap.get("Monosyllabic")
-                + "] words.\n It would take an estimated " + getReadingTime() + " to read and about "
-                + getSpeakingTime() + " to read aloud.\n";
+        //TODO format times/
+        conclusion.append("This piece is classified as a ")
+                .append(classifiedLength).append(" based on the Nebula Award categories. It has ")
+                .append("a total of ").append(wordCount).append(" words with ").append(wordFreq.getSize())
+                .append(" of those being unique. Using the Flesh-Kincaid reading ease test, this")
+                .append(" text is rated at the ").append(gradeLevel).append(" level. ")
+                .append("Comparing the ratio of (").append(difficultyMap.get("Polysyllabic"))
+                .append(") polysyllabic words to (").append(difficultyMap.get("Monosyllabic"))
+                .append(") monosyllabic words it can be speculated that this text is ").append(difficulty)
+                .append(" to read. To read this book at a rate of 275wpm it would take ").append(getReadingTime())
+                .append(" to finish, ").append(getSpeakingTime()).append(" to speak")
+                .append(" at 180wpm, ").append(wordCount / 13).append(" minutes to write")
+                .append(" at 13wpm and ").append(wordCount / 40).append(" minutes to type")
+                .append(" at 40wpm.");
+
+        String out = conclusion.toString();
+        out = out.replaceAll("\\. ", ".\n");
+
+        return out;
     }
 
     public String getTitle() {
@@ -465,11 +503,11 @@ public class Book {
 
     private String classifyLength() {
         /*
-        Classification 	Word count
-        Novel 	40,000 words or over
-        Novella 	17,500 to 39,999 words
-        Novelette 	7,500 to 17,499 words
-        Short story 	under 7,500 words
+        Classification    Word count
+        Novel 	          40,000 words or over
+        Novella 	      17,500 to 39,999 words
+        Novelette  	      7,500 to 17,499 words
+        Short story 	  under 7,500 words
         */
 
         if (wordCount < 7500) {
@@ -492,7 +530,6 @@ public class Book {
         if (difficultyMap.get("Monosyllabic") > difficultyMap.get("Polysyllabic")) {
             return "easy";
         }
-
         return "difficult";
     }
 
@@ -520,13 +557,7 @@ public class Book {
             concordance.append(word).append(" ");
         }
 
-        int i = 0;
-        int wrapLength = 80;
-        while (i + wrapLength < concordance.length() && (i = concordance.lastIndexOf(" ", i + wrapLength)) != -1) {
-            concordance.replace(i, i + 1, "\n");
-        }
-
-        return concordance.toString();
+        return wrap(concordance.toString(), 100);
     }
 
     private String getReadingTime() {
