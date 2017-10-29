@@ -7,8 +7,7 @@ public class WordCount {
 
     public static void main(String[] args) {
 
-        //File path = new File(getFileName());
-        File path = new File("Books");
+        File path = new File(getFileName());
 
 
         if (path.isDirectory()) {
