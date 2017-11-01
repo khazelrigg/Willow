@@ -24,6 +24,16 @@ class TextTools {
     }
 
     /**
+     * Returns whether or not a String is composed of only punctuation
+     *
+     * @param s String to check
+     * @return true if string is only punctuation, false otherwise
+     */
+    static boolean isPunctuation(String s) {
+        return s.replaceAll("\\W", "").length() == 0;
+    }
+
+    /**
      * Finds if a word is monosyllabic.
      *
      * @param word word to count syllables of
@@ -39,6 +49,96 @@ class TextTools {
         }
 
         return syllables;
+    }
+
+    /**
+     * Uses Nebua Award classifications to classify a text based on its length
+     *
+     * @param wordCount Total number of words
+     * @return String classification
+     */
+    static String classifyLength(long wordCount) {
+        /*
+        Classification    Word count
+        Novel 	          40,000 words or over
+        Novella 	      17,500 to 39,999 words
+        Novelette  	      7,500 to 17,499 words
+        Short story 	  under 7,500 words
+        */
+
+        if (wordCount < 7500) {
+            return "short story";
+        }
+
+        if (wordCount < 17500) {
+            return "novelette";
+        }
+
+        if (wordCount < 40000) {
+            return "novella";
+        }
+
+        return "novel";
+
+    }
+
+    /**
+     * Uses average reading speed of 275wpm to find the time required to read in minutes
+     *
+     * @param wordCount Long number of words
+     * @return number of minutes
+     */
+    static int getReadingTime(long wordCount) {
+        return (int) (wordCount / 275);
+    }
+
+    /**
+     * Uses the average speaking speed of 180wpm to find the time required to read in minutes
+     *
+     * @param wordCount Long number of words
+     * @return number of minutes
+     */
+    static int getSpeakingTime(long wordCount) {
+        return (int) (wordCount / 180);
+    }
+
+    /**
+     * Compares number of mono/polysyllabic words to determine if a text is difficult
+     *
+     * @param mono int number of monosyllabic words
+     * @param poly int number of polysyllabic words
+     * @return String easy if there are more mono than poly, hard if else
+     */
+    static String classifyDifficulty(int mono, int poly) {
+        if (mono > poly) {
+            return "easy";
+        }
+        return "difficult";
+    }
+
+    /**
+     * Uses the Flesch-Kincaid scale to classify a text's reading ease
+     *
+     * @param wordCount     Total number of words
+     * @param sentenceCount Total number of sentences
+     * @param syllableCount Total number of syllables
+     * @return String classification
+     */
+    static String getReadingEaseLevel(long wordCount, long sentenceCount, long syllableCount) {
+        // Using Flesch–Kincaid grading scale
+        double score = 206.835 - (1.015 * wordCount / sentenceCount) - (84.6 * syllableCount / wordCount);
+
+        if (score <= 100) {
+            if (score > 90) return "5th grade";
+            if (score > 80) return "6th grade";
+            if (score > 70) return "7th grade";
+            if (score > 60) return "8th & 9th grade";
+            if (score > 50) return "10th to 12th grade";
+            if (score > 30) return "College";
+            if (score < 30 && score > 0) return "College graduate";
+        }
+
+        return "easiest";
     }
 
     /**

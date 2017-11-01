@@ -34,20 +34,21 @@ public class Book {
     private static final MaxentTagger tagger =
             new MaxentTagger("models/english-left3words-distsim.tagger");
 
-    // Get POS abbreviation values
-    private static final HashMap<String, String> posAbbrev =
-            TextTools.nonAbbreviate();
     private final FreqMap posFreq;
     private final FreqMap wordFreq;
     private final FreqMap difficultyMap;
+
     private String title;
     private String author;
+    private boolean gutenberg;
+
     private File path;
     private String subdirectory;
+
     private long wordCount;
     private long syllableCount;
     private long sentenceCount;
-    private boolean gutenberg;
+    private List<HasWord> longestSentence;
 
     public Book() {
         this.title = "";
@@ -147,15 +148,6 @@ public class Book {
     }
 
     /**
-     * Returns whether or not a file already has a results file.
-     *
-     * @return True if the file has results already
-     */
-    public boolean resultsFileExists() {
-        return getResultsFile().exists();
-    }
-
-    /**
      * Tag a text for parts of speech
      *
      * @param text Text to be tagged
@@ -166,14 +158,24 @@ public class Book {
                 PTBTokenizer.PTBTokenizerFactory.newPTBTokenizerFactory(new CoreLabelTokenFactory(), "untokenizable=noneKeep");
 
         try {
+            // Get POS abbreviation values
+            HashMap<String, String> posAbbrev = TextTools.nonAbbreviate();
+
             BufferedReader br = new BufferedReader(new FileReader(path));
             DocumentPreprocessor dp = new DocumentPreprocessor(br);
             dp.setTokenizerFactory(tokenizerFactory);
 
             // Loop through every sentence
             for (List<HasWord> sentence : dp) {
-
                 List<TaggedWord> tSent = tagger.tagSentence(sentence);
+
+                if (longestSentence == null) {
+                    longestSentence = sentence;
+                }
+
+                if (sentence.size() > longestSentence.size()) {
+                    longestSentence = sentence;
+                }
 
                 for (TaggedWord word : tSent) {
                     String tag = posAbbrev.get(word.tag().toLowerCase());
@@ -309,14 +311,16 @@ public class Book {
                 bw.write("\nMonosyllabic Words: " + difficultyMap.get("Monosyllabic"));
                 bw.write("\nTotal Syllables: " + syllableCount);
                 bw.write("\nTotal Sentences: " + sentenceCount);
-                bw.write("\nFlesch-Kincaid Grade: " + getReadingEaseLevel());
-                bw.write("\nClassified Length: " + classifyLength());
+                bw.write("\nFlesch-Kincaid Grade: " + TextTools.getReadingEaseLevel(wordCount, sentenceCount, syllableCount));
+                bw.write("\nClassified Length: " + TextTools.classifyLength(wordCount));
+                bw.write("\nTop 3 words: " + wordFreq.getTopThree());
+                bw.write(wrap("\nLongest Sentence: " + getLongestSentence(), 100));
 
-                bw.write("Top 3 words: " + wordFreq.getTopThree() + "\n");
+                bw.write("\n");
 
                 // Write conclusion
                 bw.write("\n================[ Conclusion ]===============\n");
-                bw.write(writeConclusion() + "\n");
+                bw.write(writeResultsText() + "\n");
 
                 // Write pos frequencies
                 bw.write("\n=================[ POS Tags ]================\n");
@@ -407,6 +411,12 @@ public class Book {
         }
     }
 
+    /**
+     * Sets the colors of a pie chart based on labels in order to keep charts consistent
+     *
+     * @param chart Chart to modify label colors of
+     * @return PieChart with color modifications
+     */
     private PiePlot setColors(PiePlot chart) {
 
 
@@ -437,12 +447,13 @@ public class Book {
         return chart;
     }
 
-    private String writeConclusion() {
+    private String writeResultsText() {
         StringBuilder conclusion = new StringBuilder();
 
-        String classifiedLength = classifyLength();
-        String gradeLevel = getReadingEaseLevel();
-        String difficulty = classifyDifficulty();
+        String classifiedLength = TextTools.classifyLength(wordCount);
+        String gradeLevel = TextTools.getReadingEaseLevel(wordCount, sentenceCount, syllableCount);
+        String difficulty = TextTools.classifyDifficulty(difficultyMap.get("Monosyllabic"),
+                difficultyMap.get("Polysyllabic"));
 
         //TODO format times/
         conclusion.append("This piece is classified as a ")
@@ -453,10 +464,10 @@ public class Book {
                 .append("Comparing the ratio of (").append(difficultyMap.get("Polysyllabic"))
                 .append(") polysyllabic words to (").append(difficultyMap.get("Monosyllabic"))
                 .append(") monosyllabic words it can be speculated that this text is ").append(difficulty)
-                .append(" to read. To read this book at a rate of 275wpm it would take ").append(getReadingTime())
-                .append(" to finish, ").append(getSpeakingTime()).append(" to speak")
-                .append(" at 180wpm, ").append(wordCount / 13).append(" minutes to write")
-                .append(" at 13wpm and ").append(wordCount / 40).append(" minutes to type")
+                .append(" to read. To read this text at a rate of 275wpm it would take ").append(TextTools.getReadingTime(wordCount))
+                .append(" minute(s) to finish, ").append(TextTools.getSpeakingTime(wordCount)).append(" minute(s) to speak")
+                .append(" at 180wpm, ").append(wordCount / 13).append(" minute(s) to write")
+                .append(" at 13wpm and ").append(wordCount / 40).append(" minute(s) to type")
                 .append(" at 40wpm.");
 
         String out = conclusion.toString();
@@ -465,90 +476,19 @@ public class Book {
         return out;
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
     public String getName() {
+        // If there is no author don't add the " by XXX"
         if (author.equals("")) {
             return title;
         }
         return title + " by " + author;
     }
 
-    public File getPath() {
-        return path;
-    }
-
-    public void setPath(File path) {
-        this.path = path;
-    }
-
-    private File getResultsFile() {
-        return new File("results/txt/" + subdirectory + "/" + getName() + " Results.txt");
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
-    private String classifyLength() {
-        /*
-        Classification    Word count
-        Novel 	          40,000 words or over
-        Novella 	      17,500 to 39,999 words
-        Novelette  	      7,500 to 17,499 words
-        Short story 	  under 7,500 words
-        */
-
-        if (wordCount < 7500) {
-            return "short story";
-        }
-
-        if (wordCount < 17500) {
-            return "novelette";
-        }
-
-        if (wordCount < 40000) {
-            return "novella";
-        }
-
-        return "novel";
-
-    }
-
-    private String classifyDifficulty() {
-        if (difficultyMap.get("Monosyllabic") > difficultyMap.get("Polysyllabic")) {
-            return "easy";
-        }
-        return "difficult";
-    }
-
-    private String getReadingEaseLevel() {
-        // Using Flesch–Kincaid grading scale
-        double score = 206.835 - (1.015 * wordCount / sentenceCount) - (84.6 * syllableCount / wordCount);
-
-        if (score <= 100) {
-            if (score > 90) return "5th grade";
-            if (score > 80) return "6th grade";
-            if (score > 70) return "7th grade";
-            if (score > 60) return "8th & 9th grade";
-            if (score > 50) return "10th to 12th grade";
-            if (score > 30) return "College";
-            if (score < 30 && score > 0) return "College graduate";
-        }
-
-        return "easiest";
-    }
-
+    /**
+     * Creates a concordance of all unique words in the text
+     *
+     * @return String wrapped at 100 characters
+     */
     private String createConcordance() {
         StringBuilder concordance = new StringBuilder();
 
@@ -559,20 +499,58 @@ public class Book {
         return wrap(concordance.toString(), 100);
     }
 
-    private String getReadingTime() {
-        int minutes = (int) (wordCount / 275);
-        if (minutes == 1) {
-            return "1 minute";
+    /**
+     * Takes a sentence of HasWords and makes them presentable as a human readable sentence
+     *
+     * @return Sentence as a string
+     */
+    private String getLongestSentence() {
+        StringBuilder sentence = new StringBuilder();
+        for (HasWord hasWord : longestSentence) {
+            String word = hasWord.word();
+
+            // Remove spaces that come before punctuation
+            if (TextTools.isPunctuation(word) && sentence.length() > 1) {
+                sentence.deleteCharAt(sentence.length() - 1);
+            }
+
+            sentence.append(word).append(" ");
         }
-        return minutes + " minutes";
+        return sentence.toString();
+
     }
 
-    private String getSpeakingTime() {
-        int minutes = (int) (wordCount / 180);
-        if (minutes == 1) {
-            return "1 minute";
-        }
-        return minutes + " minutes";
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Returns whether or not a file already has a results file.
+     *
+     * @return True if the file has results already
+     */
+    public boolean resultsFileExists() {
+        return new File("results/txt/" + subdirectory + "/" + getName() + " Results.txt").exists();
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public File getPath() {
+        return path;
+    }
+
+    public void setPath(File path) {
+        this.path = path;
     }
 
     void setSubdirectory(String dir) {
