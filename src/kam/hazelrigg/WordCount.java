@@ -6,9 +6,12 @@ import java.util.Scanner;
 public class WordCount {
 
     public static void main(String[] args) {
-
-        File path = new File(getFileName());
-
+        File path;
+        if (args.length != 0 && new File(args[0]).exists()) {
+            path = new File(args[0]);
+        } else {
+            path = new File(getFileName());
+        }
 
         if (path.isDirectory()) {
             BatchRunner.startRunners(path);
