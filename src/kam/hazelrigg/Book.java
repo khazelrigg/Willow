@@ -10,7 +10,7 @@ import edu.stanford.nlp.process.PTBTokenizer;
 import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PiePlot3D;
+import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
 
 import java.awt.Color;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang3.text.WordUtils.wrap;
-import static org.jfree.chart.ChartFactory.createPieChart3D;
+import static org.jfree.chart.ChartFactory.createPieChart;
 
 public class Book {
     // Set up tagger
@@ -382,23 +382,22 @@ public class Book {
             dataSet.setValue(type, count);
         }
 
-        JFreeChart chart = createPieChart3D(
+        JFreeChart chart = createPieChart(
                 purpose + " of " + getName(),
                 dataSet,
                 false,
                 true,
                 false);
 
-        PiePlot3D plot = (PiePlot3D) chart.getPlot();
+        PiePlot plot = (PiePlot) chart.getPlot();
         plot = setColors(plot);
 
         plot.setBaseSectionOutlinePaint(new Color(0, 0, 0));
-        plot.setDarkerSides(true);
+        plot.setShadowPaint(null);
         plot.setBackgroundPaint(new Color(204, 204, 204));
         plot.setLabelBackgroundPaint(new Color(255, 255, 255));
         plot.setStartAngle(90f);
         plot.setLabelFont(new Font("Ubuntu San Serif", Font.PLAIN, 10));
-        plot.setDepthFactor(0.05f);
 
         // Save the chart to jpeg
         try {
@@ -408,7 +407,7 @@ public class Book {
         }
     }
 
-    private PiePlot3D setColors(PiePlot3D chart) {
+    private PiePlot setColors(PiePlot chart) {
 
 
         try {
