@@ -9,23 +9,20 @@ of analysing a file to generate parts of speech distribution charts.
 ---
 
 ### Usage:
-WordCount is best run through the command line using the WordCount class as the current JavaFX 
-application is currently missing lots of functionality.
-
-To run this program:
     
-1. Get the [latest release](https://github.com/khazelrigg/wordCount/releases)
+1. Get the [latest release of this program](https://github.com/khazelrigg/wordCount/releases)
 
-2. Execute
+2. Run:
 
-     In the terminal execute:
+     In the terminal execute the following command:
     
-        java -jar wordCount.jar
-   
-
-3. Input the path to a file or directory of files
-4. Find results in the results directory created in the working directory  
-
+        java -jar wordCount.jar 
+     
+     or to pass a file or directory to the program use the following:
+     
+        java -jar wordCount.jar fileName
+        
+4. Result outputs will be created as a folder in the working directory, use `cd results` to view the generated output
 
 ### License:
 This project is licensed under the Apache 2.0 license
