@@ -167,6 +167,11 @@ class TextTools {
             return "Adjective";
         }
 
+        if (type.equals("Personal pronoun") || type.equals("Possessive pronoun")
+                || type.equals("Possessive wh pronoun") || type.equals("Wh-pronoun")) {
+            return "Pronoun";
+        }
+
         return "Other";
 
     }

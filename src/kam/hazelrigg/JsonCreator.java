@@ -30,6 +30,9 @@ class JsonCreator extends Book {
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
 
+            /* TODO Find a way to reduce redundancy
+               Maybe a list or hashmap could do that */
+
             JSONObject json = new JSONObject();
             json.put("name", "Parts of Speech");
             json.put("description", "Parts of speech distribution for " + name);
@@ -47,19 +50,31 @@ class JsonCreator extends Book {
             adverbs.put("description", "Adverbs");
 
             JSONObject adjective = new JSONObject();
-            adjective.put("name", "Adjective");
-            adjective.put("description", "Adjective");
+            adjective.put("name", "Adjectives");
+            adjective.put("description", "Adjectives");
+
+            JSONObject pronouns = new JSONObject();
+            pronouns.put("name", "Pronouns");
+            pronouns.put("description", "Pronouns");
+
+            JSONObject others = new JSONObject();
+            others.put("name", "Other");
+            others.put("description", "Other");
 
             JSONArray nounTypes = new JSONArray();
             JSONArray verbTypes = new JSONArray();
             JSONArray adverbTypes = new JSONArray();
             JSONArray adjectiveTypes = new JSONArray();
+            JSONArray pronounTypes = new JSONArray();
+            JSONArray otherTypes = new JSONArray();
 
             for (String type : posFreq.keySet()) {
+                // Create temporary parent for each type
                 JSONObject parent = new JSONObject();
                 parent.put("name", type);
                 parent.put("description", type);
 
+                // Basic setup
                 JSONArray array = new JSONArray();
                 JSONObject object = new JSONObject();
                 object.put("name", type);
@@ -68,6 +83,7 @@ class JsonCreator extends Book {
                 array.add(object);
                 parent.put("children", array);
 
+                //Categorise each type
                 if (TextTools.getParentType(type).equals("Noun")) {
                     nounTypes.add(parent);
                 } else if (TextTools.getParentType(type).equals("Verb")) {
@@ -76,13 +92,20 @@ class JsonCreator extends Book {
                     adverbTypes.add(parent);
                 } else if (TextTools.getParentType(type).equals("Adjective")) {
                     adjectiveTypes.add(parent);
+                } else if (TextTools.getParentType(type).equals("Pronoun")) {
+                    pronounTypes.add(parent);
+                } else {
+                    otherTypes.add(parent);
                 }
             }
 
+            // Give each parent a child
             nouns.put("children", nounTypes);
             verbs.put("children", verbTypes);
             adverbs.put("children", adverbTypes);
             adjective.put("children", adjectiveTypes);
+            pronouns.put("children", pronounTypes);
+            others.put("children", otherTypes);
 
 
             // Add all parent speech types to root parent
@@ -91,6 +114,9 @@ class JsonCreator extends Book {
             rootParent.add(verbs);
             rootParent.add(adverbs);
             rootParent.add(adjective);
+            rootParent.add(pronouns);
+            rootParent.add(others);
+
             json.put("children", rootParent);
 
             bw.write(json.toJSONString());
