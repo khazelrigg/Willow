@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Map.Entry.comparingByValue;
@@ -82,6 +83,10 @@ class FreqMap {
 
     int getSize() {
         return frequency.entrySet().size();
+    }
+
+    Set<String> keySet() {
+        return frequency.keySet();
     }
 
     String[] getSortedByKey() {

@@ -141,6 +141,36 @@ class TextTools {
         return "easiest";
     }
 
+    static String getParentType(String type) {
+
+        if (type.equals("Noun, singular or mass") || type.equals("Noun, plural")
+                || type.equals("Proper noun, singular")
+                || type.equals("Proper noun, plural")) {
+            return "Noun";
+        }
+
+        if (type.equals("Verb, base form") || type.equals("Verb, past tense")
+                || type.equals("Verb, gerund or present participle")
+                || type.equals("Verb, past participle")
+                || type.equals("Verb, non-3rd person singular present")
+                || type.equals("Verb, 3rd person singular present")) {
+            return "Verb";
+        }
+
+        if (type.equals("Adverb") || type.equals("Adverb, comparative")
+                || type.equals("Adverb, superlative") || type.equals("Wh-adverb")) {
+            return "Adverb";
+        }
+
+        if (type.equals("Adjective") || type.equals("Adjective, comparative")
+                || type.equals("Adjective, superlative")) {
+            return "Adjective";
+        }
+
+        return "Other";
+
+    }
+
     /**
      * Returns the non-abbreviated versions of abbreviations.
      *

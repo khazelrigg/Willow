@@ -66,8 +66,8 @@ public class Book {
      *
      * @return True if both directories are successfully created
      */
-    private static boolean makeParentDirs() {
-        return makeDir("results/txt") && makeDir("results/img");
+    static boolean makeParentDirs() {
+        return makeDir("results/txt") && makeDir("results/img") && makeDir("results/json");
     }
 
     /**
@@ -79,6 +79,7 @@ public class Book {
         makeParentDirs();
         makeDir("results/txt/" + subdir.getName());
         makeDir("results/img/" + subdir.getName());
+        makeDir("results/json/" + subdir.getName());
     }
 
     private static boolean makeDir(String path) {
@@ -339,7 +340,7 @@ public class Book {
                 System.out.println("Error writing frequencies");
                 System.exit(3);
             }
-
+            JsonCreator.writeJson(getName(), subdirectory, posFreq);
         }
     }
 
