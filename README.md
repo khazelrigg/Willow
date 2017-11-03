@@ -24,5 +24,9 @@ of analysing a file to generate parts of speech distribution charts.
         
 4. Result outputs will be created as a folder in the working directory, use `cd results` to view the generated output
 
+---
+### Web demo
+A small web demo that shows an application of this program can be found [here](http://bl.ocks.org/khazelrigg/raw/287b2e8a648bf85313de686bfe7ed540/)
+
 ### License:
 This project is licensed under the Apache 2.0 license
