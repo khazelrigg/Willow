@@ -1,6 +1,9 @@
 package kam.hazelrigg;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class BatchRunner {
@@ -23,40 +26,15 @@ public class BatchRunner {
      * @param directory Directory to open
      */
     private static void openDirectory(File directory) {
-        File[] filesInDir = directory.listFiles();
-
-        for (File file : filesInDir != null ? filesInDir : new File[0]) {
-            if (file.isDirectory()) {
-                // Open subdirectories
-                Book.makeResultDirs(file);
-                openDirectory(file, file.getName());
-            }
-            else {
-                runners.add(new Runner(file));
-            }
+        try {
+            Files.walk(Paths.get(directory.getName())).filter(Files::isRegularFile)
+                    .forEach(f ->
+                            runners.add(new Runner(f.toFile(), f.toFile(), directory.getName())));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    /**
-     * Open a subdirectory, creates result folders for subfolders of the directory
-     * @param directory Subdirectory to open
-     * @param sub Name of the subdirectory
-     */
-    private static void openDirectory(File directory, String sub) {
-        //TODO check if sub is necessary
-        File[] filesInDir = directory.listFiles();
-
-        for (File file : filesInDir != null ? filesInDir : new File[0]) {
-            if (file.isDirectory()) {
-                // Open subdirectories
-                Book.makeResultDirs(file);
-                openDirectory(file);
-            }
-            else {
-                runners.add(new Runner(file, sub));
-            }
-        }
-    }
 
 
 }

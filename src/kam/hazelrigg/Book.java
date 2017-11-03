@@ -288,6 +288,8 @@ public class Book {
                 System.out.println("[Error] Failed to create results directories");
                 out = new File(getName() + " Results.txt");
             } else {
+                makeResultDirs(new File(subdirectory));
+
                 if (subdirectory.equals("")) {
                     out = new File("results/txt/" + getName() + " Results.txt");
                 } else {

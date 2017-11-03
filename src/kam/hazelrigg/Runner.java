@@ -8,19 +8,15 @@ public class Runner extends Thread {
     private final File file;
     public static boolean running = false;
 
-    Runner(File file) {
+    Runner(File file, File sub, String start) {
         new Thread(this);
         this.file = file;
         this.book = new Book();
         this.book.setPath(file);
-    }
+        System.out.println(sub.getPath());
+        System.out.println(sub.getParentFile().toString().substring(start.length()));
 
-    Runner(File file, String subDir) {
-        new Thread(this);
-        this.file = file;
-        this.book = new Book();
-        this.book.setPath(file);
-        this.book.setSubdirectory(subDir);
+        this.book.setSubdirectory(sub.getParentFile().toString().substring(start.length() + 1));
     }
 
     /**
