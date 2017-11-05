@@ -13,6 +13,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import kam.hazelrigg.BatchRunner;
 import kam.hazelrigg.Book;
+import kam.hazelrigg.OutputWriter;
 import kam.hazelrigg.Runner;
 
 import java.io.File;
@@ -75,6 +76,7 @@ public class ViewController {
      * Runs analysis on file(s) and updates gui
      */
     public void run() {
+        OutputWriter ow = new OutputWriter(book);
         if (directory != null) {
             long startTime = System.currentTimeMillis();
 
@@ -96,16 +98,16 @@ public class ViewController {
                 statusLabel.setText("Displaying results for: " + book.getTitle());
 
                 if (writeDocumentToggle.isSelected()) {
-                    book.writeText();
+                    ow.writeTxt();
                 }
 
                 if (posChartToggle.isSelected()) {
-                    book.makePosGraph();
+                    ow.makePosGraph();
                     showPosChart();
                 }
 
                 if (diffChartToggle.isSelected()) {
-                    book.makeDifficultyGraph();
+                    ow.makeDifficultyGraph();
                     showDifficultyChart();
                 }
 

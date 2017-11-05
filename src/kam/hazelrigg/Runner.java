@@ -15,7 +15,6 @@ public class Runner extends Thread {
         this.book.setPath(file);
         System.out.println(sub.getPath());
         System.out.println(sub.getParentFile().toString().substring(start.length()));
-
         this.book.setSubdirectory(sub.getParentFile().toString().substring(start.length() + 1));
     }
 
@@ -23,10 +22,12 @@ public class Runner extends Thread {
      * Actions to perform with each book
      */
     private void runBook() {
+        OutputWriter ow = new OutputWriter(book);
         book.analyseText();
-        book.writeText();
-        book.makePosGraph();
-        book.makeDifficultyGraph();
+        ow.writeTxt();
+        ow.writeJson();
+        ow.makePosGraph();
+        ow.makeDifficultyGraph();
     }
 
     @Override

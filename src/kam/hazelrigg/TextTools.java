@@ -1,9 +1,12 @@
 package kam.hazelrigg;
 
+import edu.stanford.nlp.ling.HasWord;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +32,7 @@ class TextTools {
      * @param s String to check
      * @return true if string is only punctuation, false otherwise
      */
-    static boolean isPunctuation(String s) {
+    private static boolean isPunctuation(String s) {
         return s.replaceAll("\\W", "").length() == 0;
     }
 
@@ -129,9 +132,9 @@ class TextTools {
         double score = 206.835 - (1.015 * wordCount / sentenceCount) - (84.6 * syllableCount / wordCount);
 
         if (score <= 100) {
-            if (score > 90) return "5th grade";
-            if (score > 80) return "6th grade";
-            if (score > 70) return "7th grade";
+            if (score > 90) return "5th-grade";
+            if (score > 80) return "6th-grade";
+            if (score > 70) return "7th-grade";
             if (score > 60) return "8th & 9th grade";
             if (score > 50) return "10th to 12th grade";
             if (score > 30) return "College";
@@ -174,6 +177,20 @@ class TextTools {
 
         return "Other";
 
+    }
+
+    static String convertHasWordToString(List<HasWord> words) {
+        StringBuilder sentence = new StringBuilder();
+        for (HasWord hasWord : words) {
+            String word = hasWord.word();
+
+            // Remove spaces that come before punctuation
+            if (isPunctuation(word) && sentence.length() > 1) {
+                sentence.deleteCharAt(sentence.length() - 1);
+            }
+            sentence.append(word).append(" ");
+        }
+        return sentence.toString();
     }
 
     /**

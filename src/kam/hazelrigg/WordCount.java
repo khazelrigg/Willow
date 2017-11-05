@@ -20,9 +20,8 @@ public class WordCount {
             book.setTitleFromText(path);
             book.setPath(path);
             book.analyseText();
-            book.writeText();
+            new OutputWriter(book).writeTxt();
         }
-
     }
 
     /**
@@ -32,7 +31,6 @@ public class WordCount {
      */
     private static String getFileName() {
         // Get a filename and check that the file exists
-
         Scanner kb = new Scanner(System.in);
 
         // Keep asking for input path until a valid one is found.
