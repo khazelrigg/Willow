@@ -58,9 +58,9 @@ public class OutputWriter {
             File outFile;
 
             if (book.subdirectory.equals("")) {
-                outFile = new File("results/txt/" + book.title + " Results.txt");
+                outFile = new File("results/txt/" + book.getName() + " Results.txt");
             } else {
-                outFile = new File("results/txt/" + book.subdirectory + "/" + book.title
+                outFile = new File("results/txt/" + book.subdirectory + "/" + book.getName()
                         + " Results.txt");
             }
 
@@ -283,7 +283,7 @@ public class OutputWriter {
     }
 
     @SuppressWarnings("unchecked")
-    void writeJson() {
+    public void writeJson() {
         File out;
         // Create results directories
         if (book.subdirectory.equals("")) {
