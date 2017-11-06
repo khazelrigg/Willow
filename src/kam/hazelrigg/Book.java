@@ -27,7 +27,7 @@ public class Book {
 
     String title;
     String author;
-    String subdirectory;
+    public String subdirectory;
     long wordCount;
     long syllableCount;
     long sentenceCount;
@@ -92,7 +92,6 @@ public class Book {
 
             br.close();
         } catch (IOException e) {
-            System.out.println("IOException : " + path.getName());
             e.printStackTrace();
         } catch (NullPointerException e) {
             System.out.println("OSHIT - STUFF BROKE WITH " + path.getName());

@@ -45,6 +45,18 @@
                         </graphic>
                     </ToggleButton>
 
+                    <ToggleButton fx:id="writeJsonToggle">
+                        <tooltip>
+                            <Tooltip text="Write JSON to disk"/>
+                        </tooltip>
+
+                        <graphic>
+                            <ImageView>
+                                <Image url="@icons/document.png"/>
+                            </ImageView>
+                        </graphic>
+                    </ToggleButton>
+
                     <ToggleButton fx:id="posChartToggle">
                         <tooltip>
                             <Tooltip text="Write parts-of-speech chart to disk" />
@@ -53,7 +65,6 @@
                         <graphic>
                             <ImageView>
                                 <Image url="@icons/piechart.png" />
-
                             </ImageView>
                         </graphic>
                     </ToggleButton>
@@ -66,7 +77,6 @@
                         <graphic>
                             <ImageView>
                                 <Image url="@icons/question.png" />
-
                             </ImageView>
                         </graphic>
                     </ToggleButton>
@@ -75,11 +85,10 @@
 
                     <Pane HBox.hgrow="ALWAYS"/>
 
-                    <Button onAction="#run">
+                    <Button fx:id="runButton" onAction="#run">
                         <graphic>
                             <ImageView>
                                 <Image url="@icons/run.png" />
-
                             </ImageView>
                         </graphic>
                     </Button>
