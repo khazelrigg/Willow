@@ -7,8 +7,9 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.control.Tooltip?>
@@ -19,6 +20,8 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.TextFlow?>
 <?import java.net.URL?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8.0.162-ea" fx:controller="kam.hazelrigg.viewer.ViewController">
 
@@ -103,12 +106,27 @@
             <HBox>
                 <ListView fx:id="resultsFileListView" onMouseClicked="#updateViewer"/>
 
-                <ScrollPane>
-                    <VBox>
-                        <ImageView fx:id="posChartImageView" />
-                        <ImageView fx:id="difficultyImageView" />
-                    </VBox>
-                </ScrollPane>
+                <TabPane HBox.hgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE">
+                    <Tab text="Parts of Speech" id="centerTabPane">
+                        <VBox alignment="CENTER" fx:id="posTab">
+                            <TextFlow HBox.hgrow="ALWAYS" textAlignment="CENTER">
+                                <Text id="placeHolder"
+                                      text="It looks like you haven't opened a file"
+                                      textAlignment="CENTER"/>
+                            </TextFlow>
+                        </VBox>
+                    </Tab>
+
+                    <Tab text="Difficulty">
+                        <VBox alignment="CENTER" fx:id="diffTab">
+                            <TextFlow HBox.hgrow="ALWAYS" textAlignment="CENTER">
+                                <Text id="placeHolder"
+                                      text="It looks like you haven't opened a file"
+                                      textAlignment="CENTER"/>
+                            </TextFlow>
+                        </VBox>
+                    </Tab>
+                </TabPane>
             </HBox>
         </center>
 

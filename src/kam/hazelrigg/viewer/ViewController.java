@@ -9,6 +9,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -31,12 +32,14 @@ public class ViewController {
     // Content
     public ListView<String> resultsFileListView;
 
-    public ImageView posChartImageView;
-    public ImageView difficultyImageView;
+    private ImageView posChartImageView;
+    private ImageView difficultyImageView;
 
     // Bottom status
     public Label statusLabel;
     public Label timerLabel;
+    public VBox posTab;
+    public VBox diffTab;
 
     private Book book = new Book();
     private File directory = null;
@@ -65,6 +68,12 @@ public class ViewController {
             book.setPath(file);
             book.setTitleFromText(file);
             addFileToList(file, file.getName());
+            // Add image viewers
+            posTab.getChildren().remove(0);
+            posTab.getChildren().add(posChartImageView);
+            diffTab.getChildren().remove(0);
+            diffTab.getChildren().add(difficultyImageView);
+
             statusLabel.setText("Opened " + book.getTitle());
             runButton.setDisable(false);
         }
@@ -243,5 +252,4 @@ public class ViewController {
 
         difficultyImageView.setImage(difficultyChart);
     }
-
 }
