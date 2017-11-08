@@ -19,7 +19,7 @@ public class WordCount {
             Book book = new Book();
             book.setTitleFromText(path);
             book.setPath(path);
-            book.analyseText();
+            book.readText();
             new OutputWriter(book).writeTxt();
         }
     }

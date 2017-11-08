@@ -23,7 +23,7 @@ public class Runner extends Thread {
      */
     private void runBook() {
         OutputWriter ow = new OutputWriter(book);
-        book.analyseText();
+        book.readText();
         ow.writeTxt();
         ow.writeJson();
         ow.makePosGraph();

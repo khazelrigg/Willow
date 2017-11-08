@@ -80,8 +80,7 @@ public class ViewController {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Open folder");
         directoryChooser.setInitialDirectory(
-                new File(System.getProperty("user.home"))
-        );
+                new File(System.getProperty("user.home")));
 
 
         File dir = directoryChooser.showDialog(chooserPane);

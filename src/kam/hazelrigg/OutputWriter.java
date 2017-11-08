@@ -75,8 +75,12 @@ public class OutputWriter {
                 bw.write("\n" + wrapInBox("Conclusion") + "\n" + getConclusionString());
                 bw.write("\n" + wrapInBox("Parts of Speech Tags") + "\n" + book.posFreq.toString());
                 bw.write("\n" + wrapInBox("Word Counts") + "\n" + book.wordFreq.toString());
-                bw.write("\n" + wrapInBox("Lemma Counts") + "\n" + book.lemmaMap.toString());
+                bw.write("\n" + wrapInBox("Lemma Counts") + "\n" + book.lemmaFreq.toString());
                 bw.write("\n" + wrapInBox("Concordance") + "\n" + createConcordance());
+
+                bw.close();
+                System.out.println("☑ - Finished writing TXT information for " + book.getName());
+
             } catch (IOException e) {
                 e.printStackTrace();
             }

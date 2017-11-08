@@ -1,9 +1,12 @@
 package kam.hazelrigg;
 
+import edu.stanford.nlp.ling.HasWord;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -208,5 +211,20 @@ class TextTools {
 
         return posNoAbbrev;
     }
+
+    static String convertHasWordToString(List<HasWord> words) {
+        StringBuilder sentence = new StringBuilder();
+        for (HasWord hasWord : words) {
+            String word = hasWord.word();
+
+            // Remove spaces that come before punctuation
+            if (isPunctuation(word) && sentence.length() > 1) {
+                sentence.deleteCharAt(sentence.length() - 1);
+            }
+            sentence.append(word).append(" ");
+        }
+        return sentence.toString();
+    }
+
 
 }

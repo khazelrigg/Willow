@@ -3,23 +3,26 @@ package kam.hazelrigg;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import edu.stanford.nlp.util.CoreMap;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 
 public class Book {
+    // Set up tagger
+    private static final MaxentTagger tagger =
+            new MaxentTagger("models/english-left3words-distsim.tagger");
+
     final FreqMap posFreq;
     final FreqMap wordFreq;
+    final FreqMap lemmaFreq;
     final FreqMap difficultyMap;
-    final FreqMap lemmaMap;
 
     String title;
     String author;
@@ -27,7 +30,7 @@ public class Book {
     long wordCount;
     long syllableCount;
     long sentenceCount;
-    String longestSentence;
+    List<HasWord> longestSentence;
     private boolean gutenberg;
     private File path;
 
@@ -36,12 +39,11 @@ public class Book {
         this.author = "";
         this.gutenberg = false;
         this.subdirectory = "";
-        this.longestSentence = "";
 
         this.posFreq = new FreqMap();
         this.wordFreq = new FreqMap();
+        this.lemmaFreq = new FreqMap();
         this.difficultyMap = new FreqMap();
-        this.lemmaMap = new FreqMap();
     }
 
     /**
@@ -91,6 +93,9 @@ public class Book {
             br.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (NullPointerException e) {
+            System.out.println("OSHIT - STUFF BROKE WITH " + path.getName());
+            e.printStackTrace();
         }
 
         this.title = title;
@@ -98,63 +103,68 @@ public class Book {
     }
 
     /**
-     * Tag a text for parts of speech, gets lemma counts, and wordcounts
+     * Tag a text for parts of speech
      *
      * @param text Text to be tagged
      */
-    private void analyseText(String text) {
-        // Set up CoreNlp pipeline
-        Properties props = new Properties();
-        props.put("annotators", "tokenize, ssplit, pos, lemma");
-        StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-
+    private void tagFile(String text) {
         Annotation doc = new Annotation(text);
-        pipeline.annotate(doc);
+        BatchRunner.pipeline.annotate(doc);
 
-        // Get pos tags as human readable format
-        HashMap<String, String> posAbbrev = TextTools.nonAbbreviate();
-
-        List<CoreMap> sentences = doc.get(CoreAnnotations.SentencesAnnotation.class);
-        for (CoreMap sentence : sentences) {
+        for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
             sentenceCount++;
-
-            // Check for new longest sentence
-            if (sentence.toString().length() > longestSentence.length()) {
-                longestSentence = sentence.toString();
-            }
-
-            // Tokenize sentence and loop through each token
             for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
                 wordCount++;
+                wordFreq.increaseFreq(token.word());
+                lemmaFreq.increaseFreq(token.get(CoreAnnotations.LemmaAnnotation.class));
+                posFreq.increaseFreq(
+                        BatchRunner.posAbbrev.get(token.get(CoreAnnotations.PartOfSpeechAnnotation.class)));
 
-                String word = token.get(CoreAnnotations.TextAnnotation.class).replaceAll("\\W", "");
-                String pos = posAbbrev
-                        .get(token.get(CoreAnnotations.PartOfSpeechAnnotation.class).toLowerCase());
-                String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
-
-                if (pos != null) {
-                    posFreq.increaseFreq(pos);
-                }
-                // Set syllable count information
-                if (TextTools.getSyllableCount(word) > 1) {
-                    difficultyMap.increaseFreq("poly");
-                } else {
-                    difficultyMap.increaseFreq("mono");
-                }
-
-
-                if (!word.isEmpty()) {
-                    wordFreq.increaseFreq(word);
-                    lemmaMap.increaseFreq(lemma);
-                }
             }
         }
 
+        /*
+        try {
+            // Get POS abbreviation values
+            HashMap<String, String> posAbbrev = TextTools.nonAbbreviate();
+
+            BufferedReader br = new BufferedReader(new FileReader(path));
+            DocumentPreprocessor dp = new DocumentPreprocessor(br);
+            dp.setTokenizerFactory(tokenizerFactory);
+
+            // Loop through every sentence
+            for (List<HasWord> sentence : dp) {
+
+                List<TaggedWord> tSent = tagger.tagSentence(sentence);
+
+                if (longestSentence == null) {
+                    longestSentence = sentence;
+                }
+
+                if (sentence.size() > longestSentence.size()) {
+                    longestSentence = sentence;
+                }
+
+                for (TaggedWord word : tSent) {
+                    String tag = posAbbrev.get(word.tag().toLowerCase());
+
+                    if (tag != null) {
+                        posFreq.increaseFreq(tag);
+                    }
+                }
+                sentenceCount++;
+            }
+            br.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        */
         syllableCount = TextTools.getSyllableCount(text);
     }
 
     /**
-     * Reads the text file from path and creates a string passed to tagger
+     * Reads a text file and tags each line for parts of speech as well as counts word frequencies.
      */
     public void readText() {
 
@@ -192,11 +202,34 @@ public class Book {
                     }
                 }
 
-                text.append(line);
+                text.append(line).append(" ");
+
+                // Word counts
+                for (String word : line.split("\\s")) {
+                    wordCount++;
+                    // Make word lowercase and strip punctuation
+                    word = word.toLowerCase().replaceAll("\\W", "");
+
+                    // Skip punctuation and stop words
+                    if (word.isEmpty() || TextTools.isStopWord(word)) {
+                        continue;
+                    }
+
+                    // Add difficulty information
+                    if (TextTools.getSyllableCount(word) == 1) {
+                        difficultyMap.increaseFreq("mono");
+                    } else {
+                        difficultyMap.increaseFreq("poly");
+                    }
+
+                    // Increase word frequency
+                    wordFreq.increaseFreq(word);
+
+                }
             }
             br.close();
 
-            analyseText(text.toString());
+            tagFile(text.toString());
 
             long endTime = System.currentTimeMillis();
             System.out.println(

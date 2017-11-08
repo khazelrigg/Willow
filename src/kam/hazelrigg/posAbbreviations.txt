@@ -1,36 +1,36 @@
-cc   :   Coordinating conjunction                 > #70C1B3
-cd   :   Cardinal number                          > #F25F5C
-dt   :   Determiner                               > #FFE066
-ex   :   Existential there                        > #494A48
-fw   :   Foreign word                             > #70C1B3
-in   :   Preposition or subordinating conjunction > #70C1B3
-jj   :   Adjective                                > #247BA0
-jjr  :   Adjective, comparative                   > #AA7CAB
-jjs  :   Adjective, superlative                   > #247BA0
-ls   :   List item marker                         > #494A48
-md   :   Modal                                    > #FFE066
-nn   :   Noun, singular or mass                   > #F25F5C
-nns  :   Noun, plural                             > #F25F5C
-nnp  :   Proper noun, singular                    > #494A48
-nnps :   Proper noun, plural                      > #FFE066
-pdt  :   Predeterminer                            > #F25F5C
-pos  :   Possessive ending                        > #A9FFCB
-prp  :   Personal pronoun                         > #E5989B
-prp$ :   Possessive pronoun                       > #A9FFCB
-rb   :   Adverb                                   > #AA7CAB
-rer  :   Adverb, comparative                      > #AA7CAB
-rbs  :   Adverb, superlative                      > #AA7CAB
-rp   :   Particle                                 > #70C1B3
-sym  :   Symbol                                   > #A9FFCB
-to   :   to                                       > #AA7CAB
-uh   :   Interjection                             > #FFE066
-vb   :   Verb, base form                          > #E5989B
-vbd  :   Verb, past tense                         > #494A48
-vbg  :   Verb, gerund or present participle       > #494A48
-vbn  :   Verb, past participle                    > #247BA0
-vbp  :   Verb, non-3rd person singular present    > #E5989B
-vbz  :   Verb, 3rd person singular present        > #F25F5C
-wdt  :   Wh-determiner                            > #A9FFCB
-wp   :   Wh-pronoun                               > #247BA0
-wp$  :   Possessive wh pronoun                    > #70C1B3
-wrp  :   Wh-adverb                                > #A9FFCB
+CC   :   Coordinating conjunction                 > #70C1B3
+CD   :   Cardinal number                          > #F25F5C
+DT   :   Determiner                               > #FFE066
+EX   :   Existential there                        > #494A48
+FW   :   Foreign word                             > #70C1B3
+IN   :   Preposition or subordinating conjunction > #70C1B3
+JJ   :   Adjective                                > #247BA0
+JJR  :   Adjective, comparative                   > #AA7CAB
+JJS  :   Adjective, superlative                   > #247BA0
+LS   :   List item marker                         > #494A48
+MD   :   Modal                                    > #FFE066
+NN   :   Noun, singular or mass                   > #F25F5C
+NNS  :   Noun, plural                             > #F25F5C
+NNP  :   Proper noun, singular                    > #494A48
+NNPS :   Proper noun, plural                      > #FFE066
+PDT  :   Predeterminer                            > #F25F5C
+POS  :   Possessive ending                        > #A9FFCB
+PRP  :   Personal pronoun                         > #E5989B
+PRP$ :   Possessive pronoun                       > #A9FFCB
+RB   :   Adverb                                   > #AA7CAB
+RER  :   Adverb, comparative                      > #AA7CAB
+RBS  :   Adverb, superlative                      > #AA7CAB
+RP   :   Particle                                 > #70C1B3
+SYM  :   Symbol                                   > #A9FFCB
+TO   :   to                                       > #AA7CAB
+UH   :   Interjection                             > #FFE066
+VB   :   Verb, base form                          > #E5989B
+VBD  :   Verb, past tense                         > #494A48
+VBG  :   Verb, gerund or present participle       > #494A48
+VBN  :   Verb, past participle                    > #247BA0
+VBP  :   Verb, non-3rd person singular present    > #E5989B
+VBZ  :   Verb, 3rd person singular present        > #F25F5C
+WDT  :   Wh-determiner                            > #A9FFCB
+WP   :   Wh-pronoun                               > #247BA0
+WP$  :   Possessive wh pronoun                    > #70C1B3
+WRP  :   Wh-adverb                                > #A9FFCB
