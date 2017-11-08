@@ -115,51 +115,25 @@ public class Book {
             sentenceCount++;
             for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
                 wordCount++;
+
+                if (TextTools.getSyllableCount(token.word()) == 1) {
+                    difficultyMap.increaseFreq("mono");
+                } else {
+                    difficultyMap.increaseFreq("poly");
+                }
+
                 wordFreq.increaseFreq(token.word());
                 lemmaFreq.increaseFreq(token.get(CoreAnnotations.LemmaAnnotation.class));
-                posFreq.increaseFreq(
-                        BatchRunner.posAbbrev.get(token.get(CoreAnnotations.PartOfSpeechAnnotation.class)));
 
+                String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
+                tag = BatchRunner.posAbbrev.get(tag);
+                if (tag != null) {
+                    posFreq.increaseFreq(tag);
+                }
             }
         }
 
-        /*
-        try {
-            // Get POS abbreviation values
-            HashMap<String, String> posAbbrev = TextTools.nonAbbreviate();
 
-            BufferedReader br = new BufferedReader(new FileReader(path));
-            DocumentPreprocessor dp = new DocumentPreprocessor(br);
-            dp.setTokenizerFactory(tokenizerFactory);
-
-            // Loop through every sentence
-            for (List<HasWord> sentence : dp) {
-
-                List<TaggedWord> tSent = tagger.tagSentence(sentence);
-
-                if (longestSentence == null) {
-                    longestSentence = sentence;
-                }
-
-                if (sentence.size() > longestSentence.size()) {
-                    longestSentence = sentence;
-                }
-
-                for (TaggedWord word : tSent) {
-                    String tag = posAbbrev.get(word.tag().toLowerCase());
-
-                    if (tag != null) {
-                        posFreq.increaseFreq(tag);
-                    }
-                }
-                sentenceCount++;
-            }
-            br.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
         syllableCount = TextTools.getSyllableCount(text);
     }
 
@@ -203,30 +177,8 @@ public class Book {
                 }
 
                 text.append(line).append(" ");
-
-                // Word counts
-                for (String word : line.split("\\s")) {
-                    wordCount++;
-                    // Make word lowercase and strip punctuation
-                    word = word.toLowerCase().replaceAll("\\W", "");
-
-                    // Skip punctuation and stop words
-                    if (word.isEmpty() || TextTools.isStopWord(word)) {
-                        continue;
-                    }
-
-                    // Add difficulty information
-                    if (TextTools.getSyllableCount(word) == 1) {
-                        difficultyMap.increaseFreq("mono");
-                    } else {
-                        difficultyMap.increaseFreq("poly");
-                    }
-
-                    // Increase word frequency
-                    wordFreq.increaseFreq(word);
-
-                }
             }
+
             br.close();
 
             tagFile(text.toString());

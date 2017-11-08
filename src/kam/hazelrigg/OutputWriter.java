@@ -7,14 +7,8 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.awt.*;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -89,7 +83,7 @@ public class OutputWriter {
     }
 
     private String wrapInBox(String text) {
-        //                   TR   TC   TL   LL   LC   LR   COL
+        //                   TL   TC   TR   LL   LC   LR   COL
         String[] boxParts = {"╒", "═", "╕", "└", "─", "┘", "│"};
         StringBuilder wrapped = new StringBuilder();
 
@@ -301,7 +295,7 @@ public class OutputWriter {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
 
             /* TODO Find a way to reduce redundancy
-               Maybe a list or hashmap could do that */
+               Maybe a list or Hashmap could do that */
             JSONObject json = new JSONObject();
             json.put("name", book.getName());
             json.put("description", "Parts of speech for " + book.getName());
@@ -353,6 +347,7 @@ public class OutputWriter {
                 parent.put("children", array);
 
                 //Categorise each type
+                System.out.println(type);
                 if (TextTools.getParentType(type).equals("Noun")) {
                     nounTypes.add(parent);
                 } else if (TextTools.getParentType(type).equals("Verb")) {
