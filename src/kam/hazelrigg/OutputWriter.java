@@ -74,8 +74,9 @@ public class OutputWriter {
                 bw.write("\n" + wrapInBox("Stats") + "\n" + getStats());
                 bw.write("\n" + wrapInBox("Conclusion") + "\n" + getConclusionString());
                 bw.write("\n" + wrapInBox("Parts of Speech Tags") + "\n" + book.posFreq.toString());
-                bw.write("\n" + wrapInBox("Concordance") + "\n" + createConcordance());
                 bw.write("\n" + wrapInBox("Word Counts") + "\n" + book.wordFreq.toString());
+                bw.write("\n" + wrapInBox("Lemma Counts") + "\n" + book.lemmaMap.toString());
+                bw.write("\n" + wrapInBox("Concordance") + "\n" + createConcordance());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -124,24 +125,23 @@ public class OutputWriter {
     private String getStats() {
         return "Total Words: " + book.wordCount
                 + "\nUnique Words: " + book.wordFreq.getSize()
-                + "\nPolysyllabic Words: " + book.difficultyMap.get("Polysyllabic")
-                + "\nMonosyllabic Words: " + book.difficultyMap.get("Monosyllabic")
+                + "\nPolysyllabic Words: " + book.difficultyMap.get("poly")
+                + "\nMonosyllabic Words: " + book.difficultyMap.get("mono")
                 + "\nTotal Syllables: " + book.syllableCount
                 + "\nTotal Sentences: " + book.sentenceCount
                 + "\nFlesch-Kincaid Grade: "
                 + TextTools.getReadingEaseLevel(book.wordCount, book.sentenceCount, book.syllableCount)
                 + "\nClassified Length: " + TextTools.classifyLength(book.wordCount)
                 + "\nTop 3 words: " + book.wordFreq.getTopThree()
-                + wrap("\nLongest Sentence: "
-                + TextTools.convertHasWordToString(book.longestSentence), 100) + "\n";
+                + wrap("\nLongest Sentence; " + book.longestSentence, 100) + "\n";
     }
 
     private String getConclusionString() {
         long wordCount = book.wordCount;
         long sentenceCount = book.sentenceCount;
         long syllableCount = book.syllableCount;
-        int monoSyllable = book.difficultyMap.get("Monosyllabic");
-        int polySyllable = book.difficultyMap.get("Polysyllabic");
+        int monoSyllable = book.difficultyMap.get("mono");
+        int polySyllable = book.difficultyMap.get("poly");
 
         String classifiedLength = TextTools.classifyLength(wordCount);
         String gradeLevel = TextTools.getReadingEaseLevel(wordCount, sentenceCount, syllableCount);
@@ -175,7 +175,7 @@ public class OutputWriter {
             concordance.append(word).append(" ");
         }
 
-        return wrap(concordance.toString(), 100);
+        return wrap(concordance.toString() + "\n", 100);
     }
 
     /**
