@@ -1,5 +1,6 @@
 package kam.hazelrigg;
 
+import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
@@ -7,15 +8,23 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.*;
-import java.io.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.commons.lang3.text.WordUtils.wrap;
-import static org.jfree.chart.ChartFactory.createPieChart;
 
 public class OutputWriter {
+    static final String ANSI_RESET = "\u001B[0m";
+    static final String ANSI_GREEN = "\u001B[32m";
+
     private Book book;
 
     public OutputWriter(Book book) {
@@ -47,6 +56,7 @@ public class OutputWriter {
     }
 
     public void writeTxt() {
+        //System.out.println("Starting TXT creation for " + book.getName());
         if (book.posFreq.getSize() > 0) {
             makeResultDirs();
             File outFile;
@@ -73,7 +83,7 @@ public class OutputWriter {
                 bw.write("\n" + wrapInBox("Concordance") + "\n" + createConcordance());
 
                 bw.close();
-                System.out.println("☑ - Finished writing TXT information for " + book.getName());
+                System.out.println(ANSI_GREEN + "☑ - Finished writing TXT information for " + book.getName() + ANSI_RESET);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -123,8 +133,8 @@ public class OutputWriter {
     private String getStats() {
         return "Total Words: " + book.wordCount
                 + "\nUnique Words: " + book.wordFreq.getSize()
-                + "\nPolysyllabic Words: " + book.difficultyMap.get("poly")
-                + "\nMonosyllabic Words: " + book.difficultyMap.get("mono")
+                + "\nPolysyllabic Words: " + book.difficultyMap.get("Polysyllabic")
+                + "\nMonosyllabic Words: " + book.difficultyMap.get("Monosyllabic")
                 + "\nTotal Syllables: " + book.syllableCount
                 + "\nTotal Sentences: " + book.sentenceCount
                 + "\nFlesch-Kincaid Grade: "
@@ -138,8 +148,8 @@ public class OutputWriter {
         long wordCount = book.wordCount;
         long sentenceCount = book.sentenceCount;
         long syllableCount = book.syllableCount;
-        int monoSyllable = book.difficultyMap.get("mono");
-        int polySyllable = book.difficultyMap.get("poly");
+        int monoSyllable = book.difficultyMap.get("Monosyllabic");
+        int polySyllable = book.difficultyMap.get("Polysyllabic");
 
         String classifiedLength = TextTools.classifyLength(wordCount);
         String gradeLevel = TextTools.getReadingEaseLevel(wordCount, sentenceCount, syllableCount);
@@ -176,18 +186,15 @@ public class OutputWriter {
         return wrap(concordance.toString() + "\n", 100);
     }
 
+    public void makeDiffGraph() {
+        makeGraph("Difficulty", book.difficultyMap);
+    }
+
     /**
      * Creates a parts of speech distribution pie graph.
      */
     public void makePosGraph() {
         makeGraph("POS Distribution", book.posFreq);
-    }
-
-    /**
-     * Creates a difficulty pie graph that uses syllable.
-     */
-    public void makeDifficultyGraph() {
-        makeGraph("Difficulty", book.difficultyMap);
     }
 
     /**
@@ -197,7 +204,6 @@ public class OutputWriter {
      * @param freq    FreqMap to use values off
      */
     private void makeGraph(String purpose, FreqMap freq) {
-
         DefaultPieDataset dataSet = new DefaultPieDataset();
         String outPath;
 
@@ -209,17 +215,18 @@ public class OutputWriter {
             outPath = book.title + "  " + book.author + " " + purpose + "Results.jpeg";
         }
 
-
         // Load POS data into data set
         HashMap<String, Integer> map = freq.getFrequency();
 
         for (Map.Entry<String, Integer> entry : map.entrySet()) {
             String type = entry.getKey();
             int count = entry.getValue();
-            dataSet.setValue(type, count);
+            if (type != null) {
+                dataSet.setValue(type, count);
+            }
         }
 
-        JFreeChart chart = createPieChart(
+        JFreeChart chart = ChartFactory.createPieChart(
                 purpose + " of " + book.getName(),
                 dataSet,
                 false,
@@ -227,7 +234,7 @@ public class OutputWriter {
                 false);
 
         PiePlot plot = (PiePlot) chart.getPlot();
-        plot = setColors(plot);
+        plot = setColors(plot, purpose);
 
         plot.setBaseSectionOutlinePaint(new Color(0, 0, 0));
         plot.setShadowPaint(null);
@@ -238,7 +245,7 @@ public class OutputWriter {
 
         // Save the chart to jpeg
         try {
-            ChartUtilities.saveChartAsJPEG(new File(outPath), chart, 1000, 1000);
+            ChartUtilities.saveChartAsJPEG(new File(outPath), chart, 700, 700);
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
         }
@@ -250,38 +257,38 @@ public class OutputWriter {
      * @param chart Chart to modify label colors of
      * @return PieChart with color modifications
      */
-    private PiePlot setColors(PiePlot chart) {
+    private PiePlot setColors(PiePlot chart, String purpose) {
 
-
-        try {
-            InputStreamReader inputStreamReader =
-                    new InputStreamReader(TextTools.class.getResourceAsStream("posAbbreviations.txt"));
-
-            BufferedReader br = new BufferedReader(inputStreamReader);
-
-            String line = br.readLine();
+        if (purpose.equals("Difficulty")) {
             chart.setSectionPaint("Monosyllabic", new Color(77, 77, 77));
             chart.setSectionPaint("Polysyllabic", new Color(241, 88, 84));
+        } else if (purpose.equals("POS Distribution")) {
+            try {
+                InputStreamReader inputStreamReader =
+                        new InputStreamReader(TextTools.class.getResourceAsStream("posAbbreviations.txt"));
 
-            while (line != null) {
-                String label = line.substring(line.indexOf(":") + 1, line.indexOf(">")).trim();
+                BufferedReader br = new BufferedReader(inputStreamReader);
+                String line = br.readLine();
 
-                String hexColor = line.substring(line.indexOf(">") + 1).trim();
-                Color color = Color.decode(hexColor);
+                while (line != null) {
+                    String label = line.substring(line.indexOf(":") + 1, line.indexOf(">")).trim();
+                    String hexColor = line.substring(line.indexOf(">") + 1).trim();
+                    Color color = Color.decode(hexColor);
 
-                chart.setSectionPaint(label, color);
-
-                line = br.readLine();
+                    chart.setSectionPaint(label, color);
+                    line = br.readLine();
+                }
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return chart;
     }
 
     @SuppressWarnings("unchecked")
     public void writeJson() {
+        //System.out.println("Starting JSON creation for " + book.getName());
         File out;
         // Create results directories
         if (book.subdirectory.equals("")) {
@@ -347,7 +354,6 @@ public class OutputWriter {
                 parent.put("children", array);
 
                 //Categorise each type
-                System.out.println(type);
                 if (TextTools.getParentType(type).equals("Noun")) {
                     nounTypes.add(parent);
                 } else if (TextTools.getParentType(type).equals("Verb")) {
@@ -389,7 +395,7 @@ public class OutputWriter {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("☑ - Finished writing JSON information for " + book.getName());
+        System.out.println(ANSI_GREEN + "☑ - Finished writing JSON information for " + book.getName() + ANSI_RESET);
 
     }
 

@@ -1,40 +1,12 @@
 package kam.hazelrigg;
 
-import edu.stanford.nlp.ling.HasWord;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class TextTools {
-
-    /**
-     * Returns whether or not a word is a stop word.
-     *
-     * @param word Word to look at
-     * @return true if the word is a stop word, false otherwise
-     */
-    static boolean isStopWord(String word) {
-        String stopWords = "|you|us|we|which|where|were|with|was|what|her|him|had|has|have|"
-                + "this|that|the|there|their|of|to|my|me|mine|if|or|and|a|an|as|are|on|i|in|is|"
-                + "it|so|for|be|been|by|but|from|";
-
-        return stopWords.contains(word + "|");
-    }
-
-    /**
-     * Returns whether or not a String is composed of only punctuation
-     *
-     * @param s String to check
-     * @return true if string is only punctuation, false otherwise
-     */
-    private static boolean isPunctuation(String s) {
-        return s.replaceAll("\\W", "").length() == 0;
-    }
 
     /**
      * Finds if a word is monosyllabic.
@@ -43,19 +15,16 @@ class TextTools {
      * @return true if word is monosyllabic, false otherwise
      */
     static int getSyllableCount(String word) {
-        Pattern p = Pattern.compile("[aeiouy]+[^$e(,.:;!?)]");
-        Matcher m = p.matcher(word);
-
+        Matcher m = WordCount.p.matcher(word);
         int syllables = 0;
         while (m.find()) {
             syllables++;
         }
-
         return syllables;
     }
 
     /**
-     * Uses Nebua Award classifications to classify a text based on its length
+     * Uses Nebula Award classifications to classify a text based on its length
      *
      * @param wordCount Total number of words
      * @return String classification
@@ -211,20 +180,4 @@ class TextTools {
 
         return posNoAbbrev;
     }
-
-    static String convertHasWordToString(List<HasWord> words) {
-        StringBuilder sentence = new StringBuilder();
-        for (HasWord hasWord : words) {
-            String word = hasWord.word();
-
-            // Remove spaces that come before punctuation
-            if (isPunctuation(word) && sentence.length() > 1) {
-                sentence.deleteCharAt(sentence.length() - 1);
-            }
-            sentence.append(word).append(" ");
-        }
-        return sentence.toString();
-    }
-
-
 }

@@ -5,7 +5,6 @@ import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.tagger.maxent.MaxentTagger;
 import edu.stanford.nlp.util.CoreMap;
 
 import java.io.BufferedReader;
@@ -15,10 +14,6 @@ import java.io.IOException;
 import java.util.List;
 
 public class Book {
-    // Set up tagger
-    private static final MaxentTagger tagger =
-            new MaxentTagger("models/english-left3words-distsim.tagger");
-
     final FreqMap posFreq;
     final FreqMap wordFreq;
     final FreqMap lemmaFreq;
@@ -52,6 +47,7 @@ public class Book {
      * @param text File to find title of
      */
     public void setTitleFromText(File text) {
+        //TODO for files that are not gutenbergs remove extension from title
         String title = "";
         String author = "";
 
@@ -92,9 +88,7 @@ public class Book {
 
             br.close();
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NullPointerException e) {
-            System.out.println("OSHIT - STUFF BROKE WITH " + path.getName());
+            System.out.println("[Error - SetTitle] Error opening file for setting title");
             e.printStackTrace();
         }
 
@@ -109,7 +103,7 @@ public class Book {
      */
     private void tagFile(String text) {
         Annotation doc = new Annotation(text);
-        BatchRunner.pipeline.annotate(doc);
+        WordCount.pipeline.annotate(doc);
 
         for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
             sentenceCount++;
@@ -117,16 +111,16 @@ public class Book {
                 wordCount++;
 
                 if (TextTools.getSyllableCount(token.word()) == 1) {
-                    difficultyMap.increaseFreq("mono");
+                    difficultyMap.increaseFreq("Monosyllabic");
                 } else {
-                    difficultyMap.increaseFreq("poly");
+                    difficultyMap.increaseFreq("Polysyllabic");
                 }
 
                 wordFreq.increaseFreq(token.word());
                 lemmaFreq.increaseFreq(token.get(CoreAnnotations.LemmaAnnotation.class));
 
                 String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
-                tag = BatchRunner.posAbbrev.get(tag);
+                tag = WordCount.posAbbrev.get(tag);
                 if (tag != null) {
                     posFreq.increaseFreq(tag);
                 }
@@ -145,7 +139,6 @@ public class Book {
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 
             System.out.println("☐ - Starting analysis of " + getName());
-            long startTime = System.currentTimeMillis();
 
             Boolean atBook = false;
             StringBuilder text = new StringBuilder();
@@ -184,11 +177,13 @@ public class Book {
             tagFile(text.toString());
 
             long endTime = System.currentTimeMillis();
-            System.out.println(
-                    "\n☑ - Finished analysis of " + getName() + " in " + (endTime - startTime) / 1000 + "s.");
+            System.out.println(OutputWriter.ANSI_GREEN +
+                    "\n☑ - Finished analysis of " + getName() + " in "
+                    + (endTime - WordCount.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
 
         } catch (IOException e) {
-            System.out.println("Couldn't find file at " + path);
+            System.out.println("[Error - readText] Couldn't find file at " + path);
+            e.printStackTrace();
         }
 
     }
@@ -228,9 +223,9 @@ public class Book {
     public boolean resultsFileExists() {
         File txt = new File("results/txt/" + subdirectory + "/" + getName() + " Results.txt");
         File img = new File("results/img/" + subdirectory + "/" + getName() + " POS Distribution Results.jpeg");
-        File img2 = new File("results/img/" + subdirectory + "/" + getName() + " Difficulty Results.jpeg");
+        File diffImg = new File("results/img/" + subdirectory + "/" + getName() + " Difficulty Results.jpeg");
         File json = new File("results/json/" + subdirectory + "/" + getName() + " Results.json");
-        return txt.exists() && img.exists() && img2.exists() && json.exists();
+        return txt.exists() && img.exists() && diffImg.exists() && json.exists();
     }
 
     void setSubdirectory(String dir) {

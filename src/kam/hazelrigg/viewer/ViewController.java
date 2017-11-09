@@ -135,7 +135,7 @@ public class ViewController {
                 }
 
                 if (diffChartToggle.isSelected()) {
-                    ow.makeDifficultyGraph();
+                    ow.makeDiffGraph();
                     showDifficultyChart(book);
                 }
 
