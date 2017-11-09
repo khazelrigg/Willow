@@ -34,7 +34,4 @@ public class BatchRunner {
             e.printStackTrace();
         }
     }
-
-
-
 }
