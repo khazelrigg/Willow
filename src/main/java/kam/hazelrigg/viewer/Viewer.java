@@ -7,7 +7,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 
-public class Viewer extends Application{
+public class Viewer extends Application {
 
     public static void main(String[] args) {
         launch(args);

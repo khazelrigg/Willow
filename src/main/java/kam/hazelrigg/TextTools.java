@@ -1,4 +1,4 @@
-package kam.hazelrigg;
+package main.java.kam.hazelrigg;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,7 +6,8 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 
-class TextTools {
+public class TextTools {
+    static HashMap<String, String> posAbbrev = nonAbbreviate();
 
     /**
      * Finds if a word is monosyllabic.
@@ -153,14 +154,14 @@ class TextTools {
      *
      * @return Hash map containing the key as the abbreviation and the value as its full text
      */
-    static HashMap<String, String> nonAbbreviate() {
-
-        InputStreamReader inputStreamReader =
-                new InputStreamReader(TextTools.class.getResourceAsStream("posAbbreviations.txt"));
+    private static HashMap<String, String> nonAbbreviate() {
 
         HashMap<String, String> posNoAbbrev = new HashMap<>();
 
         try {
+            InputStreamReader inputStreamReader =
+                    new InputStreamReader(TextTools.class.getClass().getResourceAsStream("/posAbbreviations.txt"));
+
             BufferedReader br =
                     new BufferedReader(inputStreamReader);
 

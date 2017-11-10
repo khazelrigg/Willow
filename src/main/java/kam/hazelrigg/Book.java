@@ -1,23 +1,26 @@
-package kam.hazelrigg;
+package main.java.kam.hazelrigg;
 
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 public class Book {
-    final FreqMap posFreq;
-    final FreqMap wordFreq;
+    public final FreqMap posFreq;
+    public final FreqMap wordFreq;
     final FreqMap lemmaFreq;
     final FreqMap difficultyMap;
+    private HashMap<String, String> posAbbrev = TextTools.posAbbrev;
 
     String title;
     String author;
@@ -28,18 +31,22 @@ public class Book {
     List<HasWord> longestSentence;
     private boolean gutenberg;
     private File path;
+    private StanfordCoreNLP pipeline;
 
     public Book() {
         this.title = "";
         this.author = "";
         this.gutenberg = false;
         this.subdirectory = "";
+        this.pipeline = WordCount.pipeline;
 
         this.posFreq = new FreqMap();
         this.wordFreq = new FreqMap();
         this.lemmaFreq = new FreqMap();
         this.difficultyMap = new FreqMap();
     }
+    //TODO Add polysyndeton and parallelism statistics. Look into polyptoton and alliteration as well
+
 
     /**
      * Get the title of a book.
@@ -103,7 +110,7 @@ public class Book {
      */
     private void tagFile(String text) {
         Annotation doc = new Annotation(text);
-        WordCount.pipeline.annotate(doc);
+        pipeline.annotate(doc);
 
         for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
             sentenceCount++;
@@ -116,18 +123,16 @@ public class Book {
                     difficultyMap.increaseFreq("Polysyllabic");
                 }
 
-                wordFreq.increaseFreq(token.word());
+                wordFreq.increaseFreq(token.word().toLowerCase());
                 lemmaFreq.increaseFreq(token.get(CoreAnnotations.LemmaAnnotation.class));
 
                 String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
-                tag = WordCount.posAbbrev.get(tag);
+                tag = posAbbrev.get(tag);
                 if (tag != null) {
                     posFreq.increaseFreq(tag);
                 }
             }
         }
-
-
         syllableCount = TextTools.getSyllableCount(text);
     }
 
@@ -188,6 +193,10 @@ public class Book {
 
     }
 
+    public void setText(String text) {
+        tagFile(text);
+    }
+
     public String getName() {
         // If there is no author don't add the " by XXX"
         if (author.equals("")) {
@@ -231,4 +240,9 @@ public class Book {
     void setSubdirectory(String dir) {
         this.subdirectory = dir;
     }
+
+    public void givePipeline(StanfordCoreNLP pipeline) {
+        this.pipeline = pipeline;
+    }
+
 }

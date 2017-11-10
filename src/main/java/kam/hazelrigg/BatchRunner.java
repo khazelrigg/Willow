@@ -1,4 +1,4 @@
-package kam.hazelrigg;
+package main.java.kam.hazelrigg;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +11,7 @@ public class BatchRunner {
 
     /**
      * Start a runners for each file in a directory
+     *
      * @param directory Directory to open
      */
     public static void startRunners(File directory) {
@@ -23,6 +24,7 @@ public class BatchRunner {
 
     /**
      * Opens a directory analysing each file on its own thread
+     *
      * @param directory Directory to open
      */
     private static void openDirectory(File directory) {

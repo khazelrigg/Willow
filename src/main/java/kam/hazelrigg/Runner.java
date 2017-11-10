@@ -1,4 +1,4 @@
-package kam.hazelrigg;
+package main.java.kam.hazelrigg;
 
 import java.io.File;
 

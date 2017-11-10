@@ -1,9 +1,8 @@
-package kam.hazelrigg;
+package main.java.kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -12,7 +11,6 @@ public class WordCount {
     public static Pattern p = Pattern.compile("[aeiouy]+[^$e(,.:;!?)]");
     static final long startTime = System.currentTimeMillis();
     static StanfordCoreNLP pipeline;
-    static HashMap<String, String> posAbbrev = new HashMap<>();
 
     public static void main(String[] args) {
 
@@ -20,9 +18,6 @@ public class WordCount {
         Properties props = new Properties();
         props.put("annotators", "tokenize, ssplit, pos, lemma");
         pipeline = new StanfordCoreNLP(props);
-
-        // Get pos tags in human readable format
-        posAbbrev = TextTools.nonAbbreviate();
 
         File path;
         if (args.length != 0 && new File(args[0]).exists()) {

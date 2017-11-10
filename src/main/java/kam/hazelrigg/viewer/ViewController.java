@@ -1,4 +1,4 @@
-package kam.hazelrigg.viewer;
+package main.java.kam.hazelrigg.viewer;
 
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -13,10 +13,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import kam.hazelrigg.BatchRunner;
-import kam.hazelrigg.Book;
-import kam.hazelrigg.OutputWriter;
-import kam.hazelrigg.Runner;
+import main.java.kam.hazelrigg.BatchRunner;
+import main.java.kam.hazelrigg.Book;
+import main.java.kam.hazelrigg.OutputWriter;
+import main.java.kam.hazelrigg.Runner;
 
 import java.io.File;
 import java.util.HashMap;
@@ -155,6 +155,7 @@ public class ViewController {
 
     /**
      * Creates a list of files in a seedDirectory
+     *
      * @param fileArray Array of files in a seedDirectory
      */
     private void setListOfFiles(File[] fileArray) {
@@ -169,6 +170,7 @@ public class ViewController {
 
     /**
      * Add a single file to sidebar list of files
+     *
      * @param file file to add
      */
     private void addFileToList(File file) {

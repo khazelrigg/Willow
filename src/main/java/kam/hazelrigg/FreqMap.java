@@ -1,4 +1,4 @@
-package kam.hazelrigg;
+package main.java.kam.hazelrigg;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Map.Entry.comparingByValue;
 
-class FreqMap {
+public class FreqMap {
 
     private HashMap<String, Integer> frequency = new HashMap<>();
 
@@ -93,5 +93,12 @@ class FreqMap {
         String[] keys = frequency.keySet().toArray(new String[frequency.size()]);
         Arrays.sort(keys);
         return keys;
+    }
+
+    public String getSimpleString() {
+        StringBuilder result = new StringBuilder();
+        sortByValue();
+        frequency.forEach((key, value) -> result.append(key).append(":").append(value).append("|"));
+        return result.toString();
     }
 }
