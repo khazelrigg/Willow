@@ -160,6 +160,7 @@ public class WordCountTest {
         assertTrue(test.readText() && test.isGutenberg());
     }
 
+
     @Test
     public void shouldGetResultsExist() {
         File testf = null;
