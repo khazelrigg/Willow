@@ -89,7 +89,7 @@ public class WordCountTest {
     }
 
     @Test
-    public void shouldeGetIsGutenberg() {
+    public void shouldGetIsGutenberg() {
         File testf = null;
         try {
             testf = new File(this.getClass().getResource("/test.txt").toURI());
@@ -169,11 +169,12 @@ public class WordCountTest {
             e.printStackTrace();
         }
         Book test = new Book();
-        OutputWriter ow = new OutputWriter(test);
         test.givePipeline(pipeline);
-        test.setTitleFromText(testf);
         test.setPath(testf);
+        test.setTitleFromText(testf);
         test.readText();
+
+        OutputWriter ow = new OutputWriter(test);
         ow.writeTxt();
         ow.makeDiffGraph();
         ow.makePosGraph();
@@ -182,7 +183,7 @@ public class WordCountTest {
     }
 
     @Test
-    public void shouldGetResultsDontExist() {
+    public void shouldGetNoResultsExist() {
         File testf = null;
         try {
             testf = new File(this.getClass().getResource("/test.txt").toURI());
@@ -193,9 +194,8 @@ public class WordCountTest {
         OutputWriter ow = new OutputWriter(test);
         test.givePipeline(pipeline);
         test.setTitle("test");
+        test.setAuthor("test");
         test.setPath(testf);
-        test.readText();
-        ow.writeTxt();
         assertFalse(test.resultsFileExists());
     }
 }
