@@ -60,8 +60,7 @@ public class Book {
 
         try {
             BufferedReader br = new BufferedReader(new FileReader(text));
-            String firstLine;
-            firstLine = br.readLine();
+            String firstLine = br.readLine();
 
             // If the first line is very short skip over it
             // TODO What to do if entire file is empty
@@ -108,14 +107,13 @@ public class Book {
      *
      * @param text Text to be tagged
      */
-    private void tagFile(String text) {
+    public void tagText(String text) {
         Annotation doc = new Annotation(text);
         pipeline.annotate(doc);
 
         for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
             sentenceCount++;
             for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
-                wordCount++;
 
                 if (TextTools.getSyllableCount(token.word()) == 1) {
                     difficultyMap.increaseFreq("Monosyllabic");
@@ -123,7 +121,11 @@ public class Book {
                     difficultyMap.increaseFreq("Polysyllabic");
                 }
 
-                wordFreq.increaseFreq(token.word().toLowerCase());
+                String word = token.word().replaceAll("\\W", "");
+                if (!word.isEmpty()) {
+                    wordCount++;
+                    wordFreq.increaseFreq(token.word().toLowerCase());
+                }
                 lemmaFreq.increaseFreq(token.get(CoreAnnotations.LemmaAnnotation.class));
 
                 String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
@@ -139,7 +141,7 @@ public class Book {
     /**
      * Reads a text file and tags each line for parts of speech as well as counts word frequencies.
      */
-    public void readText() {
+    public boolean readText() {
 
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 
@@ -170,7 +172,7 @@ public class Book {
                 if (gutenberg) {
                     if (line.contains("End of the Project Gutenberg EBook")
                             || line.contains("End of Project Gutenberg’s")) {
-                        break;
+                        line = "";
                     }
                 }
 
@@ -179,22 +181,20 @@ public class Book {
 
             br.close();
 
-            tagFile(text.toString());
+            tagText(text.toString());
 
             long endTime = System.currentTimeMillis();
             System.out.println(OutputWriter.ANSI_GREEN +
                     "\n☑ - Finished analysis of " + getName() + " in "
                     + (endTime - WordCount.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
-
+            return true;
         } catch (IOException e) {
             System.out.println("[Error - readText] Couldn't find file at " + path);
-            e.printStackTrace();
+        } catch (NullPointerException e) {
+            System.out.println("[Error - readText] Null pointer for file at " + path);
         }
 
-    }
-
-    public void setText(String text) {
-        tagFile(text);
+        return false;
     }
 
     public String getName() {
@@ -243,6 +243,14 @@ public class Book {
 
     public void givePipeline(StanfordCoreNLP pipeline) {
         this.pipeline = pipeline;
+    }
+
+    public boolean isGutenberg() {
+        return gutenberg;
+    }
+
+    public long getWordCount() {
+        return wordCount;
     }
 
 }

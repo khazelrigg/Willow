@@ -8,14 +8,8 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.awt.*;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -265,7 +259,7 @@ public class OutputWriter {
         } else if (purpose.equals("POS Distribution")) {
             try {
                 InputStreamReader inputStreamReader =
-                        new InputStreamReader(TextTools.class.getResourceAsStream("posAbbreviations.txt"));
+                        new InputStreamReader(TextTools.class.getResourceAsStream("/posAbbreviations.txt"));
 
                 BufferedReader br = new BufferedReader(inputStreamReader);
                 String line = br.readLine();

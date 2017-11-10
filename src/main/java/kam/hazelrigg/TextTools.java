@@ -4,17 +4,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.regex.Matcher;
 
 public class TextTools {
     static HashMap<String, String> posAbbrev = nonAbbreviate();
+
 
     /**
      * Finds if a word is monosyllabic.
      *
      * @param word word to count syllables of
      * @return true if word is monosyllabic, false otherwise
-     */
+     *//*
     static int getSyllableCount(String word) {
         Matcher m = WordCount.p.matcher(word);
         int syllables = 0;
@@ -23,7 +23,17 @@ public class TextTools {
         }
         return syllables;
     }
-
+    */
+    static int getSyllableCount(String s) {
+        s = s.trim();
+        if (s.length() <= 3) {
+            return 1;
+        }
+        s = s.toLowerCase();
+        s = s.replaceAll("[aeiouy]+", "a");
+        s = "x" + s + "x";
+        return s.split("a").length - 1;
+    }
     /**
      * Uses Nebula Award classifications to classify a text based on its length
      *
