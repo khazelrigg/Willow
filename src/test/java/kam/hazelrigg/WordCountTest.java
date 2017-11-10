@@ -19,13 +19,16 @@ public class WordCountTest {
     private ExpectedException e = ExpectedException.none();
 
     private Properties props = new Properties(
-            PropertiesUtils.asProperties("annotators", "tokenize, ssplit, pos, lemma"));
+            PropertiesUtils.asProperties(
+                    "annotators", "tokenize, ssplit, pos, lemma"
+                    , "options", "untokenizable=noneKeep"
+                    , "tokenize.language", "en"));
     private StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
     @Test
     public void getsCorrectWordCounts() {
         String testString = "I eNjoy writing a lot of unit tests. Unit tests are a loT of fUn to make.";
-        String expected = "lot:2|a:2|unit:2|tests:2|of:2|are:1|writing:1|i:1|enjoy:1|to:1|make:1|fun:1|";
+        String expected = "lot:2|unit:2|tests:2|writing:1|enjoy:1|make:1|fun:1|";
 
         Book test = new Book();
         test.givePipeline(pipeline);

@@ -1,12 +1,11 @@
 package main.java.kam.hazelrigg;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Map.Entry.comparingByValue;
@@ -52,6 +51,17 @@ public class FreqMap {
         sortByValue();
         String[] values = frequency.keySet().toArray(new String[frequency.size()]);
         return values[0] + ", " + values[1] + ", " + values[2];
+    }
+
+    void stripFromFreq(File blacklist) {
+        try (BufferedReader br = new BufferedReader(new FileReader(blacklist))) {
+            for (String line; (line = br.readLine()) != null; ) {
+                frequency.remove(line);
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

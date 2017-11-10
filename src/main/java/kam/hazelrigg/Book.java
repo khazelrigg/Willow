@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -121,21 +122,35 @@ public class Book {
                     difficultyMap.increaseFreq("Polysyllabic");
                 }
 
+                // Skip over punctuation
                 String word = token.word().replaceAll("\\W", "");
                 if (!word.isEmpty()) {
                     wordCount++;
                     wordFreq.increaseFreq(token.word().toLowerCase());
                 }
-                lemmaFreq.increaseFreq(token.get(CoreAnnotations.LemmaAnnotation.class));
+
+                String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
+                if (!lemma.replaceAll("\\W", "").isEmpty()) {
+                    lemmaFreq.increaseFreq(lemma);
+                }
 
                 String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
                 tag = posAbbrev.get(tag);
                 if (tag != null) {
                     posFreq.increaseFreq(tag);
                 }
+                syllableCount += TextTools.getSyllableCount(word);
             }
         }
-        syllableCount = TextTools.getSyllableCount(text);
+
+        File blacklist = null;
+        try {
+            System.out.println();
+            blacklist = new File(Book.class.getResource("/stopwords-english.txt").toURI());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        wordFreq.stripFromFreq(blacklist);
     }
 
     /**
@@ -172,11 +187,13 @@ public class Book {
                 if (gutenberg) {
                     if (line.contains("End of the Project Gutenberg EBook")
                             || line.contains("End of Project Gutenberg’s")) {
-                        line = "";
+                        atBook = false;
                     }
                 }
 
-                text.append(line).append(" ");
+                if (atBook) {
+                    text.append(line).append(" ");
+                }
             }
 
             br.close();
@@ -252,5 +269,4 @@ public class Book {
     public long getWordCount() {
         return wordCount;
     }
-
 }

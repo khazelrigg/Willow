@@ -240,6 +240,9 @@ public class OutputWriter {
         // Save the chart to jpeg
         try {
             ChartUtilities.saveChartAsJPEG(new File(outPath), chart, 700, 700);
+            System.out.println(ANSI_GREEN + "☑ - Finished writing " + purpose
+                    + " chart for " + book.getName() + ANSI_RESET);
+
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
         }
