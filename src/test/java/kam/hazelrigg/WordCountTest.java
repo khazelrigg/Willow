@@ -181,21 +181,4 @@ public class WordCountTest {
         ow.writeJson();
         assertTrue(test.resultsFileExists());
     }
-
-    @Test
-    public void shouldGetNoResultsExist() {
-        File testf = null;
-        try {
-            testf = new File(this.getClass().getResource("/test.txt").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        Book test = new Book();
-        OutputWriter ow = new OutputWriter(test);
-        test.givePipeline(pipeline);
-        test.setTitle("test");
-        test.setAuthor("test");
-        test.setPath(testf);
-        assertFalse(test.resultsFileExists());
-    }
 }
