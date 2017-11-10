@@ -1,2 +1,4 @@
 language: java
 jdk: oraclejdk8
+script:
+  - mvn -Dtest=WordCountTest#shouldGetResultsExist clean compile test package
