@@ -12,6 +12,8 @@
 </head>
 
 <body>
+
+<script src="scripts/jquery.js"></script>
 <script src="scripts/d3.v3.min.js"></script>
 <script type="text/javascript" src="scripts/main.js"></script>
 
@@ -26,8 +28,8 @@
     <div class="row">
         <!-- Create book list -->
         <div class="col list-group" id="book-list">
-            <a href="#" class="list-group-item active">The Invisible Man</a>
-            <a href="#" class="list-group-item list-group-item-action">Moby Dick</a>
+            <a href="#" class="list-group-item list-group-item-action active">The Invisible Man</a>
+            <a href="#" class="list-group-item list-group-item-action">Dracula</a>
             <a href="#" class="list-group-item list-group-item-action">2 B R 0 2 B</a>
             <a href="#" class="list-group-item list-group-item-action">Alice's Adventures in
                 Wonderland</a>
@@ -36,60 +38,61 @@
         </div>
 
         <!-- Create D3 chart -->
-        <div class="col" id="chart">
+        <div class="col" id="chart"></div>
 
 
-            <!-- Create data list -->
-            <div class="col" id="dataTable">
-                <ul class="list-group">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Total Words
-                        <span class="badge badge-primary">48651</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Unique Words
-                        <span class="badge badge-primary">6168</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Sentences
-                        <span class="badge badge-primary">4004</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Syllables
-                        <span class="badge badge-primary">68276</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Length
-                        <span class="badge badge-primary">Novel</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Flesch-Kincaid Ease
-                        <span class="badge badge-primary">7th grade</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Polysyllabic words
-                        <span class="badge badge-primary">13736</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Monosyllabic words
-                        <span class="badge badge-primary">15163</span>
-                    </li>
-                </ul>
-                <!-- End data list -->
-            </div>
-
-            <!-- End row -->
+        <!-- Create data list -->
+        <div class="col" id="dataTable">
+            <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Total Words
+                    <span class="badge badge-primary">48651</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Unique Words
+                    <span class="badge badge-primary">6168</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Sentences
+                    <span class="badge badge-primary">4004</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Syllables
+                    <span class="badge badge-primary">68276</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Length
+                    <span class="badge badge-primary">Novel</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Flesch-Kincaid Ease
+                    <span class="badge badge-primary">7th grade</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Polysyllabic words
+                    <span class="badge badge-primary">13736</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Monosyllabic words
+                    <span class="badge badge-primary">15163</span>
+                </li>
+            </ul>
+            <!-- End data list -->
         </div>
 
         <footer class="footer">
             <div class="container">
-                    <span class="text-muted">Made by Kameron Hazelrigg <a
-                            href="https://github.com/khazelrigg/wordCount"><i
-                            class="fa fa-github"></i></a></span>
+            <span class="text-muted">Made by Kameron Hazelrigg <a
+                    href="https://github.com/khazelrigg/wordCount"><i
+                    class="fa fa-github"></i></a></span>
             </div>
         </footer>
+        <!-- End row -->
     </div>
-    </div>
+
+
+    <!-- End container -->
+</div>
 </body>
 
 </html>

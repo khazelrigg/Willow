@@ -1,30 +1,24 @@
-	circle,
-        path {
-          cursor: pointer;
-        }
+circle,
+    path {
+      cursor: pointer;
+    }
 
-        circle {
-          fill: none;
-          pointer-events: all;
-        }
+    circle {
+      fill: none;
+      pointer-events: all;
+    }
 
-        #tooltip { 
-          background-color: #f2f2f2;
-          padding: 3px 5px;
-          border: 1px solid black;
-          text-align: center;
-        }
-
-html {
-  min-height: 100%;
-  height: 100%;
-}
+    #tooltip {
+      background-color: #f2f2f2;
+      padding: 3px 5px;
+      border: 1px solid black;
+      text-align: center;
+    }
 
 body {
   margin: 15px;
-  min-height: 100%;
-  height: 100%;
   background-color: #f2f2f2;
+  height: 100%;
 }
 
 #titleHeader {
@@ -32,11 +26,9 @@ body {
 }
 
 .content {
-  min-height: 100%;
-  height: 100%;
-  background-color: #ffffff;
+  background-color: #FFFFFF;
   box-shadow: 0px 0px 6px #222222;
-
+  height: 100%;
 }
 
 .list-group {
@@ -48,9 +40,7 @@ body {
 }
 
 .footer {
-  position: absolute;
   bottom: 0;
-  /* Set the fixed height of the footer here */
   height: 60px;
-  line-height: 60px; /* Vertically center the text there */
+  line-height: 60px;
 }
