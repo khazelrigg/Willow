@@ -1,4 +1,4 @@
-package main.java.kam.hazelrigg;
+package kam.hazelrigg;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
@@ -8,8 +8,14 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.*;
-import java.io.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,7 +56,6 @@ public class OutputWriter {
     }
 
     public void writeTxt() {
-        //System.out.println("Starting TXT creation for " + book.getName());
         if (book.posFreq.getSize() > 0) {
             makeResultDirs();
             File outFile;
@@ -74,7 +79,8 @@ public class OutputWriter {
                 bw.write("\n" + wrapInBox("Parts of Speech Tags") + "\n" + book.posFreq.toString());
                 bw.write("\n" + wrapInBox("Word Counts") + "\n" + book.wordFreq.toString());
                 bw.write("\n" + wrapInBox("Lemma Counts") + "\n" + book.lemmaFreq.toString());
-                bw.write("\n" + wrapInBox("Concordance") + "\n" + createConcordance());
+                bw.write("\n" + wrapInBox("Concordance") + "\n" + createConcordance(book.wordFreq));
+                bw.write("\n" + wrapInBox("Lemma Concordance") + "\n" + createConcordance(book.lemmaFreq));
 
                 bw.close();
                 System.out.println(ANSI_GREEN + "☑ - Finished writing TXT information for " + book.getName() + ANSI_RESET);
@@ -170,10 +176,10 @@ public class OutputWriter {
      *
      * @return String wrapped at 100 characters
      */
-    private String createConcordance() {
+    private String createConcordance(FreqMap freqs) {
         StringBuilder concordance = new StringBuilder();
 
-        for (String word : book.wordFreq.getSortedByKey()) {
+        for (String word : freqs.getSortedByKey()) {
             concordance.append(word).append(" ");
         }
 
@@ -304,38 +310,21 @@ public class OutputWriter {
             json.put("name", book.getName());
             json.put("description", "Parts of speech for " + book.getName());
 
-            JSONObject nouns = new JSONObject();
-            nouns.put("name", "Nouns");
-            nouns.put("description", "Nouns");
+            String[] types = {"Nouns", "Verbs", "Adverbs", "Adjectives", "Pronouns", "Other"};
+            HashMap<String, JSONObject> jsonObjects = new HashMap<>();
+            HashMap<String, JSONArray> jsonTypes = new HashMap<>();
 
-            JSONObject verbs = new JSONObject();
-            verbs.put("name", "Verbs");
-            verbs.put("description", "Verbs");
+            for (String type : types) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("name", type);
+                jsonObject.put("description", type);
 
-            JSONObject adverbs = new JSONObject();
-            adverbs.put("name", "Adverbs");
-            adverbs.put("description", "Adverbs");
-
-            JSONObject adjective = new JSONObject();
-            adjective.put("name", "Adjectives");
-            adjective.put("description", "Adjectives");
-
-            JSONObject pronouns = new JSONObject();
-            pronouns.put("name", "Pronouns");
-            pronouns.put("description", "Pronouns");
-
-            JSONObject others = new JSONObject();
-            others.put("name", "Other");
-            others.put("description", "Other");
-
-            JSONArray nounTypes = new JSONArray();
-            JSONArray verbTypes = new JSONArray();
-            JSONArray adverbTypes = new JSONArray();
-            JSONArray adjectiveTypes = new JSONArray();
-            JSONArray pronounTypes = new JSONArray();
-            JSONArray otherTypes = new JSONArray();
+                jsonObjects.put(type, jsonObject);
+                jsonTypes.put(type, new JSONArray());
+            }
 
             for (String type : book.posFreq.keySet()) {
+
                 // Create temporary parent for each type
                 JSONObject parent = new JSONObject();
                 parent.put("name", type);
@@ -352,37 +341,28 @@ public class OutputWriter {
 
                 //Categorise each type
                 if (TextTools.getParentType(type).equals("Noun")) {
-                    nounTypes.add(parent);
+                    jsonTypes.get("Nouns").add(parent);
                 } else if (TextTools.getParentType(type).equals("Verb")) {
-                    verbTypes.add(parent);
+                    jsonTypes.get("Verbs").add(parent);
                 } else if (TextTools.getParentType(type).equals("Adverb")) {
-                    adverbTypes.add(parent);
+                    jsonTypes.get("Adverbs").add(parent);
                 } else if (TextTools.getParentType(type).equals("Adjective")) {
-                    adjectiveTypes.add(parent);
+                    jsonTypes.get("Adjectives").add(parent);
                 } else if (TextTools.getParentType(type).equals("Pronoun")) {
-                    pronounTypes.add(parent);
+                    jsonTypes.get("Pronouns").add(parent);
                 } else {
-                    otherTypes.add(parent);
+                    jsonTypes.get("Other").add(parent);
                 }
             }
 
-            // Give each parent a child
-            nouns.put("children", nounTypes);
-            verbs.put("children", verbTypes);
-            adverbs.put("children", adverbTypes);
-            adjective.put("children", adjectiveTypes);
-            pronouns.put("children", pronounTypes);
-            others.put("children", otherTypes);
-
-
-            // Add all parent speech types to root parent
             JSONArray rootParent = new JSONArray();
-            rootParent.add(nouns);
-            rootParent.add(verbs);
-            rootParent.add(adverbs);
-            rootParent.add(adjective);
-            rootParent.add(pronouns);
-            rootParent.add(others);
+
+            for (String type : types) {
+                // Add children arrays to each object
+                jsonObjects.get(type).put("children", jsonTypes.get(type));
+                // Add objects to parent array
+                rootParent.add(jsonObjects.get(type));
+            }
 
             json.put("children", rootParent);
 

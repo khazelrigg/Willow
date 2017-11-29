@@ -20,7 +20,7 @@ public class Viewer extends Application {
         int height = 700;
 
         stage.setTitle("Word Count");
-        stage.setScene(new Scene(FXMLLoader.load(getClass().getResource("wordCount.fxml")), width, height));
+        stage.setScene(new Scene(FXMLLoader.load(getClass().getResource("/viewer/wordCount.fxml")), width, height));
         stage.getIcons().add(new Image(Viewer.class.getResourceAsStream("icons/bookshelf.png")));
         stage.show();
     }

@@ -1,4 +1,4 @@
-package main.java.kam.hazelrigg;
+package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 

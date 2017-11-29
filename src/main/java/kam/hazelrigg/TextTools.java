@@ -1,4 +1,4 @@
-package main.java.kam.hazelrigg;
+package kam.hazelrigg;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,7 +12,7 @@ public class TextTools {
     /**
      * Finds if a word is monosyllabic.
      *
-     * @param word word to count syllables of
+     * @param s word to count syllables of
      * @return true if word is monosyllabic, false otherwise
      *//*
     static int getSyllableCount(String word) {

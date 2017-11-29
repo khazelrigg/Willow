@@ -1,9 +1,7 @@
-package main.java.kam.hazelrigg;
-
+package kam.hazelrigg;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
@@ -14,11 +12,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.List;
 
 public class Book {
-    public final FreqMap posFreq;
-    public final FreqMap wordFreq;
+    final FreqMap posFreq;
+    final FreqMap wordFreq;
     final FreqMap lemmaFreq;
     final FreqMap difficultyMap;
     private HashMap<String, String> posAbbrev = TextTools.posAbbrev;
@@ -29,7 +26,7 @@ public class Book {
     long wordCount;
     long syllableCount;
     long sentenceCount;
-    List<HasWord> longestSentence;
+    CoreMap longestSentence;
     private boolean gutenberg;
     private File path;
     private StanfordCoreNLP pipeline;
@@ -93,7 +90,6 @@ public class Book {
                 title = title.substring(0, title.length() - 1);
             }
 
-            br.close();
         } catch (IOException e) {
             System.out.println("[Error - SetTitle] Error opening file for setting title");
             e.printStackTrace();
@@ -108,12 +104,16 @@ public class Book {
      *
      * @param text Text to be tagged
      */
-    public void tagText(String text) {
+    void tagText(String text) {
         Annotation doc = new Annotation(text);
         pipeline.annotate(doc);
 
         for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
             sentenceCount++;
+            if (longestSentence == null || sentence.size() > longestSentence.size()) {
+                longestSentence = sentence;
+            }
+
             for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
 
                 if (TextTools.getSyllableCount(token.word()) == 1) {
@@ -145,8 +145,7 @@ public class Book {
 
         File blacklist = null;
         try {
-            System.out.println();
-            blacklist = new File(Book.class.getResource("/stopwords-english.txt").toURI());
+            blacklist = new File(Book.class.getResource("/stopwords-english.txt").toURI());  
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -162,11 +161,10 @@ public class Book {
 
             System.out.println("☐ - Starting analysis of " + getName());
 
-            Boolean atBook = false;
+            boolean atBook = !gutenberg;
             StringBuilder text = new StringBuilder();
 
             for (String line; (line = br.readLine()) != null; ) {
-
                 // Skip empty lines
                 if (line.isEmpty()) {
                     continue;
@@ -195,9 +193,6 @@ public class Book {
                     text.append(line).append(" ");
                 }
             }
-
-            br.close();
-
             tagText(text.toString());
 
             long endTime = System.currentTimeMillis();
@@ -258,7 +253,7 @@ public class Book {
         this.subdirectory = dir;
     }
 
-    public void givePipeline(StanfordCoreNLP pipeline) {
+    void givePipeline(StanfordCoreNLP pipeline) {
         this.pipeline = pipeline;
     }
 

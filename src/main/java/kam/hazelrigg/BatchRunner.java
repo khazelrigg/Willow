@@ -23,13 +23,12 @@ public class BatchRunner {
             runner.start();
             while (runner.isAlive()) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
             running = false;
-            System.out.println("Runner stopped");
         }
     }
 

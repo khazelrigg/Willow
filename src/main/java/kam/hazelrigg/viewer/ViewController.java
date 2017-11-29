@@ -1,4 +1,4 @@
-package main.java.kam.hazelrigg.viewer;
+package kam.hazelrigg.viewer;
 
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -13,12 +13,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import main.java.kam.hazelrigg.BatchRunner;
-import main.java.kam.hazelrigg.Book;
-import main.java.kam.hazelrigg.OutputWriter;
-import main.java.kam.hazelrigg.Runner;
+import kam.hazelrigg.BatchRunner;
+import kam.hazelrigg.Book;
+import kam.hazelrigg.OutputWriter;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 
 public class ViewController {
@@ -62,6 +62,10 @@ public class ViewController {
     public void openFile() {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(chooserPane);
+        fileChooser.setTitle("Open file");
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("TXT", "*.txt"));
 
         if (file != null) {
             seedDirectory = null;
@@ -81,7 +85,6 @@ public class ViewController {
         directoryChooser.setTitle("Open folder");
         directoryChooser.setInitialDirectory(
                 new File(System.getProperty("user.home")));
-
 
         File dir = directoryChooser.showDialog(chooserPane);
         if (dir != null) {
@@ -137,14 +140,6 @@ public class ViewController {
                 if (diffChartToggle.isSelected()) {
                     ow.makeDiffGraph();
                     showDifficultyChart(book);
-                }
-
-                while (Runner.running) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                 }
 
                 long endTime = System.currentTimeMillis();
@@ -225,5 +220,14 @@ public class ViewController {
                 + " Difficulty Results.jpeg");
 
         difficultyImageView.setImage(difficultyChart);
+    }
+
+    public void openTextEditor() {
+        try {
+            java.awt.Desktop.getDesktop().edit(new File("results/txt/" + book.subdirectory + "/" + book.getName()
+                    + " Results.jpeg"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

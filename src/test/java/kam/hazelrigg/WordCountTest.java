@@ -1,10 +1,8 @@
-package test.java.kam.hazelrigg;
+package kam.hazelrigg;
 
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.PropertiesUtils;
-import main.java.kam.hazelrigg.Book;
-import main.java.kam.hazelrigg.OutputWriter;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -13,7 +11,9 @@ import java.io.FileNotFoundException;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class WordCountTest {
     private ExpectedException e = ExpectedException.none();
