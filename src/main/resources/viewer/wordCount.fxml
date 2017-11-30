@@ -26,7 +26,7 @@
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" AnchorPane.bottomAnchor="0.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
             xmlns="http://javafx.com/javafx/8.0.162-ea"
-            fx:controller="kam.hazelrigg.viewer.ViewController">
+            fx:controller="main.java.kam.hazelrigg.viewer.ViewController">
 
     <top>
         <VBox>
@@ -90,9 +90,6 @@
                 <Separator/>
 
                 <Button fx:id="openTextButton" onAction="#openTextEditor">
-                    <tooltip>
-                        <Tooltip text="Open results text in text editor"/>
-                    </tooltip>
                     <graphic>
                         <ImageView>
                             <Image url="@icons/document.png"/>
