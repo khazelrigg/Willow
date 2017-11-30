@@ -305,9 +305,7 @@ public class OutputWriter {
 
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
-
-            /* TODO Find a way to reduce redundancy
-               Maybe a list or Hashmap could do that */
+            
             JSONObject json = new JSONObject();
             json.put("name", book.getName());
             json.put("description", "Parts of speech for " + book.getName());
