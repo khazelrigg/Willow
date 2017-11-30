@@ -208,7 +208,7 @@ public class OutputWriter {
         String outPath;
 
         // Create results directories
-        if (new File("results/img/").isDirectory()) {
+        if (makeDir("results/img/")) {
             outPath = "results/img/" + book.subdirectory + "/" + book.getName() + " " + purpose + " Results.jpeg";
         } else {
             System.out.println("[Error] Failed to create image results directories");
@@ -290,9 +290,11 @@ public class OutputWriter {
     }
 
     @SuppressWarnings("unchecked")
-    public void writeJson() {
+    public String writeJson() {
         //System.out.println("Starting JSON creation for " + book.getName());
         File out;
+
+        makeDir("results/json/");
         // Create results directories
         if (book.subdirectory.equals("")) {
             out = new File("results/json/" + book.getName() + " Results.json");
@@ -368,12 +370,14 @@ public class OutputWriter {
 
             bw.write(json.toJSONString());
             bw.close();
+            System.out.println(ANSI_GREEN + "☑ - Finished writing JSON information for " + book.getName() + ANSI_RESET);
+            return json.toJSONString();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println(ANSI_GREEN + "☑ - Finished writing JSON information for " + book.getName() + ANSI_RESET);
-
+        return null;
     }
+
 
 }

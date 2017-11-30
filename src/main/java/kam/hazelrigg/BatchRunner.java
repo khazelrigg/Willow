@@ -21,13 +21,7 @@ public class BatchRunner {
 
         for (Runner runner : runners) {
             runner.start();
-            while (runner.isAlive()) {
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+
             running = false;
         }
     }
@@ -49,26 +43,25 @@ public class BatchRunner {
 }
 
 class Runner extends Thread {
-    private final Book book;
+    private Book book;
     private final File file;
 
     Runner(File file, File sub, String start) {
         new Thread(this);
         this.file = file;
-        this.book = new Book();
-        this.book.setPath(file);
         try {
             String parentOfSub = sub.getParentFile().toString().substring(start.length() + 1);
-            this.book.setSubdirectory(parentOfSub);
+            this.book = new Book(parentOfSub);
             System.out.println("┌══════════[ NEW BOOK ]══════════╾\n│ ┌╾ " + parentOfSub
                     + "\n│ └──╾ " + file.getPath() + "\n└════════════════════════════════╾\n");
 
         } catch (StringIndexOutOfBoundsException e) {
             //If theres is no subdirectory parent we must be in the parent directory
-            this.book.setSubdirectory("");
+            this.book = new Book();
             System.out.println("┌══════════[ NEW BOOK ]══════════╾\n| ┌╾ ROOT\n│ └──╾ "
                     + file.getPath() + "\n└════════════════════════════════╾\n");
         }
+        this.book.setPath(file);
     }
 
     /**

@@ -6,8 +6,11 @@ import edu.stanford.nlp.util.PropertiesUtils;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
@@ -50,6 +53,33 @@ public class WordCountTest {
     }
 
     @Test
+    public void createsCorrectJSON() {
+        File testf = null;
+        try {
+            testf = new File(this.getClass().getResource("/test.txt").toURI());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+        Book test = new Book();
+        test.givePipeline(pipeline);
+        test.setPath(testf);
+        test.setTitleFromText(testf);
+        test.readText();
+
+        OutputWriter ow = new OutputWriter(test);
+        ow.writeJson();
+        String outputJson = "";
+        try {
+            outputJson = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/test_expectedJson.json"))).readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(outputJson, ow.writeJson());
+    }
+
+    @Test
     public void ignoresPunctuationInWordCount() {
         Book test = new Book();
         test.givePipeline(pipeline);
@@ -60,6 +90,21 @@ public class WordCountTest {
 
     @Test
     public void getsTitleFromText() {
+        File testf = null;
+        try {
+            testf = new File(this.getClass().getResource("/test.txt").toURI());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+        Book test = new Book();
+        test.setTitleFromText(testf);
+
+        assertEquals("2 B R 0 2 B", test.getTitle());
+    }
+
+    @Test
+    public void getsNameFromText() {
         File testf = null;
         try {
             testf = new File(this.getClass().getResource("/test.txt").toURI());
@@ -185,4 +230,21 @@ public class WordCountTest {
         ow.writeJson();
         assertTrue(test.resultsFileExists());
     }
+
+    @Test
+    public void shouldBeMissingFile() {
+        e.expect(NullPointerException.class);
+        Book test = new Book();
+        test.givePipeline(pipeline);
+        test.setPath(new File("whoops, nothing here"));
+        test.getPath();
+        test.readText();
+    }
+
+    @Test
+    public void subdirectoryBook() {
+        Book test = new Book("dir");
+        assertEquals(test.subdirectory, "dir");
+    }
+
 }

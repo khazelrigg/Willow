@@ -43,6 +43,19 @@ public class Book {
         this.lemmaFreq = new FreqMap();
         this.difficultyMap = new FreqMap();
     }
+
+    public Book(String subdirectory) {
+        this.title = "";
+        this.author = "";
+        this.gutenberg = false;
+        this.subdirectory = subdirectory;
+        this.pipeline = WordCount.pipeline;
+
+        this.posFreq = new FreqMap();
+        this.wordFreq = new FreqMap();
+        this.lemmaFreq = new FreqMap();
+        this.difficultyMap = new FreqMap();
+    }
     //TODO Add polysyndeton and parallelism statistics. Look into polyptoton and alliteration as well
 
 
@@ -247,10 +260,6 @@ public class Book {
         File diffImg = new File("results/img/" + subdirectory + "/" + getName() + " Difficulty Results.jpeg");
         File json = new File("results/json/" + subdirectory + "/" + getName() + " Results.json");
         return txt.exists() && img.exists() && diffImg.exists() && json.exists();
-    }
-
-    void setSubdirectory(String dir) {
-        this.subdirectory = dir;
     }
 
     void givePipeline(StanfordCoreNLP pipeline) {
