@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 
 public class WordCount {
     public static Pattern p = Pattern.compile("[aeiouy]+[^$e(,.:;!?)]");
-    static final long startTime = System.currentTimeMillis();
+    static long startTime;
     static StanfordCoreNLP pipeline;
     static File path;
 
@@ -27,8 +27,10 @@ public class WordCount {
         }
 
         if (path.isDirectory()) {
+            startTime = System.currentTimeMillis();
             BatchRunner.startRunners(path);
         } else if (path.isFile()) {
+            startTime = System.currentTimeMillis();
             Book book = new Book();
             book.setTitleFromText(path);
             book.setPath(path);

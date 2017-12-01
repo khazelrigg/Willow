@@ -69,6 +69,10 @@ class Runner extends Thread {
      * Actions to perform with each book
      */
     void runBook() {
+        // TODO:
+        // Look into splitting large files into several small ones that are later added together
+        // in order to reduce the memory consumption of large books.
+
         book.readText();
         OutputWriter ow = new OutputWriter(book);
         ow.writeTxt();

@@ -273,7 +273,7 @@ public class Book {
         return gutenberg;
     }
 
-    public long getWordCount() {
+    long getWordCount() {
         return wordCount;
     }
 }
