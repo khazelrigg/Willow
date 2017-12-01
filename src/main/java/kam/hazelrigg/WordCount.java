@@ -28,7 +28,8 @@ public class WordCount {
         options.addOption("h", "help", false, "Print help")
                 .addOption("k", "interactive", false, "Run interactive mode, choose options when run instead of in command line")
                 .addOption("i", "images", false, "Create image outputs")
-                .addOption("j", "json", false, "Create JSON output");
+                .addOption("j", "json", false, "Create JSON output")
+                .addOption("o", "overwrite", false, "Overwrite any results");
 
         HelpFormatter formatter = new HelpFormatter();
 
@@ -40,12 +41,13 @@ public class WordCount {
             }
 
             if (cmd.hasOption("i")) {
-                System.out.println("i");
-                createImg = true;
+                BatchRunner.createImg = true;
             }
             if (cmd.hasOption("j")) {
-                System.out.println("j");
-                createJson = true;
+                BatchRunner.createJson = true;
+            }
+            if (cmd.hasOption("o")) {
+                BatchRunner.overwrite = true;
             }
 
             if (cmd.getArgs().length == 1) {
@@ -65,8 +67,6 @@ public class WordCount {
     }
 
     private static void start(File path) {
-        BatchRunner.createImg = createImg;
-        BatchRunner.createJson = createJson;
         BatchRunner.startRunners(path);
     }
 

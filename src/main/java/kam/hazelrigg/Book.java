@@ -5,11 +5,15 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
+import org.apache.pdfbox.io.RandomAccessFile;
+import org.apache.pdfbox.pdfparser.PDFParser;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 
 public class Book {
     final FreqMap posFreq;
@@ -166,6 +170,27 @@ public class Book {
      * Reads a text file and tags each line for parts of speech as well as counts word frequencies.
      */
     public boolean readText() {
+        try {
+            String fileType = Files.probeContentType(path.toPath());
+            System.out.println(fileType);
+            if (fileType.equals("text/plain")) {
+                readPlainText();
+            } else if (fileType.equals("application/pdf")) {
+                readPDF();
+            }
+
+            long endTime = System.currentTimeMillis();
+            System.out.println(OutputWriter.ANSI_GREEN +
+                    "\n☑ - Finished analysis of " + getName() + " in "
+                    + (endTime - WordCount.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean readPlainText() {
 
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 
@@ -205,11 +230,6 @@ public class Book {
             }
 
             tagText(text.toString());
-
-            long endTime = System.currentTimeMillis();
-            System.out.println(OutputWriter.ANSI_GREEN +
-                    "\n☑ - Finished analysis of " + getName() + " in "
-                    + (endTime - WordCount.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
             return true;
         } catch (IOException e) {
             System.out.println("[Error - readText] Couldn't find file at " + path);
@@ -218,6 +238,19 @@ public class Book {
             e.printStackTrace();
         }
 
+        return false;
+    }
+
+    private boolean readPDF() {
+        try {
+            PDFTextStripper pdfStripper = new PDFTextStripper();
+            PDFParser parser = new PDFParser(new RandomAccessFile(path, "r"));
+            parser.parse();
+            tagText(pdfStripper.getText(parser.getPDDocument()));
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 

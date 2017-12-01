@@ -10,6 +10,7 @@ public class BatchRunner {
     private static ArrayList<Runner> runners = new ArrayList<>();
     static boolean createJson = false;
     static boolean createImg = false;
+    static boolean overwrite = false;
 
     /**
      * Start a runner on a new thread for each file in a directory
@@ -27,6 +28,7 @@ public class BatchRunner {
         for (Runner runner : runners) {
             Runner.createImage(createImg);
             Runner.createJson(createImg);
+            Runner.overwrite(overwrite);
             runner.start();
             //     running = false;
         }
@@ -57,6 +59,7 @@ class Runner extends Thread {
     private final File file;
     private static boolean createImg = false;
     private static boolean createJson = false;
+    private static boolean overwrite = false;
 
     Runner(File file, File sub, String start) {
         new Thread(this);
@@ -104,11 +107,17 @@ class Runner extends Thread {
         createJson = b;
     }
 
+    static void overwrite(boolean b) {
+        overwrite = b;
+    }
+
     @Override
     public void run() {
         book.setTitleFromText(file);
 
-        if (book.resultsFileExists(createImg, createJson)) {
+        if (overwrite) {
+            runBook();
+        } else if (book.resultsFileExists(createImg, createJson)) {
             System.out.println("☑ - " + file.getName() + " already has results");
         } else {
             runBook();
