@@ -105,7 +105,7 @@ public class Book {
             }
 
         } catch (IOException e) {
-            System.out.println("[Error - SetTitle] Error opening file for setting title");
+            System.out.println("[Error - SetTitle] Error opening " + text.getName() + " for setting title");
             e.printStackTrace();
         }
 
@@ -163,20 +163,19 @@ public class Book {
         }
 
         // Remove stop-words from the word counts
-        wordFreq.stripFromFreq();
+        wordFreq.stripStopWords();
     }
 
     /**
-     * Reads a text file and tags each line for parts of speech as well as counts word frequencies.
+     * Finds the appropriate file type of book to then read text
      */
     public boolean readText() {
         try {
             String fileType = Files.probeContentType(path.toPath());
-            System.out.println(fileType);
             if (fileType.equals("text/plain")) {
-                readPlainText();
+                return readPlainText();
             } else if (fileType.equals("application/pdf")) {
-                readPDF();
+                return readPDF();
             }
 
             long endTime = System.currentTimeMillis();
@@ -185,11 +184,17 @@ public class Book {
                     + (endTime - WordCount.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
 
         } catch (IOException e) {
+            System.out.println("[Error - readText] IOException when probing file type of " + path.getName());
             e.printStackTrace();
         }
         return false;
     }
 
+    /**
+     * Reads and tags a plain text file
+     *
+     * @return true if successfully finished
+     */
     private boolean readPlainText() {
 
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
@@ -232,15 +237,21 @@ public class Book {
             tagText(text.toString());
             return true;
         } catch (IOException e) {
-            System.out.println("[Error - readText] Couldn't find file at " + path);
+            System.out.println("[Error - readPlainText] Couldn't find file at " + path);
         } catch (NullPointerException e) {
-            System.out.println("[Error - readText] Null pointer for file at " + path);
+            System.out.println("[Error - readPlainText] Null pointer for file at " + path);
             e.printStackTrace();
         }
-
+        // If the file cannot be read, quit the program
+        System.exit(2);
         return false;
     }
 
+    /**
+     * Reads and tags a PDF file
+     *
+     * @return true if successfully finished
+     */
     private boolean readPDF() {
         try {
             PDFTextStripper pdfStripper = new PDFTextStripper();
@@ -249,11 +260,18 @@ public class Book {
             tagText(pdfStripper.getText(parser.getPDDocument()));
             return true;
         } catch (IOException e) {
+            System.out.println("[Error - readPDF] IOException when opening PDFParser for " + path.getName());
             e.printStackTrace();
         }
+        System.exit(2);
         return false;
     }
 
+    /**
+     * Create a name for the book, format: title by author
+     *
+     * @return Formatted string
+     */
     public String getName() {
         // If there is no author don't add the " by XXX"
         if (author.equals("")) {

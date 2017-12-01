@@ -1,7 +1,11 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import java.io.File;
 import java.util.Properties;
@@ -12,9 +16,6 @@ public class WordCount {
     public static Pattern p = Pattern.compile("[aeiouy]+[^$e(,.:;!?)]");
     static final long startTime = System.currentTimeMillis();
     static StanfordCoreNLP pipeline;
-
-    private static boolean createImg = false;
-    private static boolean createJson = false;
 
     public static void main(String[] args) {
         // Set up CoreNlp pipeline
@@ -33,6 +34,7 @@ public class WordCount {
 
         HelpFormatter formatter = new HelpFormatter();
 
+        // Check for passed options
         try {
             CommandLine cmd = new DefaultParser().parse(options, args);
             if (cmd.getOptions().length == 0 && cmd.getArgs().length == 0) {
@@ -61,6 +63,7 @@ public class WordCount {
 
             start(path);
         } catch (ParseException e) {
+            System.out.println("[Error - main] Error parsing command line options");
             e.printStackTrace();
         }
 
@@ -72,11 +75,17 @@ public class WordCount {
 
 
     private static File runInteractive() {
-        createImg = getYesNo("Create image outputs");
-        createJson = getYesNo("Create JSON output");
+        BatchRunner.createImg = getYesNo("Create image outputs");
+        BatchRunner.createJson = getYesNo("Create JSON output");
         return new File(getFileName());
     }
 
+    /**
+     * Ask the user a yes or no question
+     *
+     * @param msg Question to ask, doesn't need question mark
+     * @return true if user answers yes, false if they answer no
+     */
     private static boolean getYesNo(String msg) {
         Scanner kb = new Scanner(System.in);
         while (true) {

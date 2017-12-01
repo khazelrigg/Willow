@@ -3,8 +3,13 @@ package kam.hazelrigg;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Map.Entry.comparingByValue;
@@ -53,13 +58,17 @@ public class FreqMap {
     }
 
 
-    void stripFromFreq() {
+    /**
+     * Removes stop words from a FreqMap
+     */
+    void stripStopWords() {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/stopwords-english.txt")))) {
             for (String line; (line = br.readLine()) != null; ) {
                 frequency.remove(line);
             }
             br.close();
         } catch (IOException e) {
+            System.out.println("[Error - stripStopWords] Error opening stop words file");
             e.printStackTrace();
         }
     }
@@ -105,6 +114,11 @@ public class FreqMap {
         return keys;
     }
 
+    /**
+     * Format the FreqMaps contents for debugging, Format = KEY:VALUE|KEY:VALUE ...
+     *
+     * @return Formatted string
+     */
     String getSimpleString() {
         StringBuilder result = new StringBuilder();
         sortByValue();

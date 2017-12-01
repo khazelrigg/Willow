@@ -45,6 +45,7 @@ public class BatchRunner {
                     .forEach(f ->
                             runners.add(new Runner(f.toFile(), f.toFile(), directory.getName())));
         } catch (IOException e) {
+            System.out.println("[Error - openDirectory] IOException when attempting to walk files in " + directory.getName());
             e.printStackTrace();
         }
     }
@@ -64,6 +65,7 @@ class Runner extends Thread {
     Runner(File file, File sub, String start) {
         new Thread(this);
         this.file = file;
+
         try {
             String parentOfSub = sub.getParentFile().toString().substring(start.length() + 1);
             this.book = new Book(parentOfSub);
@@ -76,6 +78,7 @@ class Runner extends Thread {
             System.out.println("┌══════════[ NEW BOOK ]══════════╾\n| ┌╾ ROOT\n│ └──╾ "
                     + file.getPath() + "\n└════════════════════════════════╾\n");
         }
+
         this.book.setPath(file);
     }
 
@@ -89,6 +92,7 @@ class Runner extends Thread {
         if (createJson) {
             ow.writeJson();
         }
+
         if (createImg) {
             ow.makeDiffGraph();
             ow.makePosGraph();

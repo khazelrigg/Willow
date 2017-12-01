@@ -8,8 +8,14 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.*;
-import java.io.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +31,9 @@ public class OutputWriter {
         this.book = book;
     }
 
+    /**
+     * Create folders for result subdirectories
+     */
     private void makeResultDirs() {
         makeParentDirs();
         if (!book.subdirectory.equals("")) {
@@ -35,7 +44,7 @@ public class OutputWriter {
     }
 
     /**
-     * Creates results directories for files to be saved to.
+     * Creates root results directories for files to be saved to.
      */
     private void makeParentDirs() {
         if (!(makeDir("results/txt") || makeDir("results/img")
@@ -44,11 +53,20 @@ public class OutputWriter {
         }
     }
 
+    /**
+     * Create a directory
+     *
+     * @param path Path of directory to be created
+     * @return true if successful
+     */
     private boolean makeDir(String path) {
         File dir = new File(path);
         return dir.exists() || dir.mkdirs();
     }
 
+    /**
+     * Writes Book information to a text file
+     */
     public void writeTxt() {
         if (book.posFreq.getSize() > 0) {
             makeResultDirs();
@@ -80,12 +98,19 @@ public class OutputWriter {
                 System.out.println(ANSI_GREEN + "☑ - Finished writing TXT information for " + book.getName() + ANSI_RESET);
 
             } catch (IOException e) {
+                System.out.println("[Error - writeTxt] Error opening " + outFile.getName() + "for writing");
                 e.printStackTrace();
             }
 
         }
     }
 
+    /**
+     * Formats a string into a 100 character wide box
+     *
+     * @param text Text to be placed into box
+     * @return Formatted String
+     */
     private String wrapInBox(String text) {
         //                   TL   TC   TR   LL   LC   LR   COL
         String[] boxParts = {"╒", "═", "╕", "└", "─", "┘", "│"};
@@ -124,6 +149,11 @@ public class OutputWriter {
         return wrapped.toString();
     }
 
+    /**
+     * Format a Book's data into a list style string
+     *
+     * @return Formatted string
+     */
     private String getStats() {
         return "Total Words: " + book.wordCount
                 + "\nUnique Words: " + book.wordFreq.getSize()
@@ -138,6 +168,11 @@ public class OutputWriter {
                 + wrap("\nLongest Sentence; " + book.longestSentence, 100) + "\n";
     }
 
+    /**
+     * Format a Book's data into a paragraph style String wrapped at 100 characters
+     *
+     * @return Formatted String
+     */
     private String getConclusionString() {
         long wordCount = book.wordCount;
         long sentenceCount = book.sentenceCount;
@@ -156,11 +191,11 @@ public class OutputWriter {
                         + "at the %s level. Comparing the ratio of (%d) polysyllabic words to (%d) "
                         + "monosyllabic words it can be speculated that this text is %s to read. To"
                         + " read this text at a rate of 275wpm it would take %d minute(s) to finish"
-                        + ", %d minute(s) to speak at 180wpm, %d minutes to type at 40wpm and "
-                        + "%d minute(s) to write at 13wpm.", classifiedLength, wordCount,
-                book.wordFreq.getSize(), gradeLevel, polySyllable, monoSyllable, difficulty
-                , TextTools.getReadingTime(wordCount), TextTools.getSpeakingTime(wordCount)
-                , wordCount / 40, wordCount / 13);
+                        + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
+                        + " to write at 13wpm it would take %d minute(s)."
+                , classifiedLength, wordCount, book.wordFreq.getSize(), gradeLevel,
+                polySyllable, monoSyllable, difficulty, TextTools.getReadingTime(wordCount),
+                TextTools.getSpeakingTime(wordCount), wordCount / 40, wordCount / 13);
 
         return wrap(conclusion + "\n", 100);
     }
@@ -180,6 +215,9 @@ public class OutputWriter {
         return wrap(concordance.toString() + "\n", 100);
     }
 
+    /**
+     * Create a pie chart showing the ratio of polysyllabic to monosyllabic words
+     */
     public void makeDiffGraph() {
         makeGraph("Difficulty", book.difficultyMap);
     }
@@ -245,6 +283,7 @@ public class OutputWriter {
 
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
+            ioe.printStackTrace();
         }
     }
 
@@ -277,6 +316,7 @@ public class OutputWriter {
                 }
                 br.close();
             } catch (IOException e) {
+                System.out.println("[Error - setColors] Error reading posAbbreviations file");
                 e.printStackTrace();
             }
         }
@@ -285,7 +325,6 @@ public class OutputWriter {
 
     @SuppressWarnings("unchecked")
     public String writeJson() {
-        //System.out.println("Starting JSON creation for " + book.getName());
         File out;
 
         makeDir("results/json/");
@@ -299,7 +338,7 @@ public class OutputWriter {
 
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
-            
+
             JSONObject json = new JSONObject();
             json.put("name", book.getName());
             json.put("description", "Parts of speech for " + book.getName());
@@ -368,6 +407,7 @@ public class OutputWriter {
             return rootObject.toJSONString();
 
         } catch (IOException e) {
+            System.out.println("[Error - writeJSON] Error opening " + out.getName() + " for writing");
             e.printStackTrace();
         }
         return null;

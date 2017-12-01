@@ -34,6 +34,7 @@ public class TextTools {
         s = "x" + s + "x";
         return s.split("a").length - 1;
     }
+
     /**
      * Uses Nebula Award classifications to classify a text based on its length
      *
