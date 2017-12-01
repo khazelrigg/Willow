@@ -3,6 +3,7 @@ Books/*
 .idea/
 JavaDoc/
 out/
+results/
 src/META-INF/
 wordCount.iml
 wordcount.properties

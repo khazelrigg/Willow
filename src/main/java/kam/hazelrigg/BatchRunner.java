@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-class BatchRunner {
+public class BatchRunner {
     static ArrayList<Runner> runners = new ArrayList<>();
 
     /**
