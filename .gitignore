@@ -1,13 +1,9 @@
-Books/
+Books/*
+!Books/tests/
 .idea/
 JavaDoc/
-jars/maven.iml
-jars/pom.xml
-jars/src/
-models/README-Models.txt
-models/english-bidirectional-distsim.tagger.props
-models/english-left3words-distsim.tagger.props
 out/
+results/
 src/META-INF/
 wordCount.iml
 wordcount.properties

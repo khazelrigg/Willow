@@ -115,6 +115,7 @@ public class Book {
      * @param text Text to be tagged
      */
     void tagText(String text) {
+
         Annotation doc = new Annotation(text);
         pipeline.annotate(doc);
 
@@ -201,6 +202,7 @@ public class Book {
                     text.append(line).append(" ");
                 }
             }
+
             tagText(text.toString());
 
             long endTime = System.currentTimeMillis();
@@ -212,6 +214,7 @@ public class Book {
             System.out.println("[Error - readText] Couldn't find file at " + path);
         } catch (NullPointerException e) {
             System.out.println("[Error - readText] Null pointer for file at " + path);
+            e.printStackTrace();
         }
 
         return false;
@@ -274,7 +277,7 @@ public class Book {
         return gutenberg;
     }
 
-    public long getWordCount() {
+    long getWordCount() {
         return wordCount;
     }
 }

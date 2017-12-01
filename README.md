@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/khazelrigg/wordCount.svg?branch=1.1.0)](https://travis-ci.org/khazelrigg/wordCount)
+
 Word Count
 ==========
 
