@@ -11,6 +11,7 @@ public class WordCount {
     public static Pattern p = Pattern.compile("[aeiouy]+[^$e(,.:;!?)]");
     static final long startTime = System.currentTimeMillis();
     static StanfordCoreNLP pipeline;
+    static File path;
 
     public static void main(String[] args) {
 
@@ -19,7 +20,6 @@ public class WordCount {
         props.put("annotators", "tokenize, ssplit, pos, lemma");
         pipeline = new StanfordCoreNLP(props);
 
-        File path;
         if (args.length != 0 && new File(args[0]).exists()) {
             path = new File(args[0]);
         } else {
@@ -28,11 +28,12 @@ public class WordCount {
 
         if (path.isDirectory()) {
             BatchRunner.startRunners(path);
-        } else {
+        } else if (path.isFile()) {
             Book book = new Book();
             book.setTitleFromText(path);
             book.setPath(path);
             book.readText();
+
             new OutputWriter(book).writeTxt();
         }
     }

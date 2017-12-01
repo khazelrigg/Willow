@@ -6,9 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-public class BatchRunner {
-    private static ArrayList<Runner> runners = new ArrayList<>();
-    private static boolean running;
+class BatchRunner {
+    static ArrayList<Runner> runners = new ArrayList<>();
 
     /**
      * Start a runners for each file in a directory
@@ -17,13 +16,6 @@ public class BatchRunner {
      */
     public static void startRunners(File directory) {
         openDirectory(directory);
-        running = true;
-
-        for (Runner runner : runners) {
-            runner.start();
-
-            running = false;
-        }
     }
 
     /**
@@ -33,7 +25,7 @@ public class BatchRunner {
      */
     private static void openDirectory(File directory) {
         try {
-            Files.walk(Paths.get(directory.getName())).filter(Files::isRegularFile)
+            Files.walk(Paths.get(directory.getPath())).filter(Files::isRegularFile)
                     .forEach(f ->
                             runners.add(new Runner(f.toFile(), f.toFile(), directory.getName())));
         } catch (IOException e) {
@@ -43,12 +35,14 @@ public class BatchRunner {
 }
 
 class Runner extends Thread {
-    private Book book;
+    Book book;
     private final File file;
+    private boolean overwrite = false;
 
     Runner(File file, File sub, String start) {
         new Thread(this);
         this.file = file;
+
         try {
             String parentOfSub = sub.getParentFile().toString().substring(start.length() + 1);
             this.book = new Book(parentOfSub);
@@ -62,12 +56,19 @@ class Runner extends Thread {
                     + file.getPath() + "\n└════════════════════════════════╾\n");
         }
         this.book.setPath(file);
+
+        // Start a new thread
+        this.start();
+    }
+
+    void setOverwrite(boolean b) {
+        overwrite = b;
     }
 
     /**
      * Actions to perform with each book
      */
-    private void runBook() {
+    void runBook() {
         book.readText();
         OutputWriter ow = new OutputWriter(book);
         ow.writeTxt();
@@ -83,10 +84,14 @@ class Runner extends Thread {
     public void run() {
         book.setTitleFromText(file);
 
-        if (book.resultsFileExists()) {
-            System.out.println("☑ - " + file.getName() + " already has results");
-        } else {
+        if (overwrite) {
             runBook();
+        } else {
+            if (book.resultsFileExists()) {
+                System.out.println("☑ - " + file.getName() + " already has results");
+            } else {
+                runBook();
+            }
         }
     }
 }

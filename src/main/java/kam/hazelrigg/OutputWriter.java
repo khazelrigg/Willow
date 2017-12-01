@@ -368,10 +368,14 @@ public class OutputWriter {
 
             json.put("children", rootParent);
 
-            bw.write(json.toJSONString());
+            JSONObject main = new JSONObject();
+            main.put(book.title, json);
+            String result = main.toJSONString();
+            bw.write(result);
+
             bw.close();
             System.out.println(ANSI_GREEN + "☑ - Finished writing JSON information for " + book.getName() + ANSI_RESET);
-            return json.toJSONString();
+            return result;
 
         } catch (IOException e) {
             e.printStackTrace();

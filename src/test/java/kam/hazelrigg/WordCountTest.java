@@ -7,11 +7,14 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -68,7 +71,6 @@ public class WordCountTest {
         test.readText();
 
         OutputWriter ow = new OutputWriter(test);
-        ow.writeJson();
         String outputJson = "";
         try {
             outputJson = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/test_expectedJson.json"))).readLine();
@@ -188,6 +190,7 @@ public class WordCountTest {
             e.printStackTrace();
         }
         Book test = new Book();
+        test.setTitleFromText(testf);
         test.givePipeline(pipeline);
         test.setPath(testf);
         assertTrue(test.readText());
@@ -246,5 +249,53 @@ public class WordCountTest {
         Book test = new Book("dir");
         assertEquals(test.subdirectory, "dir");
     }
+
+    @Test
+    public void testUserInputDir() {
+        String input = "Books/tests";
+        InputStream in = new ByteArrayInputStream(input.getBytes());
+        System.setIn(in);
+
+        WordCount.main(new String[0]);
+    }
+
+    @Test
+    public void batchRunFakeDir() {
+        e.expect(IOException.class);
+        BatchRunner.startRunners(new File("thereisnofolderonacomputerthatwouldhavethisname"));
+    }
+
+    @Test
+    public void runnerOverwriteTest() {
+        Runner testRunner = new Runner(new File("Books/tests/test_speech.txt")
+                , new File("Books/tests/test_speech.txt"), "Books/tests");
+        testRunner.setOverwrite(true);
+        testRunner.book.givePipeline(pipeline);
+        testRunner.runBook();
+    }
+
+
+    @Test
+    public void testOpenDirectory() {
+        // Clear any old runners
+        BatchRunner.runners = new ArrayList<>();
+        BatchRunner.startRunners(new File("Books/tests"));
+        assertEquals(BatchRunner.runners.size(), 2);
+    }
+
+    @Test
+    public void testCommandlineDirArg() {
+        BatchRunner.runners = new ArrayList<>();
+        WordCount.main(new String[]{"Books/tests"});
+        assertEquals(BatchRunner.runners.size(), 2);
+    }
+
+    @Test
+    public void testCommandlineFileArg() {
+        BatchRunner.runners = new ArrayList<>();
+        WordCount.main(new String[]{"Books/tests/test_speech.txt"});
+        assertEquals(WordCount.path.getName(), "test_speech.txt");
+    }
+
 
 }
