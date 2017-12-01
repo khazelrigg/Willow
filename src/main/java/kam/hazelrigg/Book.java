@@ -131,6 +131,7 @@ public class Book {
                 String word = token.word().replaceAll("\\W", "");
                 String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
                 String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
+                tag = TextTools.posAbbrev.get(tag);
 
 
                 if (TextTools.getSyllableCount(token.word()) == 1) {

@@ -105,7 +105,7 @@ public class FreqMap {
         return keys;
     }
 
-    public String getSimpleString() {
+    String getSimpleString() {
         StringBuilder result = new StringBuilder();
         sortByValue();
         frequency.forEach((key, value) -> result.append(key).append(":").append(value).append("|"));

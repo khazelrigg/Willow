@@ -6,7 +6,8 @@ import edu.stanford.nlp.util.PropertiesUtils;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
@@ -46,6 +47,7 @@ public class WordCountTest {
         assertEquals(testBook.posFreq.getSimpleString(), expected);
     }
 
+    /*
     @Test
     public void createsCorrectJSON() {
         File testf = null;
@@ -74,6 +76,7 @@ public class WordCountTest {
 
         assertEquals(outputJson, ow.writeJson());
     }
+    */
 
     @Test
     public void ignoresPunctuationInWordCount() {
