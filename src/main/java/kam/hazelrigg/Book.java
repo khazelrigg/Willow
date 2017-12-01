@@ -10,15 +10,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
 
 public class Book {
     final FreqMap posFreq;
     final FreqMap wordFreq;
     final FreqMap lemmaFreq;
     final FreqMap difficultyMap;
-    private HashMap<String, String> posAbbrev = TextTools.posAbbrev;
 
     String title;
     String author;
@@ -121,13 +118,19 @@ public class Book {
         Annotation doc = new Annotation(text);
         pipeline.annotate(doc);
 
+        // Actions for each sentence in the document
         for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
             sentenceCount++;
             if (longestSentence == null || sentence.size() > longestSentence.size()) {
                 longestSentence = sentence;
             }
 
+            // Actions for each word
             for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
+                String word = token.word().replaceAll("\\W", "");
+                String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
+                String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
+
 
                 if (TextTools.getSyllableCount(token.word()) == 1) {
                     difficultyMap.increaseFreq("Monosyllabic");
@@ -136,33 +139,25 @@ public class Book {
                 }
 
                 // Skip over punctuation
-                String word = token.word().replaceAll("\\W", "");
                 if (!word.isEmpty()) {
                     wordCount++;
                     wordFreq.increaseFreq(token.word().toLowerCase());
                 }
 
-                String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
                 if (!lemma.replaceAll("\\W", "").isEmpty()) {
                     lemmaFreq.increaseFreq(lemma);
                 }
 
-                String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
-                tag = posAbbrev.get(tag);
                 if (tag != null) {
                     posFreq.increaseFreq(tag);
                 }
+
                 syllableCount += TextTools.getSyllableCount(word);
             }
         }
 
-        File blacklist = null;
-        try {
-            blacklist = new File(Book.class.getResource("/stopwords-english.txt").toURI());  
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        wordFreq.stripFromFreq(blacklist);
+        // Remove stop-words from the word counts
+        wordFreq.stripFromFreq();
     }
 
     /**
@@ -254,12 +249,21 @@ public class Book {
         this.path = path;
     }
 
-    public boolean resultsFileExists() {
+    public boolean resultsFileExists(boolean i, boolean j) {
         File txt = new File("results/txt/" + subdirectory + "/" + getName() + " Results.txt");
         File img = new File("results/img/" + subdirectory + "/" + getName() + " POS Distribution Results.jpeg");
         File diffImg = new File("results/img/" + subdirectory + "/" + getName() + " Difficulty Results.jpeg");
         File json = new File("results/json/" + subdirectory + "/" + getName() + " Results.json");
-        return txt.exists() && img.exists() && diffImg.exists() && json.exists();
+
+        if (!i && !j) {
+            return txt.exists();
+        } else if (i && j) {
+            return txt.exists() && img.exists() && diffImg.exists() && json.exists();
+        } else if (i) {
+            return txt.exists() && img.exists() && diffImg.exists();
+        } else {
+            return txt.exists() && json.exists();
+        }
     }
 
     void givePipeline(StanfordCoreNLP pipeline) {

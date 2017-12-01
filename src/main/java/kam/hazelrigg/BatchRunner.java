@@ -8,21 +8,27 @@ import java.util.ArrayList;
 
 public class BatchRunner {
     private static ArrayList<Runner> runners = new ArrayList<>();
-    private static boolean running;
+    static boolean createJson = false;
+    static boolean createImg = false;
 
     /**
-     * Start a runners for each file in a directory
+     * Start a runner on a new thread for each file in a directory
      *
-     * @param directory Directory to open
+     * @param file File/Dir to run
      */
-    public static void startRunners(File directory) {
-        openDirectory(directory);
-        running = true;
+    public static void startRunners(File file) {
+        if (file.isDirectory()) {
+            openDirectory(file);
+        } else if (file.isFile()) {
+            openFile(file);
+        }
+//        boolean running = true;
 
         for (Runner runner : runners) {
+            Runner.createImage(createImg);
+            Runner.createJson(createImg);
             runner.start();
-
-            running = false;
+            //     running = false;
         }
     }
 
@@ -40,11 +46,17 @@ public class BatchRunner {
             e.printStackTrace();
         }
     }
+
+    private static void openFile(File f) {
+        runners.add(new Runner(f, f, f.getName()));
+    }
 }
 
 class Runner extends Thread {
     private Book book;
     private final File file;
+    private static boolean createImg = false;
+    private static boolean createJson = false;
 
     Runner(File file, File sub, String start) {
         new Thread(this);
@@ -71,19 +83,32 @@ class Runner extends Thread {
         book.readText();
         OutputWriter ow = new OutputWriter(book);
         ow.writeTxt();
-        ow.writeJson();
-        ow.makeDiffGraph();
-        ow.makePosGraph();
+        if (createJson) {
+            ow.writeJson();
+        }
+        if (createImg) {
+            ow.makeDiffGraph();
+            ow.makePosGraph();
+        }
+
         long endTime = System.currentTimeMillis();
         System.out.println("[FINISHED] Completely finished " + book.getName() + " in "
                 + (endTime - WordCount.startTime) / 1000 + "s.");
+    }
+
+    static void createImage(boolean b) {
+        createImg = b;
+    }
+
+    static void createJson(boolean b) {
+        createJson = b;
     }
 
     @Override
     public void run() {
         book.setTitleFromText(file);
 
-        if (book.resultsFileExists()) {
+        if (book.resultsFileExists(createImg, createJson)) {
             System.out.println("☑ - " + file.getName() + " already has results");
         } else {
             runBook();

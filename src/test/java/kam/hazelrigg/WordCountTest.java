@@ -6,17 +6,11 @@ import edu.stanford.nlp.util.PropertiesUtils;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class WordCountTest {
     private ExpectedException e = ExpectedException.none();
@@ -65,6 +59,7 @@ public class WordCountTest {
         test.givePipeline(pipeline);
         test.setPath(testf);
         test.setTitleFromText(testf);
+        System.out.println(test.title);
         test.readText();
 
         OutputWriter ow = new OutputWriter(test);
@@ -75,6 +70,7 @@ public class WordCountTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println(outputJson);
 
         assertEquals(outputJson, ow.writeJson());
     }
@@ -228,7 +224,7 @@ public class WordCountTest {
         ow.makeDiffGraph();
         ow.makePosGraph();
         ow.writeJson();
-        assertTrue(test.resultsFileExists());
+        assertTrue(test.resultsFileExists(true, true));
     }
 
     @Test
@@ -237,8 +233,9 @@ public class WordCountTest {
         Book test = new Book();
         test.givePipeline(pipeline);
         test.setPath(new File("whoops, nothing here"));
-        test.getPath();
+        File p = test.getPath();
         test.readText();
+        assertEquals(p.getName(), "whoops, nothing here");
     }
 
     @Test

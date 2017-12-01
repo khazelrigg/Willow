@@ -8,14 +8,8 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.awt.*;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -363,13 +357,15 @@ public class OutputWriter {
                 // Add objects to parent array
                 rootParent.add(jsonObjects.get(type));
             }
-
+            JSONObject rootObject = new JSONObject();
             json.put("children", rootParent);
+            rootObject.put(book.title, json);
 
-            bw.write(json.toJSONString());
+
+            bw.write(rootObject.toJSONString());
             bw.close();
             System.out.println(ANSI_GREEN + "☑ - Finished writing JSON information for " + book.getName() + ANSI_RESET);
-            return json.toJSONString();
+            return rootObject.toJSONString();
 
         } catch (IOException e) {
             e.printStackTrace();

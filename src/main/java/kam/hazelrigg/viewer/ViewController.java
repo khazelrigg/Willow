@@ -117,7 +117,7 @@ public class ViewController {
             long startTime = System.currentTimeMillis();
             statusLabel.setText("Analysing file: " + book.getTitle());
 
-            if (book.resultsFileExists()) {
+            if (book.resultsFileExists((diffChartToggle.isSelected() && posChartToggle.isSelected()), writeJsonToggle.isSelected())) {
                 showPosChart(book);
                 showDifficultyChart(book);
             } else {
