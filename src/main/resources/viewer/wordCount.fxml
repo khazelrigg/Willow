@@ -26,14 +26,14 @@
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" AnchorPane.bottomAnchor="0.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
             xmlns="http://javafx.com/javafx/8.0.162-ea"
-            fx:controller="main.java.kam.hazelrigg.viewer.ViewController">
+            fx:controller="kam.hazelrigg.viewer.ViewController">
 
     <top>
         <VBox>
 
             <MenuBar id="menuBar">
                 <Menu text="File">
-                    <MenuItem text="Open File" onAction="#openFile"/>
+                    <MenuItem text="Open File" onAction="#openFileChooser"/>
                     <MenuItem text="Open Folder" onAction="#openFolder"/>
                 </Menu>
             </MenuBar>

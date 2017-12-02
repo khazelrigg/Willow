@@ -1,5 +1,7 @@
 package kam.hazelrigg.viewer;
 
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -13,15 +15,17 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import kam.hazelrigg.BatchRunner;
 import kam.hazelrigg.Book;
 import kam.hazelrigg.OutputWriter;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Properties;
 
 public class ViewController {
+    StanfordCoreNLP pipeline;
+
     // Top bars
     public ToggleButton writeDocumentToggle;
     public ToggleButton posChartToggle;
@@ -49,6 +53,10 @@ public class ViewController {
 
     @FXML
     public void initialize() {
+        Properties props = new Properties();
+        props.put("annotators", "tokenize, ssplit, pos, lemma");
+        pipeline = new StanfordCoreNLP(props);
+
         writeDocumentToggle.setSelected(true);
         writeJsonToggle.setSelected(true);
         posChartToggle.setSelected(true);
@@ -59,21 +67,17 @@ public class ViewController {
     /**
      * Selects a file using fileChooser
      */
-    public void openFile() {
+    public void openFileChooser() {
         FileChooser fileChooser = new FileChooser();
-        File file = fileChooser.showOpenDialog(chooserPane);
         fileChooser.setTitle("Open file");
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
-        fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("TXT", "*.txt"));
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Plain Text (txt)", "*.txt"),
+                new FileChooser.ExtensionFilter("PDF documents", "*.pdf"));
 
+        File file = fileChooser.showOpenDialog(chooserPane);
         if (file != null) {
-            seedDirectory = null;
-            book.setPath(file);
-            book.setTitleFromText(file);
-            addFileToList(file);
-            statusLabel.setText("Opened " + book.getTitle());
-            runButton.setDisable(false);
+            openFile(file);
         }
     }
 
@@ -88,79 +92,27 @@ public class ViewController {
 
         File dir = directoryChooser.showDialog(chooserPane);
         if (dir != null) {
-            seedDirectory = dir;
-            statusLabel.setText("Opened " + dir.getName());
+            for (File f : dir.listFiles()) {
+                openFile(f);
+            }
             runButton.setDisable(false);
         }
     }
 
-    /**
-     * Runs analysis on file(s) and updates gui
-     */
-    public void run() {
-        OutputWriter ow = new OutputWriter(book);
-        // Add image viewers
-        posTab.getChildren().remove(0);
-        posTab.getChildren().add(posChartImageView);
-        diffTab.getChildren().remove(0);
-        diffTab.getChildren().add(difficultyImageView);
-        if (seedDirectory != null) {
-            long startTime = System.currentTimeMillis();
-
-            statusLabel.setText("Analysing dir: " + seedDirectory);
-            BatchRunner.startRunners(seedDirectory);
-            setListOfFiles(seedDirectory.listFiles());
-
-            long endTime = System.currentTimeMillis();
-            timerLabel.setText("Finished in " + (endTime - startTime) / 1000 + " secs.");
-        } else {
-            long startTime = System.currentTimeMillis();
-            statusLabel.setText("Analysing file: " + book.getTitle());
-
-            if (book.resultsFileExists((diffChartToggle.isSelected() && posChartToggle.isSelected()), writeJsonToggle.isSelected())) {
-                showPosChart(book);
-                showDifficultyChart(book);
-            } else {
-                book.readText();
-                statusLabel.setText("Displaying results for: " + book.getTitle());
-
-                if (writeDocumentToggle.isSelected()) {
-                    ow.writeTxt();
-                }
-
-                if (writeJsonToggle.isSelected()) {
-                    ow.writeJson();
-                }
-
-                if (posChartToggle.isSelected()) {
-                    ow.makePosGraph();
-                    showPosChart(book);
-                }
-
-                if (diffChartToggle.isSelected()) {
-                    ow.makeDiffGraph();
-                    showDifficultyChart(book);
-                }
-
-                long endTime = System.currentTimeMillis();
-                timerLabel.setText((endTime - startTime) / 1000 + " secs.");
-            }
-        }
-    }
-
-    /**
-     * Creates a list of files in a seedDirectory
-     *
-     * @param fileArray Array of files in a seedDirectory
-     */
-    private void setListOfFiles(File[] fileArray) {
-        for (File file : fileArray) {
-            if (file.isDirectory()) {
-                setListOfFiles(file.listFiles());
-            } else {
+    private void openFile(File file) {
+        Platform.runLater(() -> {
+            if (file != null) {
+                book.setPath(file);
+                book.subdirectory = book.getPath().getParentFile().getName();
+                book.givePipeline(pipeline);
+                book.setTitleFromText(file);
+                statusLabel.setText("Opened " + book.getTitle());
+                runButton.setDisable(false);
+                run();
                 addFileToList(file);
+                switchActiveBook(book.getName());
             }
-        }
+        });
     }
 
     /**
@@ -170,16 +122,18 @@ public class ViewController {
      */
     private void addFileToList(File file) {
         ObservableList<String> files = resultsFileListView.getItems();
-        //TODO add logic to avoid adding items twice if single files were opened beforehand
+
         Book newBook = new Book();
-        newBook.setTitleFromText(file);
         newBook.setPath(file);
+        newBook.setTitleFromText(file);
+        newBook.subdirectory = newBook.getPath().getParentFile().getName();
 
         if (!files.contains(newBook.getName())) {
             files.add(newBook.getName());
             bookMap.put(newBook.getName(), newBook);
             resultsFileListView.setItems(files);
         }
+
     }
 
     public void updateViewer() {
@@ -191,20 +145,68 @@ public class ViewController {
      */
     private void switchActiveBook(String listItemText) {
         //TODO test more use cases     (File not in subdir)
+        Platform.runLater(() -> {
+            // Get new book from map using the book name
+            Book cur = bookMap.get(listItemText);
+            run();
+            showPosChart(cur);
+            showDifficultyChart(cur);
+        });
+
+    }
+
+
+    /**
+     * Runs analysis on file(s) and updates gui
+     */
+    public void run() {
+
         Task<Void> task = new Task<Void>() {
+
             @Override
-            public Void call() {
-                // Get new book from map using the book name
-                Book cur = bookMap.get(listItemText);
-                //Set any subdirectories
-                cur.subdirectory = cur.getPath().getParentFile().getName();
-                showPosChart(cur);
-                showDifficultyChart(cur);
+            protected Void call() throws Exception {
+                OutputWriter ow = new OutputWriter(book);
+                long startTime = System.currentTimeMillis();
+                statusLabel.setText("Analysing file: " + book.getTitle());
+
+                if (book.resultsFileExists((diffChartToggle.isSelected() && posChartToggle.isSelected()), writeJsonToggle.isSelected())) {
+                    showPosChart(book);
+                    showDifficultyChart(book);
+                } else {
+                    book.readText();
+
+                    statusLabel.setText("Displaying results for: " + book.getTitle());
+
+                    if (writeDocumentToggle.isSelected()) {
+                        ow.writeTxt();
+                    }
+
+                    if (writeJsonToggle.isSelected()) {
+                        ow.writeJson();
+                    }
+
+                    if (posChartToggle.isSelected()) {
+                        ow.makePosGraph();
+                    }
+
+                    if (diffChartToggle.isSelected()) {
+                        ow.makeDiffGraph();
+                    }
+
+                    long endTime = System.currentTimeMillis();
+                    timerLabel.setText((endTime - startTime) / 1000 + " secs.");
+                }
+
                 return null;
             }
         };
-        new Thread(task).start();
+        task.run();
+
+        Platform.runLater(() -> {
+
+        });
     }
+
 
 
     //TODO get rid of absolute path for images
@@ -213,6 +215,8 @@ public class ViewController {
                 + " POS Distribution Results.jpeg");
 
         posChartImageView.setImage(posGraph);
+        posTab.getChildren().remove(0);
+        posTab.getChildren().add(posChartImageView);
     }
 
     private void showDifficultyChart(Book cur) {
@@ -220,6 +224,8 @@ public class ViewController {
                 + " Difficulty Results.jpeg");
 
         difficultyImageView.setImage(difficultyChart);
+        diffTab.getChildren().remove(0);
+        diffTab.getChildren().add(difficultyImageView);
     }
 
     public void openTextEditor() {
