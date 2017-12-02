@@ -4,6 +4,9 @@
     <artifactId>WordCount</artifactId>
     <version>1.1.2</version>
     <name>Word Counter</name>
+    <url>https://github.com/khazelrigg/wordCount</url>
+    <packaging>jar</packaging>
+
 
     <dependencies>
         <dependency>
@@ -69,6 +72,9 @@
     </dependencies>
 
     <build>
+        <defaultGoal>install</defaultGoal>
+        <directory>${basedir}/target</directory>
+
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -78,6 +84,7 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -87,8 +94,6 @@
                         <exclude>**/log4j.properties</exclude>
                     </excludes>
 
-                    <finalName>WordCount</finalName>
-
                     <archive>
                         <manifest>
                             <mainClass>kam.hazelrigg.WordCount</mainClass>
@@ -96,11 +101,13 @@
                     </archive>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>1.6</version>
                 <configuration>
+                    <finalName>WordCount</finalName>
                     <artifactSet>
                         <excludes>
                             <exclude>junit:junit</exclude>

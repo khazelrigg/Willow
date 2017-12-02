@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class BatchRunner {
     private static ArrayList<Runner> runners = new ArrayList<>();
@@ -17,21 +19,23 @@ public class BatchRunner {
      *
      * @param file File/Dir to run
      */
-    public static void startRunners(File file) {
+    static void startRunners(File file) {
         if (file.isDirectory()) {
             openDirectory(file);
         } else if (file.isFile()) {
             openFile(file);
         }
-//        boolean running = true;
 
-        for (Runner runner : runners) {
-            Runner.createImage(createImg);
-            Runner.createJson(createImg);
-            Runner.overwrite(overwrite);
-            runner.start();
-            //     running = false;
-        }
+        // Get available cpus and start a fixed thread pool to execute books
+        int cpus = Runtime.getRuntime().availableProcessors();
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(cpus + 1);
+
+        Runner.createImage(createImg);
+        Runner.createJson(createImg);
+        Runner.overwrite(overwrite);
+
+        runners.forEach(executor::execute);
+        executor.shutdown();
     }
 
     /**
@@ -41,9 +45,15 @@ public class BatchRunner {
      */
     private static void openDirectory(File directory) {
         try {
-            Files.walk(Paths.get(directory.getName())).filter(Files::isRegularFile)
-                    .forEach(f ->
-                            runners.add(new Runner(f.toFile(), f.toFile(), directory.getName())));
+            Files.walk(Paths.get(directory.getAbsolutePath())).filter(Files::isRegularFile)
+                    .forEach(f -> {
+                        File file = f.toFile();
+                        File subFolder = f.toAbsolutePath().getParent().getFileName().toFile();
+                        runners.add(new Runner(file, subFolder));
+                    });
+        } catch (NullPointerException e) {
+            System.out.println("[Error - openDirectory] NullPointer when attempting to walk files in " + directory.getName());
+            e.printStackTrace();
         } catch (IOException e) {
             System.out.println("[Error - openDirectory] IOException when attempting to walk files in " + directory.getName());
             e.printStackTrace();
@@ -51,7 +61,7 @@ public class BatchRunner {
     }
 
     private static void openFile(File f) {
-        runners.add(new Runner(f, f, f.getName()));
+        runners.add(new Runner(f, f));
     }
 }
 
@@ -62,12 +72,12 @@ class Runner extends Thread {
     private static boolean createJson = false;
     private static boolean overwrite = false;
 
-    Runner(File file, File sub, String start) {
+    Runner(File file, File sub) {
         new Thread(this);
         this.file = file;
 
         try {
-            String parentOfSub = sub.getParentFile().toString().substring(start.length() + 1);
+            String parentOfSub = sub.toString();
             this.book = new Book(parentOfSub);
             System.out.println("┌══════════[ NEW BOOK ]══════════╾\n│ ┌╾ " + parentOfSub
                     + "\n│ └──╾ " + file.getPath() + "\n└════════════════════════════════╾\n");
@@ -101,6 +111,8 @@ class Runner extends Thread {
         long endTime = System.currentTimeMillis();
         System.out.println("[FINISHED] Completely finished " + book.getName() + " in "
                 + (endTime - WordCount.startTime) / 1000 + "s.");
+
+        this.book = null;
     }
 
     static void createImage(boolean b) {

@@ -27,9 +27,9 @@ public class Book {
     long wordCount;
     long syllableCount;
     long sentenceCount;
-    CoreMap longestSentence;
     private boolean gutenberg;
     private File path;
+    CoreMap longestSentence;
     private StanfordCoreNLP pipeline;
 
     public Book() {
@@ -137,7 +137,6 @@ public class Book {
                 String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
                 tag = TextTools.posAbbrev.get(tag);
 
-
                 if (TextTools.getSyllableCount(token.word()) == 1) {
                     difficultyMap.increaseFreq("Monosyllabic");
                 } else {
@@ -241,12 +240,13 @@ public class Book {
             return true;
         } catch (IOException e) {
             System.out.println("[Error - readPlainText] Couldn't find file at " + path);
+            e.printStackTrace();
+            System.exit(2);
         } catch (NullPointerException e) {
             System.out.println("[Error - readPlainText] Null pointer for file at " + path);
             e.printStackTrace();
+            System.exit(2);
         }
-        // If the file cannot be read, quit the program
-        System.exit(2);
         return false;
     }
 
@@ -324,7 +324,7 @@ public class Book {
         }
     }
 
-    void givePipeline(StanfordCoreNLP pipeline) {
+    public void givePipeline(StanfordCoreNLP pipeline) {
         this.pipeline = pipeline;
     }
 
