@@ -230,9 +230,8 @@ public class WordCountTest {
         Book test = new Book();
         test.givePipeline(pipeline);
         test.setPath(new File("whoops, nothing here"));
-        File p = test.getPath();
+        test.getPath();
         test.readText();
-        assertEquals(p.getName(), "whoops, nothing here");
     }
 
     @Test

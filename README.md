@@ -4,23 +4,31 @@ Word Count
 ==========
 
 **Word Count** is a Java application built using Stanford's Core NLP library with the main purpose 
-of analysing a file to generate parts of speech distribution charts.
+of analysing a file to generate human readable text files and charts that show  word counts and Parts Of Speech
+ distribution in a text.
 
 ---
 
 ### Usage:
-    
+
+    usage: wordCount [OPTION]... [FILE]...
+     -h,--help          Print help
+     -i,--images        Create image outputs
+     -j,--json          Create JSON output
+     -k,--interactive   Run interactive mode, choose options when run instead
+                        of in command line
+     -o,--overwrite     Overwrite any results
+
+### Installing
 1. Get the [latest release of this program](https://github.com/khazelrigg/wordCount/releases)
 
-2. Run:
-
-     In the terminal execute the following command:
-    
-        java -jar wordCount.jar 
+2. Executing the jar:
      
-     or to pass a file or directory to the program use the following:
-     
-        java -jar wordCount.jar fileName
+        java -jar WordCount.jar -h
+        
+    Example usage to analyse directory with the name "Books" and create P.O.S. and difficulty charts
+        
+        java -jar WordCount.jar -i Books
         
 4. Result outputs will be created as a folder in the working directory, use `cd results` to view the generated output
 

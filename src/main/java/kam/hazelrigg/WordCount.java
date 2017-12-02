@@ -18,10 +18,6 @@ public class WordCount {
     static StanfordCoreNLP pipeline;
 
     public static void main(String[] args) {
-        // Set up CoreNlp pipeline
-        Properties props = new Properties();
-        props.put("annotators", "tokenize, ssplit, pos, lemma");
-        pipeline = new StanfordCoreNLP(props);
         File path = null;
 
         // Set up command line args
@@ -60,6 +56,11 @@ public class WordCount {
                 formatter.printHelp("wordCount [OPTION]... [FILE]...", options);
                 System.exit(-1);
             }
+
+            // Set up CoreNlp pipeline
+            Properties props = new Properties();
+            props.put("annotators", "tokenize, ssplit, pos, lemma");
+            pipeline = new StanfordCoreNLP(props);
 
             start(path);
         } catch (ParseException e) {

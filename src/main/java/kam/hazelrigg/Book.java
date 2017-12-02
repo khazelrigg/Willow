@@ -184,7 +184,10 @@ public class Book {
                     + (endTime - WordCount.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
 
         } catch (IOException e) {
-            System.out.println("[Error - readText] IOException when probing file type of " + path.getName());
+            System.out.println("[Error - readText] IOException when probing file type");
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            System.out.println("[Error - readText] NullPointerException when probing file type");
             e.printStackTrace();
         }
         return false;
