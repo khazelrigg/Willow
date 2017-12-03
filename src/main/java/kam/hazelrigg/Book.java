@@ -113,6 +113,44 @@ public class Book {
         this.author = author;
     }
 
+    private void tagSentence(CoreMap sentence) {
+        sentenceCount++;
+        if (longestSentence == null || sentence.size() > longestSentence.size()) {
+            longestSentence = sentence;
+        }
+
+        // Actions for each word
+        for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
+            String word = token.word().replaceAll("[^A-Za-z0-9]", "");
+            String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
+            String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
+            tag = TextTools.posAbbrev.get(tag);
+
+            if (TextTools.getSyllableCount(token.word()) == 1) {
+                difficultyMap.increaseFreq("Monosyllabic");
+            } else {
+                difficultyMap.increaseFreq("Polysyllabic");
+            }
+
+            // Skip over punctuation
+            if (!word.isEmpty()) {
+                wordCount++;
+                wordFreq.increaseFreq(token.word().toLowerCase());
+            }
+
+            if (!lemma.replaceAll("\\W", "").isEmpty()) {
+                lemmaFreq.increaseFreq(lemma);
+            }
+
+            if (tag != null) {
+                posFreq.increaseFreq(tag);
+            }
+
+            syllableCount += TextTools.getSyllableCount(word);
+        }
+
+    }
+
     /**
      * Tag a text for parts of speech
      *
@@ -168,11 +206,15 @@ public class Book {
     /**
      * Finds the appropriate file type of book to then read text
      */
-    public boolean readText() {
+    public boolean readText(Boolean econ) {
         try {
             String fileType = Files.probeContentType(path.toPath());
             if (fileType.equals("text/plain")) {
-                return readPlainText();
+                if (econ) {
+                    return readPlainTextEconomy();
+                } else {
+                    return readPlainText();
+                }
             } else if (fileType.equals("application/pdf")) {
                 return readPDF();
             }
@@ -192,15 +234,8 @@ public class Book {
         return false;
     }
 
-    /**
-     * Reads and tags a plain text file
-     *
-     * @return true if successfully finished
-     */
     private boolean readPlainText() {
-
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-
             System.out.println("☐ - Starting analysis of " + getName());
 
             boolean atBook = !gutenberg;
@@ -212,31 +247,101 @@ public class Book {
                     continue;
                 }
 
-                // Skip over the Gutenberg headers
-                if (gutenberg && !atBook) {
+                if (gutenberg) {
                     if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
                             || line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
                         atBook = true;
-                        line = br.readLine();
-                    } else {
                         continue;
                     }
                 }
 
-                // Stop at the Gutenberg footer
+                if (atBook) {
+                    if (gutenberg) {
+                        if (line.contains("End of the Project Gutenberg EBook")
+                                || line.contains("End of the Project Gutenberg Ebook")
+                                || line.contains("End of Project Gutenberg’s")) {
+                            atBook = false;
+                        }
+                    }
+                    text.append(line);
+                }
+            }
+            tagText(text.toString());
+            return true;
+        } catch (IOException e) {
+            System.out.println("[Error - readPlainText] Couldn't find file at " + path);
+            e.printStackTrace();
+            System.exit(2);
+        } catch (NullPointerException e) {
+            System.out.println("[Error - readPlainText] Null pointer for file at " + path);
+            e.printStackTrace();
+            System.exit(2);
+        }
+        return false;
+    }
+
+    /**
+     * Reads and tags a plain text file
+     *
+     * @return true if successfully finished
+     */
+    private boolean readPlainTextEconomy() {
+
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            System.out.println("☐ - Starting analysis of " + getName());
+
+            boolean atBook = !gutenberg;
+            String buffer = "";
+
+            for (String line; (line = br.readLine()) != null; ) {
+                // Skip empty lines
+                if (line.isEmpty()) {
+                    continue;
+                }
+
                 if (gutenberg) {
-                    if (line.contains("End of the Project Gutenberg EBook")
-                            || line.contains("End of Project Gutenberg’s")) {
-                        atBook = false;
+                    if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
+                            || line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
+                        atBook = true;
+                        continue;
                     }
                 }
 
                 if (atBook) {
-                    text.append(line).append(" ");
+                    if (gutenberg) {
+                        if (line.contains("End of the Project Gutenberg EBook")
+                                || line.contains("End of the Project Gutenberg Ebook")
+                                || line.contains("End of Project Gutenberg’s")) {
+                            atBook = false;
+                            line = "";
+                        }
+                    }
+
+                    buffer += " " + line;
+                    buffer = buffer.trim();
+                    Annotation doc = new Annotation(buffer);
+                    pipeline.annotate(doc);
+
+                    for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
+                        String sentenceString = sentence.toString();
+
+                        if (!sentenceString.equals(buffer) && buffer.contains(sentenceString)) {
+                            buffer = buffer.replace(sentenceString, "");
+
+                            //Catch any punctuation that may cause errors in replaceAll such as ?
+                            if (buffer.charAt(0) == sentenceString.charAt(sentenceString.length() - 1)) {
+                                buffer = buffer.substring(1);
+                            }
+
+                            tagSentence(sentence);
+                            break;
+                        }
+                    }
+
+
                 }
             }
 
-            tagText(text.toString());
             return true;
         } catch (IOException e) {
             System.out.println("[Error - readPlainText] Couldn't find file at " + path);
@@ -260,6 +365,7 @@ public class Book {
             PDFTextStripper pdfStripper = new PDFTextStripper();
             PDFParser parser = new PDFParser(new RandomAccessFile(path, "r"));
             parser.parse();
+
             tagText(pdfStripper.getText(parser.getPDDocument()));
             return true;
         } catch (IOException e) {

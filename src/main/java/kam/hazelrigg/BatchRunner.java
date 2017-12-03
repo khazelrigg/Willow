@@ -5,14 +5,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class BatchRunner {
+class BatchRunner {
     private static ArrayList<Runner> runners = new ArrayList<>();
-    static boolean createJson = false;
-    static boolean createImg = false;
-    static boolean overwrite = false;
+
+    static void passOptions(HashMap<String, Boolean> options) {
+        Runner.setOptions(options);
+    }
 
     /**
      * Start a runner on a new thread for each file in a directory
@@ -28,13 +30,9 @@ public class BatchRunner {
 
         // Get available cpus and start a fixed thread pool to execute books
         int cpus = Runtime.getRuntime().availableProcessors();
+
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(cpus + 1);
-
-        Runner.createImage(createImg);
-        Runner.createJson(createImg);
-        Runner.overwrite(overwrite);
-
-        runners.forEach(executor::execute);
+                runners.forEach(executor::execute);
         executor.shutdown();
     }
 
@@ -68,25 +66,18 @@ public class BatchRunner {
 class Runner extends Thread {
     private Book book;
     private final File file;
-    private static boolean createImg = false;
-    private static boolean createJson = false;
-    private static boolean overwrite = false;
+    private static HashMap<String, Boolean> options = new HashMap<>();
 
     Runner(File file, File sub) {
         new Thread(this);
         this.file = file;
 
-        try {
-            String parentOfSub = sub.toString();
-            this.book = new Book(parentOfSub);
+        String parentOfSub = sub.toString();
+        this.book = new Book(parentOfSub);
+
+        if (options.get("v")) {
             System.out.println("┌══════════[ NEW BOOK ]══════════╾\n│ ┌╾ " + parentOfSub
                     + "\n│ └──╾ " + file.getPath() + "\n└════════════════════════════════╾\n");
-
-        } catch (StringIndexOutOfBoundsException e) {
-            //If theres is no subdirectory parent we must be in the parent directory
-            this.book = new Book();
-            System.out.println("┌══════════[ NEW BOOK ]══════════╾\n| ┌╾ ROOT\n│ └──╾ "
-                    + file.getPath() + "\n└════════════════════════════════╾\n");
         }
 
         this.book.setPath(file);
@@ -96,14 +87,14 @@ class Runner extends Thread {
      * Actions to perform with each book
      */
     private void runBook() {
-        book.readText();
+        book.readText(options.get("economy"));
         OutputWriter ow = new OutputWriter(book);
         ow.writeTxt();
-        if (createJson) {
+        if (options.get("json")) {
             ow.writeJson();
         }
 
-        if (createImg) {
+        if (options.get("images")) {
             ow.makeDiffGraph();
             ow.makePosGraph();
         }
@@ -115,25 +106,17 @@ class Runner extends Thread {
         this.book = null;
     }
 
-    static void createImage(boolean b) {
-        createImg = b;
-    }
-
-    static void createJson(boolean b) {
-        createJson = b;
-    }
-
-    static void overwrite(boolean b) {
-        overwrite = b;
+    static void setOptions(HashMap<String, Boolean> options) {
+        Runner.options = options;
     }
 
     @Override
     public void run() {
         book.setTitleFromText(file);
 
-        if (overwrite) {
+        if (options.get("overwrite")) {
             runBook();
-        } else if (book.resultsFileExists(createImg, createJson)) {
+        } else if (book.resultsFileExists(options.get("images"), options.get("json"))) {
             System.out.println("☑ - " + file.getName() + " already has results");
         } else {
             runBook();

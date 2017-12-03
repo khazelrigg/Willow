@@ -173,7 +173,7 @@ public class ViewController {
                     showPosChart(book);
                     showDifficultyChart(book);
                 } else {
-                    book.readText();
+                    book.readText(false);
 
                     statusLabel.setText("Displaying results for: " + book.getTitle());
 
