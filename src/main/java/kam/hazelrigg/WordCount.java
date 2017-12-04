@@ -32,7 +32,8 @@ public class WordCount {
                 .addOption("k", "interactive", false, "Run interactive mode, choose options when run instead of in command line")
                 .addOption("i", "images", false, "Create image outputs")
                 .addOption("j", "json", false, "Create JSON output")
-                .addOption("o", "overwrite", false, "Overwrite any existing results");
+                .addOption("o", "overwrite", false, "Overwrite any existing results")
+                .addOption("t", "threads", false, "Max number of threads to run, 0 = Use CPUs available; default = 0");
 
 
         HelpFormatter formatter = new HelpFormatter();
@@ -68,7 +69,13 @@ public class WordCount {
             props.put("tokenize.options", "untokenizable=noneDelete");
             pipeline = new StanfordCoreNLP(props);
 
-            start(path);
+            if (cmd.hasOption("threads") && !cmd.getOptionValue("threads").equals("0")) {
+                start(path, Integer.parseInt(cmd.getOptionValue("threads")));
+            } else {
+                int threads = Runtime.getRuntime().availableProcessors();
+                start(path, threads + 1);
+            }
+
         } catch (ParseException e) {
             System.out.println("[Error - main] Error parsing command line options");
             e.printStackTrace();
@@ -76,8 +83,8 @@ public class WordCount {
 
     }
 
-    private static void start(File path) {
-        BatchRunner.startRunners(path);
+    private static void start(File path, int threads) {
+        BatchRunner.startRunners(path, threads);
     }
 
 

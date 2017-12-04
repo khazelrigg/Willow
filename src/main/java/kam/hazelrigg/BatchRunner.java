@@ -21,17 +21,14 @@ class BatchRunner {
      *
      * @param file File/Dir to run
      */
-    static void startRunners(File file) {
+    static void startRunners(File file, int threads) {
         if (file.isDirectory()) {
             openDirectory(file);
         } else if (file.isFile()) {
             openFile(file);
         }
 
-        // Get available cpus and start a fixed thread pool to execute books
-        int cpus = Runtime.getRuntime().availableProcessors();
-
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(cpus + 1);
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
                 runners.forEach(executor::execute);
         executor.shutdown();
     }
@@ -50,10 +47,12 @@ class BatchRunner {
                         runners.add(new Runner(file, subFolder));
                     });
         } catch (NullPointerException e) {
-            System.out.println("[Error - openDirectory] NullPointer when attempting to walk files in " + directory.getName());
+            System.out.println("[Error - openDirectory] NullPointer when walking files in "
+                    + directory.getName());
             e.printStackTrace();
         } catch (IOException e) {
-            System.out.println("[Error - openDirectory] IOException when attempting to walk files in " + directory.getName());
+            System.out.println("[Error - openDirectory] IOException when walking files in "
+                    + directory.getName());
             e.printStackTrace();
         }
     }

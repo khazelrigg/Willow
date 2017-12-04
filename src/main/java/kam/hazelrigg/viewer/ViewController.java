@@ -20,11 +20,13 @@ import kam.hazelrigg.OutputWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Properties;
 
 public class ViewController {
-    StanfordCoreNLP pipeline;
+    private StanfordCoreNLP pipeline;
 
     // Top bars
     public ToggleButton writeDocumentToggle;
@@ -46,7 +48,6 @@ public class ViewController {
     public VBox diffTab;
 
     private Book book = new Book();
-    private File seedDirectory = null;
     private Stage chooserPane = new Stage();
 
     private HashMap<String, Book> bookMap = new HashMap<>();
@@ -92,8 +93,14 @@ public class ViewController {
 
         File dir = directoryChooser.showDialog(chooserPane);
         if (dir != null) {
-            for (File f : dir.listFiles()) {
-                openFile(f);
+            try {
+                Files.walk(Paths.get(dir.getAbsolutePath()))
+                        .filter(Files::isRegularFile)
+                        .forEach(f -> openFile(f.toFile()));
+            } catch (IOException e) {
+                System.out.println("[Error - openFolder] IOException walking files in "
+                        + dir.getName());
+                e.printStackTrace();
             }
             runButton.setDisable(false);
         }
