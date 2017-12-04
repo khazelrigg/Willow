@@ -16,10 +16,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class Book {
-    final FreqMap posFreq;
-    final FreqMap wordFreq;
-    final FreqMap lemmaFreq;
-    final FreqMap difficultyMap;
+    final FreqMap<String, Integer> posFreq;
+    final FreqMap<String, Integer> wordFreq;
+    final FreqMap<String, Integer> lemmaFreq;
+    final FreqMap<String, Integer> difficultyMap;
 
     String title;
     String author;
@@ -39,10 +39,10 @@ public class Book {
         this.subdirectory = "";
         this.pipeline = WordCount.pipeline;
 
-        this.posFreq = new FreqMap();
-        this.wordFreq = new FreqMap();
-        this.lemmaFreq = new FreqMap();
-        this.difficultyMap = new FreqMap();
+        this.posFreq = new FreqMap<>();
+        this.wordFreq = new FreqMap<>();
+        this.lemmaFreq = new FreqMap<>();
+        this.difficultyMap = new FreqMap<>();
     }
 
     public Book(String subdirectory) {
@@ -52,10 +52,10 @@ public class Book {
         this.subdirectory = subdirectory;
         this.pipeline = WordCount.pipeline;
 
-        this.posFreq = new FreqMap();
-        this.wordFreq = new FreqMap();
-        this.lemmaFreq = new FreqMap();
-        this.difficultyMap = new FreqMap();
+        this.posFreq = new FreqMap<>();
+        this.wordFreq = new FreqMap<>();
+        this.lemmaFreq = new FreqMap<>();
+        this.difficultyMap = new FreqMap<>();
     }
     //TODO Add polysyndeton and parallelism statistics. Look into polyptoton and alliteration as well
 
@@ -66,163 +66,79 @@ public class Book {
      * @param text File to find title of
      */
     public void setTitleFromText(File text) {
-        //TODO for files that are not gutenbergs remove extension from title
-        String title = "";
-        String author = "";
+        String title = null;
+        String author = null;
 
         try {
             BufferedReader br = new BufferedReader(new FileReader(text));
-            String firstLine = br.readLine();
+            String line = br.readLine();
 
-            // If the first line is very short skip over it
-            // TODO What to do if entire file is empty
-            while (firstLine.length() < 1) {
-                firstLine = br.readLine();
+            // If the first line is empty skip over it until finding a full line
+            while (line.isEmpty()) {
+                line = br.readLine();
             }
 
-            // Cases of Gutenberg books to check
-            if (firstLine.contains("The Project Gutenberg EBook of")) {
-                firstLine = firstLine.substring(31);
-                this.gutenberg = true;
-            } else if (firstLine.contains("Project Gutenberg's")
-                    || firstLine.contains("Project Gutenberg’s")) {
-                firstLine = firstLine.substring(20);
-                this.gutenberg = true;
-            }
-
-            // If the pattern "title by author" appears split at the word 'by' to get author and title
-            if (gutenberg && firstLine.contains("by")) {
-                title = firstLine.substring(0, firstLine.lastIndexOf("by")).trim();
-                author = firstLine.substring(firstLine.lastIndexOf("by") + 2).trim();
+            if (isGutenbergText(line)) {
+                while (title == null || author == null) {
+                    line = br.readLine();
+                    if (line.contains("Title:")) {
+                        title = line.substring(6).trim();
+                    } else if (line.contains("Author:")) {
+                        author = line.substring(7).trim();
+                    }
+                }
             } else {
-                title = text.getName();
-                author = "";
+                if (line.toLowerCase().contains("title:")) {
+                    title = line.substring(6).trim();
+                    line = br.readLine().toLowerCase();
+                    if (line.contains("author")) {
+                        author = line.substring(7).trim();
+                    }
+                } else {
+                    title = path.getName();
+                    author = "";
+                }
             }
 
-            // Remove any trailing commas
-            if (title.endsWith(",")) {
-                title = title.substring(0, title.length() - 1);
-            }
+            this.title = title;
+            this.author = author;
+
 
         } catch (IOException e) {
             System.out.println("[Error - SetTitle] Error opening " + text.getName() + " for setting title");
             e.printStackTrace();
         }
 
-        this.title = title;
-        this.author = author;
+        //this.title = title;
+        //this.author = author;
     }
 
-    private void tagSentence(CoreMap sentence) {
-        sentenceCount++;
-        if (longestSentence == null || sentence.size() > longestSentence.size()) {
-            longestSentence = sentence;
-        }
-
-        // Actions for each word
-        for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
-            String word = token.word().replaceAll("[^A-Za-z0-9]", "");
-            String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
-            String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
-            tag = TextTools.posAbbrev.get(tag);
-
-            if (TextTools.getSyllableCount(token.word()) == 1) {
-                difficultyMap.increaseFreq("Monosyllabic");
-            } else {
-                difficultyMap.increaseFreq("Polysyllabic");
-            }
-
-            // Skip over punctuation
-            if (!word.isEmpty()) {
-                wordCount++;
-                wordFreq.increaseFreq(token.word().toLowerCase());
-            }
-
-            if (!lemma.replaceAll("\\W", "").isEmpty()) {
-                lemmaFreq.increaseFreq(lemma);
-            }
-
-            if (tag != null) {
-                posFreq.increaseFreq(tag);
-            }
-
-            syllableCount += TextTools.getSyllableCount(word);
-        }
-
+    private boolean isGutenbergText(String line) {
+        return line.toLowerCase().contains("gutenberg");
     }
 
-    /**
-     * Tag a text for parts of speech
-     *
-     * @param text Text to be tagged
-     */
-    void tagText(String text) {
-
-        Annotation doc = new Annotation(text);
-        pipeline.annotate(doc);
-
-        // Actions for each sentence in the document
-        for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
-            sentenceCount++;
-            if (longestSentence == null || sentence.size() > longestSentence.size()) {
-                longestSentence = sentence;
-            }
-
-            // Actions for each word
-            for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
-                String word = token.word().replaceAll("\\W", "");
-                String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
-                String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
-                tag = TextTools.posAbbrev.get(tag);
-
-                if (TextTools.getSyllableCount(token.word()) == 1) {
-                    difficultyMap.increaseFreq("Monosyllabic");
-                } else {
-                    difficultyMap.increaseFreq("Polysyllabic");
-                }
-
-                // Skip over punctuation
-                if (!word.isEmpty()) {
-                    wordCount++;
-                    wordFreq.increaseFreq(token.word().toLowerCase());
-                }
-
-                if (!lemma.replaceAll("\\W", "").isEmpty()) {
-                    lemmaFreq.increaseFreq(lemma);
-                }
-
-                if (tag != null) {
-                    posFreq.increaseFreq(tag);
-                }
-
-                syllableCount += TextTools.getSyllableCount(word);
-            }
-        }
-
-        // Remove stop-words from the word counts
-        wordFreq.stripStopWords();
-    }
 
     /**
      * Finds the appropriate file type of book to then read text
      */
     public boolean readText(Boolean econ) {
         try {
+            System.out.println("☐ - Starting analysis of " + getName());
             String fileType = Files.probeContentType(path.toPath());
-            if (fileType.equals("text/plain")) {
-                if (econ) {
-                    return readPlainTextEconomy();
-                } else {
-                    return readPlainText();
-                }
-            } else if (fileType.equals("application/pdf")) {
-                return readPDF();
-            }
 
-            long endTime = System.currentTimeMillis();
-            System.out.println(OutputWriter.ANSI_GREEN +
-                    "\n☑ - Finished analysis of " + getName() + " in "
-                    + (endTime - WordCount.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
+            switch (fileType) {
+                case "text/plain":
+                    if (econ) {
+                        return readPlainTextEconomy();
+                    } else {
+                        return readPlainText();
+                    }
+                case "application/pdf":
+                    return readPDF();
+                default:
+                    System.out.println("Unsupported format " + fileType);
+                    System.exit(-3);
+            }
 
         } catch (IOException e) {
             System.out.println("[Error - readText] IOException when probing file type");
@@ -234,10 +150,93 @@ public class Book {
         return false;
     }
 
+    /**
+     * Reads and tags a plain text file sentence by sentence
+     *
+     * @return true if successfully finished
+     */
+    private boolean readPlainTextEconomy() {
+
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            boolean atBook = !gutenberg;
+            StringBuilder buffer = new StringBuilder();
+            Annotation doc;
+
+            for (String line; (line = br.readLine()) != null; ) {
+                if (line.isEmpty()) {
+                    continue;
+                }
+
+                // Find the header of a Gutenberg text
+                if (gutenberg) {
+                    if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
+                            || line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
+                        atBook = true;
+                        continue;
+                    }
+                }
+
+                // Find the footer of a Gutenberg text and stop reading
+                if (atBook) {
+                    if (gutenberg) {
+                        if (line.contains("End of the Project Gutenberg EBook")
+                                || line.contains("End of the Project Gutenberg Ebook")
+                                || line.contains("End of Project Gutenberg’s")) {
+                            break;
+                        }
+                    }
+
+                    // Add the current line to the buffer
+                    buffer.append(" ").append(line.trim());
+                    doc = new Annotation(buffer.toString());
+                    pipeline.annotate(doc);
+
+                    for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
+                        String sentenceString = sentence.toString().trim();
+                        String buffered = buffer.toString().trim();
+
+                        // If the sentence and buffer are equal, continue adding lines
+                        if (sentenceString.equals(buffered)) {
+                            continue;
+                        }
+
+                        // If the buffer contains a sentence, tag the sentence and remove it
+                        if (buffered.contains(sentenceString)) {
+
+                            // Remove the sentence and following space
+                            buffer.delete(buffered.indexOf(sentenceString),
+                                    buffered.indexOf(sentenceString)
+                                            + sentenceString.length() + 1);
+                            updateStats(sentence);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Remove stop-words from the word counts
+            wordFreq.stripStopWords();
+            lemmaFreq.stripStopWords();
+            return true;
+        } catch (IOException e) {
+            System.out.println("[Error - readPlainText] Couldn't find file at " + path);
+            e.printStackTrace();
+            System.exit(2);
+        } catch (NullPointerException e) {
+            System.out.println("[Error - readPlainText] Null pointer for file at " + path);
+            e.printStackTrace();
+            System.exit(2);
+        }
+        return false;
+    }
+
+    /**
+     * Reads and tags a plain text file by loading into memory
+     *
+     * @return true if successfully finished
+     */
     private boolean readPlainText() {
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-            System.out.println("☐ - Starting analysis of " + getName());
-
             boolean atBook = !gutenberg;
             StringBuilder text = new StringBuilder();
 
@@ -263,84 +262,11 @@ public class Book {
                             atBook = false;
                         }
                     }
-                    text.append(line);
+                    text.append(line).append(" ");
                 }
             }
+
             tagText(text.toString());
-            return true;
-        } catch (IOException e) {
-            System.out.println("[Error - readPlainText] Couldn't find file at " + path);
-            e.printStackTrace();
-            System.exit(2);
-        } catch (NullPointerException e) {
-            System.out.println("[Error - readPlainText] Null pointer for file at " + path);
-            e.printStackTrace();
-            System.exit(2);
-        }
-        return false;
-    }
-
-    /**
-     * Reads and tags a plain text file
-     *
-     * @return true if successfully finished
-     */
-    private boolean readPlainTextEconomy() {
-
-        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-            System.out.println("☐ - Starting analysis of " + getName());
-
-            boolean atBook = !gutenberg;
-            String buffer = "";
-
-            for (String line; (line = br.readLine()) != null; ) {
-                // Skip empty lines
-                if (line.isEmpty()) {
-                    continue;
-                }
-
-                if (gutenberg) {
-                    if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
-                            || line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
-                        atBook = true;
-                        continue;
-                    }
-                }
-
-                if (atBook) {
-                    if (gutenberg) {
-                        if (line.contains("End of the Project Gutenberg EBook")
-                                || line.contains("End of the Project Gutenberg Ebook")
-                                || line.contains("End of Project Gutenberg’s")) {
-                            atBook = false;
-                            line = "";
-                        }
-                    }
-
-                    buffer += " " + line;
-                    buffer = buffer.trim();
-                    Annotation doc = new Annotation(buffer);
-                    pipeline.annotate(doc);
-
-                    for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
-                        String sentenceString = sentence.toString();
-
-                        if (!sentenceString.equals(buffer) && buffer.contains(sentenceString)) {
-                            buffer = buffer.replace(sentenceString, "");
-
-                            //Catch any punctuation that may cause errors in replaceAll such as ?
-                            if (buffer.charAt(0) == sentenceString.charAt(sentenceString.length() - 1)) {
-                                buffer = buffer.substring(1);
-                            }
-
-                            tagSentence(sentence);
-                            break;
-                        }
-                    }
-
-
-                }
-            }
 
             return true;
         } catch (IOException e) {
@@ -374,6 +300,62 @@ public class Book {
         }
         System.exit(2);
         return false;
+    }
+
+    /**
+     * Tag a text for parts of speech
+     *
+     * @param text Text to be tagged
+     */
+    void tagText(String text) {
+        Annotation doc = new Annotation(text);
+        pipeline.annotate(doc);
+
+        for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
+            updateStats(sentence);
+        }
+
+        // Remove stop-words from the word counts
+        wordFreq.stripStopWords();
+        lemmaFreq.stripStopWords();
+    }
+
+    private void updateStats(CoreMap sentence) {
+        sentenceCount++;
+        if (longestSentence == null || sentence.size() > longestSentence.size()) {
+            longestSentence = sentence;
+        }
+
+
+        for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
+            String word = token.word().toLowerCase().replaceAll("\\W", "");
+            String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
+            String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
+            tag = TextTools.posAbbrev.get(tag);
+
+            // Skip over punctuation
+            if (!word.isEmpty()) {
+                wordCount++;
+                wordFreq.increaseFreq(word);
+
+                if (TextTools.getSyllableCount(token.word()) == 1) {
+                    difficultyMap.increaseFreq("Monosyllabic");
+                } else {
+                    difficultyMap.increaseFreq("Polysyllabic");
+                }
+
+
+                if (!lemma.replaceAll("\\W", "").isEmpty()) {
+                    lemmaFreq.increaseFreq(lemma);
+                }
+
+                if (tag != null) {
+                    posFreq.increaseFreq(tag);
+                }
+            }
+
+            syllableCount += TextTools.getSyllableCount(word);
+        }
     }
 
     /**

@@ -1,12 +1,7 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 
 import java.io.File;
 import java.util.HashMap;
@@ -64,16 +59,16 @@ public class WordCount {
             }
 
             // Set up CoreNlp pipeline after ensuring program will be run
-            Properties props = new Properties();
-            props.put("annotators", "tokenize, ssplit, pos, lemma");
-            props.put("tokenize.options", "untokenizable=noneDelete");
-            pipeline = new StanfordCoreNLP(props);
+            Properties properties = new Properties();
+            properties.put("annotators", "tokenize, ssplit, pos, lemma");
+            properties.put("tokenize.options", "untokenizable=noneDelete");
+            pipeline = new StanfordCoreNLP(properties);
 
             if (cmd.hasOption("threads") && !cmd.getOptionValue("threads").equals("0")) {
-                start(path, Integer.parseInt(cmd.getOptionValue("threads")));
+                startRunners(path, Integer.parseInt(cmd.getOptionValue("threads")));
             } else {
                 int threads = Runtime.getRuntime().availableProcessors();
-                start(path, threads + 1);
+                startRunners(path, threads + 1);
             }
 
         } catch (ParseException e) {
@@ -83,10 +78,9 @@ public class WordCount {
 
     }
 
-    private static void start(File path, int threads) {
+    private static void startRunners(File path, int threads) {
         BatchRunner.startRunners(path, threads);
     }
-
 
     private static File runInteractive() {
         chosenOptions.put("i", getYesNo("Create image outputs"));
@@ -138,6 +132,5 @@ public class WordCount {
             }
         }
     }
-
 
 }

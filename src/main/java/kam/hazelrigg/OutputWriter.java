@@ -8,16 +8,10 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.awt.*;
+import java.io.*;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
 
 import static org.apache.commons.lang3.text.WordUtils.wrap;
 
@@ -68,11 +62,11 @@ public class OutputWriter {
      * Writes Book information to a text file
      */
     public void writeTxt() {
-        if (book.posFreq.getSize() > 0) {
+        if (book.posFreq.size() > 0) {
             makeResultDirs();
             File outFile;
 
-            if (book.subdirectory.equals("")) {
+            if (book.subdirectory.isEmpty()) {
                 outFile = new File("results/txt/" + book.getName() + " Results.txt");
             } else {
                 outFile = new File("results/txt/" + book.subdirectory + "/" + book.getName()
@@ -156,7 +150,7 @@ public class OutputWriter {
      */
     private String getStats() {
         return "Total Words: " + book.wordCount
-                + "\nUnique Words: " + book.wordFreq.getSize()
+                + "\nUnique Words: " + book.wordFreq.size()
                 + "\nPolysyllabic Words: " + book.difficultyMap.get("Polysyllabic")
                 + "\nMonosyllabic Words: " + book.difficultyMap.get("Monosyllabic")
                 + "\nTotal Syllables: " + book.syllableCount
@@ -193,7 +187,7 @@ public class OutputWriter {
                         + " read this text at a rate of 275wpm it would take %d minute(s) to finish"
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
                         + " to write at 13wpm it would take %d minute(s)."
-                , classifiedLength, wordCount, book.wordFreq.getSize(), gradeLevel,
+                , classifiedLength, wordCount, book.wordFreq.size(), gradeLevel,
                 polySyllable, monoSyllable, difficulty, TextTools.getReadingTime(wordCount),
                 TextTools.getSpeakingTime(wordCount), wordCount / 40, wordCount / 13);
 
@@ -233,11 +227,12 @@ public class OutputWriter {
      * Creates a graph using JFreeChart that is saved to a jpg.
      *
      * @param purpose Purpose of the graph, used in title of graph
-     * @param freq    FreqMap to use values off
+     * @param data FreqMap to use values off
      */
-    private void makeGraph(String purpose, FreqMap freq) {
+    private void makeGraph(String purpose, FreqMap<String, Integer> data) {
         DefaultPieDataset dataSet = new DefaultPieDataset();
         String outPath;
+        int resolution = 1000;
 
         // Create results directories
         if (makeDir("results/img/")) {
@@ -248,22 +243,10 @@ public class OutputWriter {
         }
 
         // Load POS data into data set
-        HashMap<String, Integer> map = freq.getFrequency();
-
-        for (Map.Entry<String, Integer> entry : map.entrySet()) {
-            String type = entry.getKey();
-            int count = entry.getValue();
-            if (type != null) {
-                dataSet.setValue(type, count);
-            }
-        }
+        data.toHashMap().forEach(dataSet::setValue);
 
         JFreeChart chart = ChartFactory.createPieChart(
-                purpose + " of " + book.getName(),
-                dataSet,
-                false,
-                true,
-                false);
+                purpose + " of " + book.getName(), dataSet, false, true, false);
 
         PiePlot plot = (PiePlot) chart.getPlot();
         plot = setColors(plot, purpose);
@@ -277,7 +260,7 @@ public class OutputWriter {
 
         // Save the chart to jpeg
         try {
-            ChartUtilities.saveChartAsJPEG(new File(outPath), chart, 700, 700);
+            ChartUtilities.saveChartAsJPEG(new File(outPath), chart, resolution, resolution);
             System.out.println(ANSI_GREEN + "☑ - Finished writing " + purpose
                     + " chart for " + book.getName() + ANSI_RESET);
 
@@ -325,80 +308,81 @@ public class OutputWriter {
 
     @SuppressWarnings("unchecked")
     public String writeJson() {
-        File out;
-
-        makeDir("results/json/");
-        // Create results directories
-        if (book.subdirectory.equals("")) {
-            out = new File("results/json/" + book.getName() + " Results.json");
+        String outPath;
+        if (makeDir("results/json/")) {
+            outPath = "results/json/" + book.subdirectory + "/" + book.getName() + " Results.json";
         } else {
-            out = new File("results/json/" + book.subdirectory + "/" + book.getName()
-                    + " Results.json");
+            System.out.println("[Error] Failed to create image results directories");
+            outPath = book.getName() + " Results.json";
         }
 
+        File out = new File(outPath);
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
 
-            JSONObject json = new JSONObject();
-            json.put("name", book.getName());
-            json.put("description", "Parts of speech for " + book.getName());
+            JSONObject bookJson = new JSONObject();
+            bookJson.put("name", book.getName());
+            bookJson.put("description", "Parts of speech for " + book.getName());
 
-            String[] types = {"Nouns", "Verbs", "Adverbs", "Adjectives", "Pronouns", "Other"};
+            String[] posTypes = {"Nouns", "Verbs", "Adverbs", "Adjectives", "Pronouns", "Other"};
             HashMap<String, JSONObject> jsonObjects = new HashMap<>();
             HashMap<String, JSONArray> jsonTypes = new HashMap<>();
 
-            for (String type : types) {
+            for (String type : posTypes) {
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("name", type);
                 jsonObject.put("description", type);
-
                 jsonObjects.put(type, jsonObject);
+
                 jsonTypes.put(type, new JSONArray());
             }
 
-            for (String type : book.posFreq.keySet()) {
+            String[] types = book.posFreq.getSortedByKey();
 
+            Arrays.stream(types).forEach(type -> {
                 // Create temporary parent for each type
-                JSONObject parent = new JSONObject();
-                parent.put("name", type);
-                parent.put("description", type);
+                JSONObject typeParent = new JSONObject();
+                typeParent.put("name", type);
+                typeParent.put("description", type);
 
                 // Basic setup
-                JSONArray array = new JSONArray();
-                JSONObject object = new JSONObject();
-                object.put("name", type);
-                object.put("description", type);
-                object.put("size", book.posFreq.get(type));
-                array.add(object);
-                parent.put("children", array);
+                JSONArray typeArray = new JSONArray();
+                JSONObject typeObject = new JSONObject();
+
+                typeObject.put("name", type);
+                typeObject.put("description", type);
+                typeObject.put("size", book.posFreq.get(type));
+                typeArray.add(typeObject);
 
                 //Categorise each type
-                if (TextTools.getParentType(type).equals("Noun")) {
-                    jsonTypes.get("Nouns").add(parent);
-                } else if (TextTools.getParentType(type).equals("Verb")) {
-                    jsonTypes.get("Verbs").add(parent);
-                } else if (TextTools.getParentType(type).equals("Adverb")) {
-                    jsonTypes.get("Adverbs").add(parent);
-                } else if (TextTools.getParentType(type).equals("Adjective")) {
-                    jsonTypes.get("Adjectives").add(parent);
-                } else if (TextTools.getParentType(type).equals("Pronoun")) {
-                    jsonTypes.get("Pronouns").add(parent);
-                } else {
-                    jsonTypes.get("Other").add(parent);
+                typeParent.put("children", typeArray);
+                switch (TextTools.getParentType(type)) {
+                    case "Noun":
+                        jsonTypes.get("Nouns").add(typeParent);
+                    case "Verb":
+                        jsonTypes.get("Verbs").add(typeParent);
+                    case "Adverb":
+                        jsonTypes.get("Adverbs").add(typeParent);
+                    case "Adjective":
+                        jsonTypes.get("Adjectives").add(typeParent);
+                    case "Pronoun":
+                        jsonTypes.get("Pronouns").add(typeParent);
+                    default:
+                        jsonTypes.get("Other").add(typeParent);
                 }
-            }
+            });
 
-            JSONArray rootParent = new JSONArray();
+            JSONArray jsonParent = new JSONArray();
 
-            for (String type : types) {
-                // Add children arrays to each object
+            Arrays.stream(posTypes).forEach(type -> {
                 jsonObjects.get(type).put("children", jsonTypes.get(type));
-                // Add objects to parent array
-                rootParent.add(jsonObjects.get(type));
-            }
+                jsonParent.add(jsonObjects.get(type));
+            });
+
+            bookJson.put("children", jsonParent);
+
             JSONObject rootObject = new JSONObject();
-            json.put("children", rootParent);
-            rootObject.put(book.title, json);
+            rootObject.put(book.title, bookJson);
 
 
             bw.write(rootObject.toJSONString());
@@ -408,10 +392,10 @@ public class OutputWriter {
 
         } catch (IOException e) {
             System.out.println("[Error - writeJSON] Error opening " + out.getName() + " for writing");
+            makeResultDirs();
             e.printStackTrace();
+            writeJson();
         }
         return null;
     }
-
-
 }

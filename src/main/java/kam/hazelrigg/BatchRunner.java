@@ -17,9 +17,10 @@ class BatchRunner {
     }
 
     /**
-     * Start a runner on a new thread for each file in a directory
+     * Start a thread pool to analyse texts
      *
      * @param file File/Dir to run
+     * @param threads Number of threads to use in pool
      */
     static void startRunners(File file, int threads) {
         if (file.isDirectory()) {
@@ -71,8 +72,12 @@ class Runner extends Thread {
         new Thread(this);
         this.file = file;
 
-        String parentOfSub = sub.toString();
-        this.book = new Book(parentOfSub);
+        String parentOfSub = sub.getName();
+        if (file == sub) {
+            this.book = new Book();
+        } else {
+            this.book = new Book(parentOfSub);
+        }
 
         if (options.get("v")) {
             System.out.println("┌══════════[ NEW BOOK ]══════════╾\n│ ┌╾ " + parentOfSub
@@ -86,14 +91,20 @@ class Runner extends Thread {
      * Actions to perform with each book
      */
     private void runBook() {
-        book.readText(options.get("economy"));
+        book.readText(options.get("e"));
+        long endReadTime = System.currentTimeMillis();
+        System.out.println(OutputWriter.ANSI_GREEN +
+                "\n☑ - Finished analysis of " + book.getName() + " in "
+                + (endReadTime - WordCount.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
+
         OutputWriter ow = new OutputWriter(book);
         ow.writeTxt();
-        if (options.get("json")) {
+
+        if (options.get("j")) {
             ow.writeJson();
         }
 
-        if (options.get("images")) {
+        if (options.get("i")) {
             ow.makeDiffGraph();
             ow.makePosGraph();
         }
@@ -113,9 +124,9 @@ class Runner extends Thread {
     public void run() {
         book.setTitleFromText(file);
 
-        if (options.get("overwrite")) {
+        if (options.get("o")) {
             runBook();
-        } else if (book.resultsFileExists(options.get("images"), options.get("json"))) {
+        } else if (book.resultsFileExists(options.get("i"), options.get("j"))) {
             System.out.println("☑ - " + file.getName() + " already has results");
         } else {
             runBook();
