@@ -100,6 +100,10 @@ class Runner extends Thread {
         OutputWriter ow = new OutputWriter(book);
         ow.writeTxt();
 
+        if (options.get("c")) {
+            ow.writeCSV();
+        }
+
         if (options.get("j")) {
             ow.writeJson();
         }

@@ -3,7 +3,11 @@ package kam.hazelrigg;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
 import static java.util.Map.Entry.comparingByValue;
@@ -92,6 +96,14 @@ public class FreqMap<K, V> extends HashMap<K, V> {
         StringBuilder result = new StringBuilder();
         sortByValue();
         frequency.forEach((key, value) -> result.append(key).append(":").append(value).append("|"));
+        return result.toString();
+    }
+
+    String getCsvString() {
+        StringBuilder result = new StringBuilder();
+        sortByValue();
+        frequency.forEach((key, value) ->
+                result.append("\"").append(key).append("\", ").append(value).append("\n"));
         return result.toString();
     }
 

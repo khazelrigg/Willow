@@ -16,49 +16,30 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class Book {
-    final FreqMap<String, Integer> posFreq;
-    final FreqMap<String, Integer> wordFreq;
-    final FreqMap<String, Integer> lemmaFreq;
-    final FreqMap<String, Integer> difficultyMap;
+    final FreqMap<String, Integer> partsOfSpeech = new FreqMap<>();
+    final FreqMap<String, Integer> wordFreq = new FreqMap<>();
+    final FreqMap<String, Integer> lemmas = new FreqMap<>();
+    final FreqMap<String, Integer> difficultyMap = new FreqMap<>();
 
-    String title;
-    String author;
+    String title = "";
+    String author = "";
     public String subdirectory;
     long wordCount;
     long syllableCount;
     long sentenceCount;
-    private boolean gutenberg;
+    private boolean gutenberg = false;
     private File path;
     CoreMap longestSentence;
-    private StanfordCoreNLP pipeline;
+    private StanfordCoreNLP pipeline = WordCount.pipeline;
 
     public Book() {
-        this.title = "";
-        this.author = "";
-        this.gutenberg = false;
-        this.subdirectory = "";
-        this.pipeline = WordCount.pipeline;
-
-        this.posFreq = new FreqMap<>();
-        this.wordFreq = new FreqMap<>();
-        this.lemmaFreq = new FreqMap<>();
-        this.difficultyMap = new FreqMap<>();
+        this.subdirectory = null;
     }
 
     public Book(String subdirectory) {
-        this.title = "";
-        this.author = "";
-        this.gutenberg = false;
         this.subdirectory = subdirectory;
-        this.pipeline = WordCount.pipeline;
-
-        this.posFreq = new FreqMap<>();
-        this.wordFreq = new FreqMap<>();
-        this.lemmaFreq = new FreqMap<>();
-        this.difficultyMap = new FreqMap<>();
     }
     //TODO Add polysyndeton and parallelism statistics. Look into polyptoton and alliteration as well
-
 
     /**
      * Get the title of a book.
@@ -103,7 +84,6 @@ public class Book {
             this.title = title;
             this.author = author;
 
-
         } catch (IOException e) {
             System.out.println("[Error - SetTitle] Error opening " + text.getName() + " for setting title");
             e.printStackTrace();
@@ -117,28 +97,14 @@ public class Book {
         return line.toLowerCase().contains("gutenberg");
     }
 
-
     /**
      * Finds the appropriate file type of book to then read text
      */
-    public boolean readText(Boolean econ) {
+    public boolean readText(Boolean economy) {
+        System.out.println("☐ - Starting analysis of " + getName());
         try {
-            System.out.println("☐ - Starting analysis of " + getName());
             String fileType = Files.probeContentType(path.toPath());
-
-            switch (fileType) {
-                case "text/plain":
-                    if (econ) {
-                        return readPlainTextEconomy();
-                    } else {
-                        return readPlainText();
-                    }
-                case "application/pdf":
-                    return readPDF();
-                default:
-                    System.out.println("Unsupported format " + fileType);
-                    System.exit(-3);
-            }
+            return runFileType(fileType, economy);
 
         } catch (IOException e) {
             System.out.println("[Error - readText] IOException when probing file type");
@@ -146,6 +112,23 @@ public class Book {
         } catch (NullPointerException e) {
             System.out.println("[Error - readText] NullPointerException when probing file type");
             e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean runFileType(String fileType, boolean economy) {
+        switch (fileType) {
+            case "text/plain":
+                if (economy) {
+                    return readPlainTextEconomy();
+                } else {
+                    return readPlainText();
+                }
+            case "application/pdf":
+                return readPDF();
+            default:
+                System.out.println("Unsupported format " + fileType);
+                System.exit(-3);
         }
         return false;
     }
@@ -160,38 +143,34 @@ public class Book {
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             boolean atBook = !gutenberg;
             StringBuilder buffer = new StringBuilder();
-            Annotation doc;
+            Annotation document;
 
             for (String line; (line = br.readLine()) != null; ) {
+
                 if (line.isEmpty()) {
                     continue;
                 }
 
                 // Find the header of a Gutenberg text
                 if (gutenberg) {
-                    if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
-                            || line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
-                        atBook = true;
-                        continue;
-                    }
+                    atBook = checkForGutenbergStartEnd(line);
                 }
 
                 // Find the footer of a Gutenberg text and stop reading
                 if (atBook) {
                     if (gutenberg) {
-                        if (line.contains("End of the Project Gutenberg EBook")
-                                || line.contains("End of the Project Gutenberg Ebook")
-                                || line.contains("End of Project Gutenberg’s")) {
+                        atBook = checkForGutenbergStartEnd(line);
+                        if (!atBook) {
                             break;
                         }
                     }
 
                     // Add the current line to the buffer
                     buffer.append(" ").append(line.trim());
-                    doc = new Annotation(buffer.toString());
-                    pipeline.annotate(doc);
+                    document = new Annotation(buffer.toString());
+                    pipeline.annotate(document);
 
-                    for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
+                    for (CoreMap sentence : document.get(CoreAnnotations.SentencesAnnotation.class)) {
                         String sentenceString = sentence.toString().trim();
                         String buffered = buffer.toString().trim();
 
@@ -207,16 +186,15 @@ public class Book {
                             buffer.delete(buffered.indexOf(sentenceString),
                                     buffered.indexOf(sentenceString)
                                             + sentenceString.length() + 1);
-                            updateStats(sentence);
+
+                            updateStatsFromSentence(sentence);
                             break;
                         }
                     }
                 }
             }
 
-            // Remove stop-words from the word counts
-            wordFreq.stripStopWords();
-            lemmaFreq.stripStopWords();
+            removeStopWords();
             return true;
         } catch (IOException e) {
             System.out.println("[Error - readPlainText] Couldn't find file at " + path);
@@ -227,6 +205,18 @@ public class Book {
             e.printStackTrace();
             System.exit(2);
         }
+        return false;
+    }
+
+    private boolean checkForGutenbergStartEnd(String line) {
+        if (line.contains("End of the Project Gutenberg")
+                || line.contains("End of Project Gutenberg’s")) {
+            return false;
+        } else if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
+                || line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
+            return true;
+        }
+
         return false;
     }
 
@@ -312,49 +302,132 @@ public class Book {
         pipeline.annotate(doc);
 
         for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
-            updateStats(sentence);
+            updateStatsFromSentence(sentence);
         }
 
-        // Remove stop-words from the word counts
-        wordFreq.stripStopWords();
-        lemmaFreq.stripStopWords();
+        removeStopWords();
     }
 
-    private void updateStats(CoreMap sentence) {
+    private void updateStatsFromSentence(CoreMap sentence) {
         sentenceCount++;
         if (longestSentence == null || sentence.size() > longestSentence.size()) {
             longestSentence = sentence;
         }
-
+        // schemeAnalysis(sentence);
 
         for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
-            String word = token.word().toLowerCase().replaceAll("\\W", "");
-            String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
-            String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
-            tag = TextTools.posAbbrev.get(tag);
+            updateStatsFromToken(token);
+        }
+    }
 
-            // Skip over punctuation
-            if (!word.isEmpty()) {
-                wordCount++;
-                wordFreq.increaseFreq(word);
+    /**
+     * private void schemeAnalysis(CoreMap sentence) {
+     * boolean epizeuxis = isEpizeuxis(sentence);
+     * if (epizeuxis)
+     * System.out.println(sentence.toString());
+     * // isPolysyndeton(sentence);
+     * }
+     * <p>
+     * private boolean isEpizeuxis(CoreMap sentence) {
+     * List<CoreLabel> coreLabels = sentence.get(CoreAnnotations.TokensAnnotation.class);
+     * <p>
+     * for (int i = 0; i < coreLabels.size() - 1; i++) {
+     * String currentWord = coreLabels.get(i).word().replaceAll("\\W", "");
+     * String nextWord = coreLabels.get(i + 1).word().replaceAll("\\W", "");
+     * <p>
+     * if (currentWord.isEmpty()) {
+     * continue;
+     * }
+     * <p>
+     * if (nextWord.equals("s") || nextWord.equals("nt")) {
+     * currentWord = currentWord + nextWord;
+     * if (coreLabels.size() >= i + 2) {
+     * nextWord = coreLabels.get(i + 2).word();
+     * }
+     * i++;
+     * }
+     * <p>
+     * if (currentWord.equals(nextWord)) {
+     * System.out.println("MATCH");
+     * return true;
+     * }
+     * }
+     * return false;
+     * }
+     * <p>
+     * <p>
+     * private boolean isPolysyndeton(CoreMap sentence) {
+     * System.out.println("+=========================[ Sentence ]=========================+");
+     * System.out.println("SENTENCE: " + sentence.toString());
+     * <p>
+     * Collection<RelationTriple> triples =
+     * sentence.get(NaturalLogicAnnotations.RelationTriplesAnnotation.class);
+     * <p>
+     * Collection<SentenceFragment> sentenceFragments = sentence.get(NaturalLogicAnnotations.EntailedClausesAnnotation.class);
+     * System.out.println(sentence.get(NaturalLogicAnnotations.PolarityAnnotation.class).toString());
+     * <p>
+     * if (sentenceFragments != null) {
+     * for (SentenceFragment frag : sentenceFragments) {
+     * if (frag != null) {
+     * System.out.println("FRAGMENT:\t" + frag);
+     * }
+     * }
+     * }
+     * <p>
+     * System.out.println("CLAUSES: " + triples.size());
+     * <p>
+     * for (RelationTriple triple : triples) {
+     * System.out.println("+----------------------------[ TRIPLES ]-------------------------+");
+     * System.out.println(triple.asSentence());
+     * System.out.println(
+     * "CONFIDENCE:\t\t" + triple.confidence + "\n" +
+     * "LEMMA:\t\t" + triple.subjectLemmaGloss() + "\n" +
+     * "RELATION:\t\t" + triple.relationLemmaGloss() + "\n" +
+     * "LEMMA GLOSS:\t\t" + triple.objectLemmaGloss());
+     * }
+     * <p>
+     * return false;
+     * }
+     */
 
-                if (TextTools.getSyllableCount(token.word()) == 1) {
-                    difficultyMap.increaseFreq("Monosyllabic");
-                } else {
-                    difficultyMap.increaseFreq("Polysyllabic");
-                }
+    private void updateStatsFromToken(CoreLabel token) {
+        String word = token.word().toLowerCase();
+        String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
+        String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
+        tag = TextTools.posAbbrev.get(tag);
 
+        updateSyllables(word);
 
-                if (!lemma.replaceAll("\\W", "").isEmpty()) {
-                    lemmaFreq.increaseFreq(lemma);
-                }
+        // Skip over punctuation
+        if (!word.replaceAll("\\W", "").isEmpty()) {
+            updateWords(word);
+            updateLemmas(lemma);
+            updatePartsOfSpeech(tag);
+        }
+    }
 
-                if (tag != null) {
-                    posFreq.increaseFreq(tag);
-                }
-            }
+    private void updateWords(String word) {
+        wordCount++;
+        wordFreq.increaseFreq(word.toLowerCase());
+    }
 
-            syllableCount += TextTools.getSyllableCount(word);
+    private void updateSyllables(String word) {
+        if (TextTools.getSyllableCount(word) == 1) {
+            difficultyMap.increaseFreq("Monosyllabic");
+        } else {
+            difficultyMap.increaseFreq("Polysyllabic");
+        }
+    }
+
+    private void updateLemmas(String lemma) {
+        if (!lemma.replaceAll("\\W", "").isEmpty()) {
+            lemmas.increaseFreq(lemma);
+        }
+    }
+
+    private void updatePartsOfSpeech(String tag) {
+        if (tag != null) {
+            partsOfSpeech.increaseFreq(tag);
         }
     }
 
@@ -381,6 +454,11 @@ public class Book {
 
     public String getAuthor() {
         return author;
+    }
+
+    private void removeStopWords() {
+        wordFreq.stripStopWords();
+        lemmas.stripStopWords();
     }
 
     public void setAuthor(String author) {

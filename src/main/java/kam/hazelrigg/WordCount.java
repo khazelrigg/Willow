@@ -1,7 +1,12 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import java.io.File;
 import java.util.HashMap;
@@ -27,8 +32,9 @@ public class WordCount {
                 .addOption("k", "interactive", false, "Run interactive mode, choose options when run instead of in command line")
                 .addOption("i", "images", false, "Create image outputs")
                 .addOption("j", "json", false, "Create JSON output")
+                .addOption("c", "csv", false, "Create CSV output")
                 .addOption("o", "overwrite", false, "Overwrite any existing results")
-                .addOption("t", "threads", false, "Max number of threads to run, 0 = Use CPUs available; default = 0");
+                .addOption("t", "threads", true, "Max number of threads to run, 0 = Use CPUs available; default = 0");
 
 
         HelpFormatter formatter = new HelpFormatter();
@@ -60,8 +66,10 @@ public class WordCount {
 
             // Set up CoreNlp pipeline after ensuring program will be run
             Properties properties = new Properties();
-            properties.put("annotators", "tokenize, ssplit, pos, lemma");
+            properties.put("annotators",
+                    "tokenize, ssplit, pos, lemma, depparse, natlog, openie");
             properties.put("tokenize.options", "untokenizable=noneDelete");
+
             pipeline = new StanfordCoreNLP(properties);
 
             if (cmd.hasOption("threads") && !cmd.getOptionValue("threads").equals("0")) {

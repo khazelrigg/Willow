@@ -8,8 +8,16 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.*;
-import java.io.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -30,7 +38,7 @@ public class OutputWriter {
      */
     private void makeResultDirs() {
         makeParentDirs();
-        if (!book.subdirectory.equals("")) {
+        if (book.subdirectory != null) {
             makeDir("results/txt/" + book.subdirectory);
             makeDir("results/img/" + book.subdirectory);
             makeDir("results/json/" + book.subdirectory);
@@ -62,11 +70,11 @@ public class OutputWriter {
      * Writes Book information to a text file
      */
     public void writeTxt() {
-        if (book.posFreq.size() > 0) {
+        if (book.partsOfSpeech.size() > 0) {
             makeResultDirs();
             File outFile;
 
-            if (book.subdirectory.isEmpty()) {
+            if (book.subdirectory == null) {
                 outFile = new File("results/txt/" + book.getName() + " Results.txt");
             } else {
                 outFile = new File("results/txt/" + book.subdirectory + "/" + book.getName()
@@ -82,11 +90,11 @@ public class OutputWriter {
                 bw.write(wrapInBox(header));
                 bw.write("\n" + wrapInBox("Stats") + "\n" + getStats());
                 bw.write("\n" + wrapInBox("Conclusion") + "\n" + getConclusionString());
-                bw.write("\n" + wrapInBox("Parts of Speech Tags") + "\n" + book.posFreq.toString());
+                bw.write("\n" + wrapInBox("Parts of Speech Tags") + "\n" + book.partsOfSpeech.toString());
                 bw.write("\n" + wrapInBox("Word Counts") + "\n" + book.wordFreq.toString());
-                bw.write("\n" + wrapInBox("Lemma Counts") + "\n" + book.lemmaFreq.toString());
+                bw.write("\n" + wrapInBox("Lemma Counts") + "\n" + book.lemmas.toString());
                 bw.write("\n" + wrapInBox("Concordance") + "\n" + createConcordance(book.wordFreq));
-                bw.write("\n" + wrapInBox("Lemma Concordance") + "\n" + createConcordance(book.lemmaFreq));
+                bw.write("\n" + wrapInBox("Lemma Concordance") + "\n" + createConcordance(book.lemmas));
 
                 bw.close();
                 System.out.println(ANSI_GREEN + "☑ - Finished writing TXT information for " + book.getName() + ANSI_RESET);
@@ -197,12 +205,13 @@ public class OutputWriter {
     /**
      * Creates a concordance of all unique words in the text
      *
+     * @param words FreqMap to load keys of
      * @return String wrapped at 100 characters
      */
-    private String createConcordance(FreqMap freqs) {
+    private String createConcordance(FreqMap words) {
         StringBuilder concordance = new StringBuilder();
 
-        for (String word : freqs.getSortedByKey()) {
+        for (String word : words.getSortedByKey()) {
             concordance.append(word).append(" ");
         }
 
@@ -220,7 +229,7 @@ public class OutputWriter {
      * Creates a parts of speech distribution pie graph.
      */
     public void makePosGraph() {
-        makeGraph("POS Distribution", book.posFreq);
+        makeGraph("POS Distribution", book.partsOfSpeech);
     }
 
     /**
@@ -309,10 +318,15 @@ public class OutputWriter {
     @SuppressWarnings("unchecked")
     public String writeJson() {
         String outPath;
+
         if (makeDir("results/json/")) {
-            outPath = "results/json/" + book.subdirectory + "/" + book.getName() + " Results.json";
+            if (book.subdirectory != null) {
+                outPath = "results/json/" + book.subdirectory + "/" + book.getName() + " Results.json";
+            } else {
+                outPath = "results/json/" + "/" + book.getName() + " Results.json";
+            }
         } else {
-            System.out.println("[Error] Failed to create image results directories");
+            System.out.println("[Error] Failed to create json results directory");
             outPath = book.getName() + " Results.json";
         }
 
@@ -337,7 +351,7 @@ public class OutputWriter {
                 jsonTypes.put(type, new JSONArray());
             }
 
-            String[] types = book.posFreq.getSortedByKey();
+            String[] types = book.partsOfSpeech.getSortedByKey();
 
             Arrays.stream(types).forEach(type -> {
                 // Create temporary parent for each type
@@ -351,7 +365,7 @@ public class OutputWriter {
 
                 typeObject.put("name", type);
                 typeObject.put("description", type);
-                typeObject.put("size", book.posFreq.get(type));
+                typeObject.put("size", book.partsOfSpeech.get(type));
                 typeArray.add(typeObject);
 
                 //Categorise each type
@@ -397,5 +411,26 @@ public class OutputWriter {
             writeJson();
         }
         return null;
+    }
+
+    String writeCSV() {
+        Path outPath;
+        if (makeDir("results/csv/")) {
+            if (book.subdirectory == null) {
+                outPath = Paths.get("results", "csv", book.getName() + " Results.csv");
+            } else {
+                outPath = Paths.get("results", "csv", book.subdirectory, book.getName() + " Results.csv");
+            }
+        } else {
+            outPath = Paths.get(book.getName() + "Results.csv");
+        }
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(outPath.toFile()))) {
+            bw.write("Word, Count\n");
+            bw.write(book.wordFreq.getCsvString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return book.wordFreq.getCsvString();
     }
 }
