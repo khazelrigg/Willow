@@ -109,8 +109,7 @@ public class ViewController {
     private void openFile(File file) {
         Platform.runLater(() -> {
             if (file != null) {
-                book.setPath(file);
-                book.subdirectory = book.getPath().getParentFile().getName();
+                book.setSubdirectory(book.getPath().getParentFile().getName());
                 book.givePipeline(pipeline);
                 book.setTitleFromText(file);
                 statusLabel.setText("Opened " + book.getTitle());
@@ -131,9 +130,8 @@ public class ViewController {
         ObservableList<String> files = resultsFileListView.getItems();
 
         Book newBook = new Book();
-        newBook.setPath(file);
         newBook.setTitleFromText(file);
-        newBook.subdirectory = newBook.getPath().getParentFile().getName();
+        newBook.setSubdirectory(newBook.getPath().getParentFile().getName());
 
         if (!files.contains(newBook.getName())) {
             files.add(newBook.getName());
@@ -218,7 +216,7 @@ public class ViewController {
 
     //TODO get rid of absolute path for images
     private void showPosChart(Book cur) {
-        Image posGraph = new Image("file:results/img/" + cur.subdirectory + "/" + cur.getName()
+        Image posGraph = new Image("file:results/img/" + cur.getSubdirectory() + "/" + cur.getName()
                 + " POS Distribution Results.jpeg");
 
         posChartImageView.setImage(posGraph);
@@ -227,7 +225,7 @@ public class ViewController {
     }
 
     private void showDifficultyChart(Book cur) {
-        Image difficultyChart = new Image("file:results/img/" + cur.subdirectory + "/" + cur.getName()
+        Image difficultyChart = new Image("file:results/img/" + cur.getSubdirectory() + "/" + cur.getName()
                 + " Difficulty Results.jpeg");
 
         difficultyImageView.setImage(difficultyChart);
@@ -237,7 +235,7 @@ public class ViewController {
 
     public void openTextEditor() {
         try {
-            java.awt.Desktop.getDesktop().edit(new File("results/txt/" + book.subdirectory + "/" + book.getName()
+            java.awt.Desktop.getDesktop().edit(new File("results/txt/" + book.getSubdirectory() + "/" + book.getName()
                     + " Results.jpeg"));
         } catch (IOException e) {
             e.printStackTrace();

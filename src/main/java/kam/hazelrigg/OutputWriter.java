@@ -1,5 +1,6 @@
 package kam.hazelrigg;
 
+import edu.stanford.nlp.util.CoreMap;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
@@ -8,14 +9,8 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.awt.*;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -26,11 +21,29 @@ import static org.apache.commons.lang3.text.WordUtils.wrap;
 public class OutputWriter {
     static final String ANSI_RESET = "\u001B[0m";
     static final String ANSI_GREEN = "\u001B[32m";
+    private final String subdirectory;
+    private final FreqMap<String, Integer> words;
+    private final FreqMap<String, Integer> partsOfSpeech;
+    private final FreqMap<String, Integer> lemmas;
+    private final FreqMap<String, Integer> syllables;
+    private final long wordCount;
+    private final long syllableCount;
+    private final long sentenceCount;
+    private final CoreMap longestSentence;
 
     private Book book;
 
     public OutputWriter(Book book) {
         this.book = book;
+        this.subdirectory = book.getSubdirectory();
+        this.words = book.getWords();
+        this.partsOfSpeech = book.getPartsOfSpeech();
+        this.lemmas = book.getLemmas();
+        this.syllables = book.getSyllables();
+        this.wordCount = book.getWordCount();
+        this.syllableCount = book.getSyllableCount();
+        this.sentenceCount = book.getSentenceCount();
+        this.longestSentence = book.getLongestSentence();
     }
 
     /**
@@ -38,10 +51,11 @@ public class OutputWriter {
      */
     private void makeResultDirs() {
         makeParentDirs();
-        if (book.subdirectory != null) {
-            makeDir("results/txt/" + book.subdirectory);
-            makeDir("results/img/" + book.subdirectory);
-            makeDir("results/json/" + book.subdirectory);
+        try {
+            makeDir("results/txt/" + subdirectory);
+            makeDir("results/img/" + subdirectory);
+            makeDir("results/json/" + subdirectory);
+        } catch (NullPointerException ignore) {
         }
     }
 
@@ -70,15 +84,15 @@ public class OutputWriter {
      * Writes Book information to a text file
      */
     public void writeTxt() {
-        if (book.partsOfSpeech.size() > 0) {
+        if (partsOfSpeech.size() > 0) {
             makeResultDirs();
             File outFile;
 
-            if (book.subdirectory == null) {
-                outFile = new File("results/txt/" + book.getName() + " Results.txt");
-            } else {
-                outFile = new File("results/txt/" + book.subdirectory + "/" + book.getName()
+            try {
+                outFile = new File("results/txt/" + subdirectory + "/" + book.getName()
                         + " Results.txt");
+            } catch (NullPointerException e) {
+                outFile = new File("results/txt/" + book.getName() + " Results.txt");
             }
 
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))) {
@@ -88,13 +102,13 @@ public class OutputWriter {
                 }
 
                 bw.write(wrapInBox(header));
-                bw.write("\n" + wrapInBox("Stats") + "\n" + getStats());
-                bw.write("\n" + wrapInBox("Conclusion") + "\n" + getConclusionString());
-                bw.write("\n" + wrapInBox("Parts of Speech Tags") + "\n" + book.partsOfSpeech.toString());
-                bw.write("\n" + wrapInBox("Word Counts") + "\n" + book.wordFreq.toString());
-                bw.write("\n" + wrapInBox("Lemma Counts") + "\n" + book.lemmas.toString());
-                bw.write("\n" + wrapInBox("Concordance") + "\n" + createConcordance(book.wordFreq));
-                bw.write("\n" + wrapInBox("Lemma Concordance") + "\n" + createConcordance(book.lemmas));
+                bw.write("\n" + wrapInBox("Stats") + getStats());
+                bw.write("\n" + wrapInBox("Conclusion") + getConclusionString());
+                bw.write("\n" + wrapInBox("Parts of Speech") + partsOfSpeech.toString());
+                bw.write("\n" + wrapInBox("Word Counts") + words.toString());
+                bw.write("\n" + wrapInBox("Lemma Counts") + lemmas.toString());
+                bw.write("\n" + wrapInBox("Concordance") + createConcordance(words));
+                bw.write("\n" + wrapInBox("Lemma Concordance") + createConcordance(lemmas));
 
                 bw.close();
                 System.out.println(ANSI_GREEN + "☑ - Finished writing TXT information for " + book.getName() + ANSI_RESET);
@@ -148,6 +162,7 @@ public class OutputWriter {
                 wrapped.append(boxParts[4]);
             }
         }
+        wrapped.append("\n");
         return wrapped.toString();
     }
 
@@ -157,17 +172,17 @@ public class OutputWriter {
      * @return Formatted string
      */
     private String getStats() {
-        return "Total Words: " + book.wordCount
-                + "\nUnique Words: " + book.wordFreq.size()
-                + "\nPolysyllabic Words: " + book.difficultyMap.get("Polysyllabic")
-                + "\nMonosyllabic Words: " + book.difficultyMap.get("Monosyllabic")
-                + "\nTotal Syllables: " + book.syllableCount
-                + "\nTotal Sentences: " + book.sentenceCount
+        return "Total Words: " + wordCount
+                + "\nUnique Words: " + words.size()
+                + "\nPolysyllabic Words: " + syllables.get("Polysyllabic")
+                + "\nMonosyllabic Words: " + syllables.get("Monosyllabic")
+                + "\nTotal Syllables: " + syllableCount
+                + "\nTotal Sentences: " + sentenceCount
                 + "\nFlesch-Kincaid Grade: "
-                + TextTools.getReadingEaseLevel(book.wordCount, book.sentenceCount, book.syllableCount)
-                + "\nClassified Length: " + TextTools.classifyLength(book.wordCount)
-                + "\nTop 3 words: " + book.wordFreq.getTopThree()
-                + wrap("\nLongest Sentence; " + book.longestSentence, 100) + "\n";
+                + TextTools.getReadingEaseLevel(book)
+                + "\nClassified Length: " + TextTools.classifyLength(wordCount)
+                + "\nTop 3 words: " + words.getTopThree()
+                + wrap("\nLongest Sentence; " + longestSentence, 100) + "\n";
     }
 
     /**
@@ -176,14 +191,11 @@ public class OutputWriter {
      * @return Formatted String
      */
     private String getConclusionString() {
-        long wordCount = book.wordCount;
-        long sentenceCount = book.sentenceCount;
-        long syllableCount = book.syllableCount;
-        int monoSyllable = book.difficultyMap.get("Monosyllabic");
-        int polySyllable = book.difficultyMap.get("Polysyllabic");
+        int monoSyllable = syllables.get("Monosyllabic");
+        int polySyllable = syllables.get("Polysyllabic");
 
         String classifiedLength = TextTools.classifyLength(wordCount);
-        String gradeLevel = TextTools.getReadingEaseLevel(wordCount, sentenceCount, syllableCount);
+        String gradeLevel = TextTools.getReadingEaseLevel(book);
         String difficulty = TextTools.classifyDifficulty(monoSyllable, polySyllable);
 
         //TODO format times/
@@ -195,7 +207,7 @@ public class OutputWriter {
                         + " read this text at a rate of 275wpm it would take %d minute(s) to finish"
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
                         + " to write at 13wpm it would take %d minute(s)."
-                , classifiedLength, wordCount, book.wordFreq.size(), gradeLevel,
+                , classifiedLength, wordCount, words.size(), gradeLevel,
                 polySyllable, monoSyllable, difficulty, TextTools.getReadingTime(wordCount),
                 TextTools.getSpeakingTime(wordCount), wordCount / 40, wordCount / 13);
 
@@ -222,14 +234,14 @@ public class OutputWriter {
      * Create a pie chart showing the ratio of polysyllabic to monosyllabic words
      */
     public void makeDiffGraph() {
-        makeGraph("Difficulty", book.difficultyMap);
+        makeGraph("Difficulty", syllables);
     }
 
     /**
      * Creates a parts of speech distribution pie graph.
      */
     public void makePosGraph() {
-        makeGraph("POS Distribution", book.partsOfSpeech);
+        makeGraph("POS Distribution", partsOfSpeech);
     }
 
     /**
@@ -245,7 +257,7 @@ public class OutputWriter {
 
         // Create results directories
         if (makeDir("results/img/")) {
-            outPath = "results/img/" + book.subdirectory + "/" + book.getName() + " " + purpose + " Results.jpeg";
+            outPath = "results/img/" + subdirectory + "/" + book.getName() + " " + purpose + " Results.jpeg";
         } else {
             System.out.println("[Error] Failed to create image results directories");
             outPath = book.title + "  " + book.author + " " + purpose + "Results.jpeg";
@@ -320,8 +332,8 @@ public class OutputWriter {
         String outPath;
 
         if (makeDir("results/json/")) {
-            if (book.subdirectory != null) {
-                outPath = "results/json/" + book.subdirectory + "/" + book.getName() + " Results.json";
+            if (subdirectory != null) {
+                outPath = "results/json/" + subdirectory + "/" + book.getName() + " Results.json";
             } else {
                 outPath = "results/json/" + "/" + book.getName() + " Results.json";
             }
@@ -351,7 +363,7 @@ public class OutputWriter {
                 jsonTypes.put(type, new JSONArray());
             }
 
-            String[] types = book.partsOfSpeech.getSortedByKey();
+            String[] types = partsOfSpeech.getSortedByKey();
 
             Arrays.stream(types).forEach(type -> {
                 // Create temporary parent for each type
@@ -365,7 +377,7 @@ public class OutputWriter {
 
                 typeObject.put("name", type);
                 typeObject.put("description", type);
-                typeObject.put("size", book.partsOfSpeech.get(type));
+                typeObject.put("size", partsOfSpeech.get(type));
                 typeArray.add(typeObject);
 
                 //Categorise each type
@@ -416,10 +428,10 @@ public class OutputWriter {
     String writeCSV() {
         Path outPath;
         if (makeDir("results/csv/")) {
-            if (book.subdirectory == null) {
+            try {
+                outPath = Paths.get("results", "csv", subdirectory, book.getName() + " Results.csv");
+            } catch (NullPointerException e) {
                 outPath = Paths.get("results", "csv", book.getName() + " Results.csv");
-            } else {
-                outPath = Paths.get("results", "csv", book.subdirectory, book.getName() + " Results.csv");
             }
         } else {
             outPath = Paths.get(book.getName() + "Results.csv");
@@ -427,10 +439,11 @@ public class OutputWriter {
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(outPath.toFile()))) {
             bw.write("Word, Count\n");
-            bw.write(book.wordFreq.getCsvString());
+            bw.write(words.getCsvString());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return book.wordFreq.getCsvString();
+
+        return words.getCsvString();
     }
 }

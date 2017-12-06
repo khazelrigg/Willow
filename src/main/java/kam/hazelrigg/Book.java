@@ -16,20 +16,27 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class Book {
-    final FreqMap<String, Integer> partsOfSpeech = new FreqMap<>();
-    final FreqMap<String, Integer> wordFreq = new FreqMap<>();
-    final FreqMap<String, Integer> lemmas = new FreqMap<>();
-    final FreqMap<String, Integer> difficultyMap = new FreqMap<>();
+    private final FreqMap<String, Integer> partsOfSpeech = new FreqMap<>();
+    private final FreqMap<String, Integer> words = new FreqMap<>();
+    private final FreqMap<String, Integer> lemmas = new FreqMap<>();
+    private final FreqMap<String, Integer> syllables = new FreqMap<>();
 
     String title = "";
     String author = "";
-    public String subdirectory;
-    long wordCount;
-    long syllableCount;
-    long sentenceCount;
+
+    private String subdirectory;
+    private long wordCount;
+
+    public void setSubdirectory(String subdirectory) {
+        this.subdirectory = subdirectory;
+    }
+
+    private long syllableCount;
+    private long sentenceCount;
+
     private boolean gutenberg = false;
     private File path;
-    CoreMap longestSentence;
+    private CoreMap longestSentence;
     private StanfordCoreNLP pipeline = WordCount.pipeline;
 
     public Book() {
@@ -231,7 +238,6 @@ public class Book {
             StringBuilder text = new StringBuilder();
 
             for (String line; (line = br.readLine()) != null; ) {
-                // Skip empty lines
                 if (line.isEmpty()) {
                     continue;
                 }
@@ -399,7 +405,7 @@ public class Book {
         updateSyllables(word);
 
         // Skip over punctuation
-        if (!word.replaceAll("\\W", "").isEmpty()) {
+        if (!stripPunctuation(word).isEmpty()) {
             updateWords(word);
             updateLemmas(lemma);
             updatePartsOfSpeech(tag);
@@ -408,26 +414,27 @@ public class Book {
 
     private void updateWords(String word) {
         wordCount++;
-        wordFreq.increaseFreq(word.toLowerCase());
+        words.increaseFreq(word.toLowerCase());
     }
 
     private void updateSyllables(String word) {
         if (TextTools.getSyllableCount(word) == 1) {
-            difficultyMap.increaseFreq("Monosyllabic");
+            syllables.increaseFreq("Monosyllabic");
         } else {
-            difficultyMap.increaseFreq("Polysyllabic");
+            syllables.increaseFreq("Polysyllabic");
         }
     }
 
     private void updateLemmas(String lemma) {
-        if (!lemma.replaceAll("\\W", "").isEmpty()) {
+        if (!stripPunctuation(lemma).isEmpty()) {
             lemmas.increaseFreq(lemma);
         }
     }
 
     private void updatePartsOfSpeech(String tag) {
-        if (tag != null) {
+        try {
             partsOfSpeech.increaseFreq(tag);
+        } catch (NullPointerException ignore) {
         }
     }
 
@@ -438,7 +445,7 @@ public class Book {
      */
     public String getName() {
         // If there is no author don't add the " by XXX"
-        if (author.equals("")) {
+        if (author.isEmpty()) {
             return title;
         }
         return title + " by " + author;
@@ -457,7 +464,7 @@ public class Book {
     }
 
     private void removeStopWords() {
-        wordFreq.stripStopWords();
+        words.stripStopWords();
         lemmas.stripStopWords();
     }
 
@@ -500,5 +507,42 @@ public class Book {
 
     long getWordCount() {
         return wordCount;
+    }
+
+    FreqMap<String, Integer> getPartsOfSpeech() {
+        return partsOfSpeech;
+    }
+
+    public FreqMap<String, Integer> getWords() {
+        return words;
+    }
+
+    FreqMap<String, Integer> getLemmas() {
+        return lemmas;
+    }
+
+    public FreqMap<String, Integer> getSyllables() {
+        return syllables;
+    }
+
+
+    public long getSyllableCount() {
+        return syllableCount;
+    }
+
+    public long getSentenceCount() {
+        return sentenceCount;
+    }
+
+    private String stripPunctuation(String word) {
+        return word.replaceAll("\\W", "");
+    }
+
+    public String getSubdirectory() {
+        return subdirectory;
+    }
+
+    public CoreMap getLongestSentence() {
+        return longestSentence;
     }
 }

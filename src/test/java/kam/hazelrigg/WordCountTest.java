@@ -11,9 +11,7 @@ import java.io.FileNotFoundException;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class WordCountTest {
     private ExpectedException e = ExpectedException.none();
@@ -34,7 +32,7 @@ public class WordCountTest {
         test.givePipeline(pipeline);
         test.tagText(testString);
 
-        assertEquals("Failure creating word counts", test.wordFreq.getSimpleString(), expected);
+        assertEquals("Failure creating word counts", test.getWords().getSimpleString(), expected);
     }
 
     @Test
@@ -46,7 +44,7 @@ public class WordCountTest {
         Book testBook = new Book();
         testBook.givePipeline(pipeline);
         testBook.tagText(testString);
-        assertEquals(testBook.partsOfSpeech.getSimpleString(), expected);
+        assertEquals(testBook.getPartsOfSpeech().getSimpleString(), expected);
     }
 
     /*
@@ -257,7 +255,7 @@ public class WordCountTest {
     @Test
     public void subdirectoryBook() {
         Book test = new Book("dir");
-        assertEquals(test.subdirectory, "dir");
+        assertEquals(test.getSubdirectory(), "dir");
     }
 
 }

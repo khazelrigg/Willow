@@ -1,12 +1,7 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 
 import java.io.File;
 import java.util.HashMap;
@@ -20,6 +15,11 @@ public class WordCount {
     static StanfordCoreNLP pipeline;
     private static HashMap<String, Boolean> chosenOptions = new HashMap<>();
 
+    /**
+     * Run main program
+     *
+     * @param args Path to file/directory
+     */
     public static void main(String[] args) {
         File path = null;
 
