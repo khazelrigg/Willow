@@ -75,14 +75,16 @@ public class WordCountTest {
     @Test
     public void createsCorrectCSV() {
         String testString = "So they were trying to re-invent themselves and their universe."
-                + " Science fiction was a big help.";
-        String expected = "\"reinvent\", 1\n" +
+                + " Science fiction was a big help. They like science fiction";
+        String expected = "\"fiction\", 2\n" +
+                "\"science\", 2\n" +
                 "\"big\", 1\n" +
-                "\"fiction\", 1\n" +
+                "\"like\", 1\n" +
+                "\"re-invent\", 1\n" +
                 "\"help\", 1\n" +
                 "\"trying\", 1\n" +
-                "\"universe\", 1\n" +
-                "\"science\", 1\n";
+                "\"universe\", 1\n";
+
         Book testBook = new Book();
         testBook.givePipeline(pipeline);
         testBook.tagText(testString);
@@ -164,74 +166,75 @@ public class WordCountTest {
 
     @Test
     public void shouldGetIsNotGutenberg() {
-        File testf = null;
+        File testFile = null;
         try {
-            testf = new File(this.getClass().getResource("/test2.txt").toURI());
+            testFile = new File(this.getClass().getResource("/test2.txt").toURI());
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
         Book test = new Book();
-        test.setTitleFromText(testf);
+        test.setPath(testFile);
+        test.setTitleFromText(testFile);
         assertFalse(test.isGutenberg());
     }
 
     @Test
     public void shouldGetIsGutenbergVariant() {
-        File testf = null;
+        File testFile = null;
         try {
-            testf = new File(this.getClass().getResource("/test3.txt").toURI());
+            testFile = new File(this.getClass().getResource("/test3.txt").toURI());
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
 
         Book test = new Book();
-        test.setTitleFromText(testf);
+        test.setTitleFromText(testFile);
 
         assertTrue(test.isGutenberg());
     }
 
     @Test
     public void shouldReadText() {
-        File testf = null;
+        File testFile = null;
         try {
-            testf = new File(this.getClass().getResource("/test2.txt").toURI());
+            testFile = new File(this.getClass().getResource("/test2.txt").toURI());
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
         Book test = new Book();
         test.givePipeline(pipeline);
-        test.setPath(testf);
+        test.setPath(testFile);
         assertTrue(test.readText(false));
     }
 
     @Test
     public void shouldReadGutenbergText() {
-        File testf = null;
+        File testFile = null;
         try {
-            testf = new File(this.getClass().getResource("/test.txt").toURI());
+            testFile = new File(this.getClass().getResource("/test.txt").toURI());
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
         Book test = new Book();
         test.givePipeline(pipeline);
-        test.setTitleFromText(testf);
-        test.setPath(testf);
-        assertTrue(test.readText(false) && test.isGutenberg());
+        test.setTitleFromText(testFile);
+        test.setPath(testFile);
+        assertTrue(test.isGutenberg());
     }
-
 
     @Test
     public void shouldGetResultsExist() {
-        File testf = null;
+        File testFile = null;
         try {
-            testf = new File(this.getClass().getResource("/test.txt").toURI());
+            testFile = new File(this.getClass().getResource("/test.txt").toURI());
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
+
         Book test = new Book();
+        test.setPath(testFile);
         test.givePipeline(pipeline);
-        test.setPath(testf);
-        test.setTitleFromText(testf);
+        test.setTitleFromText(testFile);
         test.readText(false);
 
         OutputWriter ow = new OutputWriter(test);
@@ -239,7 +242,10 @@ public class WordCountTest {
         ow.makeDiffGraph();
         ow.makePosGraph();
         ow.writeJson();
-        assertTrue(test.resultsFileExists(true, true));
+
+        boolean hasResults = test.hasResults(true, true);
+        System.out.println(hasResults);
+        assertTrue(hasResults);
     }
 
     @Test
@@ -248,12 +254,11 @@ public class WordCountTest {
         Book test = new Book();
         test.givePipeline(pipeline);
         test.setPath(new File("whoops, nothing here"));
-        test.getPath();
         test.readText(false);
     }
 
     @Test
-    public void subdirectoryBook() {
+    public void createsSubdirectoryBook() {
         Book test = new Book("dir");
         assertEquals(test.getSubdirectory(), "dir");
     }

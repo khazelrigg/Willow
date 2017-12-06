@@ -130,7 +130,7 @@ class Runner extends Thread {
 
         if (options.get("o")) {
             runBook();
-        } else if (book.resultsFileExists(options.get("i"), options.get("j"))) {
+        } else if (book.hasResults(options.get("i"), options.get("j"))) {
             System.out.println("☑ - " + file.getName() + " already has results");
         } else {
             runBook();

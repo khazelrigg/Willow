@@ -223,7 +223,7 @@ public class OutputWriter {
     private String createConcordance(FreqMap words) {
         StringBuilder concordance = new StringBuilder();
 
-        for (String word : words.getSortedByKey()) {
+        for (String word : words.getSortedKeys()) {
             concordance.append(word).append(" ");
         }
 
@@ -264,7 +264,9 @@ public class OutputWriter {
         }
 
         // Load POS data into data set
-        data.toHashMap().forEach(dataSet::setValue);
+        data.toHashMap().entrySet().stream()
+                .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+                .forEach(entry -> dataSet.setValue(entry.getKey(), entry.getValue()));
 
         JFreeChart chart = ChartFactory.createPieChart(
                 purpose + " of " + book.getName(), dataSet, false, true, false);
@@ -327,6 +329,7 @@ public class OutputWriter {
         return chart;
     }
 
+
     @SuppressWarnings("unchecked")
     public String writeJson() {
         String outPath;
@@ -363,7 +366,7 @@ public class OutputWriter {
                 jsonTypes.put(type, new JSONArray());
             }
 
-            String[] types = partsOfSpeech.getSortedByKey();
+            String[] types = partsOfSpeech.getSortedKeys();
 
             Arrays.stream(types).forEach(type -> {
                 // Create temporary parent for each type

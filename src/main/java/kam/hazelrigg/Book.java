@@ -40,7 +40,7 @@ public class Book {
     private StanfordCoreNLP pipeline = WordCount.pipeline;
 
     public Book() {
-        this.subdirectory = null;
+        this.subdirectory = "";
     }
 
     public Book(String subdirectory) {
@@ -67,6 +67,7 @@ public class Book {
             }
 
             if (isGutenbergText(line)) {
+                this.gutenberg = true;
                 while (title == null || author == null) {
                     line = br.readLine();
                     if (line.contains("Title:")) {
@@ -83,7 +84,7 @@ public class Book {
                         author = line.substring(7).trim();
                     }
                 } else {
-                    title = path.getName();
+                    title = text.getName();
                     author = "";
                 }
             }
@@ -95,9 +96,6 @@ public class Book {
             System.out.println("[Error - SetTitle] Error opening " + text.getName() + " for setting title");
             e.printStackTrace();
         }
-
-        //this.title = title;
-        //this.author = author;
     }
 
     private boolean isGutenbergText(String line) {
@@ -418,7 +416,9 @@ public class Book {
     }
 
     private void updateSyllables(String word) {
-        if (TextTools.getSyllableCount(word) == 1) {
+        int wordSyllables = TextTools.getSyllableCount(word);
+        syllableCount += wordSyllables;
+        if (wordSyllables == 1) {
             syllables.increaseFreq("Monosyllabic");
         } else {
             syllables.increaseFreq("Polysyllabic");
@@ -432,9 +432,8 @@ public class Book {
     }
 
     private void updatePartsOfSpeech(String tag) {
-        try {
+        if (tag != null) {
             partsOfSpeech.increaseFreq(tag);
-        } catch (NullPointerException ignore) {
         }
     }
 
@@ -480,7 +479,7 @@ public class Book {
         this.path = path;
     }
 
-    public boolean resultsFileExists(boolean i, boolean j) {
+    public boolean hasResults(boolean i, boolean j) {
         File txt = new File("results/txt/" + subdirectory + "/" + getName() + " Results.txt");
         File img = new File("results/img/" + subdirectory + "/" + getName() + " POS Distribution Results.jpeg");
         File diffImg = new File("results/img/" + subdirectory + "/" + getName() + " Difficulty Results.jpeg");
@@ -524,7 +523,6 @@ public class Book {
     public FreqMap<String, Integer> getSyllables() {
         return syllables;
     }
-
 
     public long getSyllableCount() {
         return syllableCount;
