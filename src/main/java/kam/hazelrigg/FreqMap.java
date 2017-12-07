@@ -81,7 +81,7 @@ public class FreqMap<K, V> extends HashMap<K, V> {
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
     }
 
-    String[] getSortedByKey() {
+    String[] getSortedKeys() {
         String[] keys = frequency.keySet().toArray(new String[frequency.size()]);
         Arrays.sort(keys);
         return keys;

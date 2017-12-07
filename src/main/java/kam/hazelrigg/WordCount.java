@@ -1,7 +1,11 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import java.io.File;
 import java.util.HashMap;
@@ -36,7 +40,6 @@ public class WordCount {
                 .addOption("o", "overwrite", false, "Overwrite any existing results")
                 .addOption("t", "threads", true, "Max number of threads to run, 0 = Use CPUs available; default = 0");
 
-
         HelpFormatter formatter = new HelpFormatter();
 
         // Check for passed options
@@ -47,30 +50,20 @@ public class WordCount {
                 System.exit(-1);
             }
 
-            for (Option option : options.getOptions()) {
-                chosenOptions.put(option.getOpt(), cmd.hasOption(option.getOpt()));
-            }
-
-            BatchRunner.passOptions(chosenOptions);
+            BatchRunner.passOptions(options);
 
             if (cmd.getArgs().length == 1) {
                 path = new File(cmd.getArgs()[0]);
             } else if (cmd.hasOption("k")) {
                 path = runInteractive();
-                BatchRunner.passOptions(chosenOptions);
+                BatchRunner.passOptions(options);
             } else {
                 formatter.printHelp("wordCount [OPTIONS] [FILE]", "Acceptable file types: Plain text and pdf", options, "");
                 //formatter.printHelp("wordCount [OPTION]... [FILE]...", options);
                 System.exit(-1);
             }
 
-            // Set up CoreNlp pipeline after ensuring program will be run
-            Properties properties = new Properties();
-            properties.put("annotators",
-                    "tokenize, ssplit, pos, lemma, depparse, natlog, openie");
-            properties.put("tokenize.options", "untokenizable=noneDelete");
-
-            pipeline = new StanfordCoreNLP(properties);
+            pipeline = createPipeline();
 
             if (cmd.hasOption("threads") && !cmd.getOptionValue("threads").equals("0")) {
                 startRunners(path, Integer.parseInt(cmd.getOptionValue("threads")));
@@ -139,6 +132,15 @@ public class WordCount {
                 System.out.println("Try again, no file found at " + input);
             }
         }
+    }
+
+    private static StanfordCoreNLP createPipeline() {
+        Properties properties = new Properties();
+        properties.put("annotators",
+                "tokenize, ssplit, pos, lemma");
+        properties.put("tokenize.options", "untokenizable=noneDelete");
+
+        return new StanfordCoreNLP(properties);
     }
 
 }

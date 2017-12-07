@@ -103,15 +103,15 @@ public class TextTools {
     /**
      * Uses the Flesch-Kincaid scale to classify a text's reading ease
      *
-     * @param wordCount     Total number of words
-     * @param sentenceCount Total number of sentences
-     * @param syllableCount Total number of syllables
+     * @param book Book to use
      * @return String classification
      */
-    static String getReadingEaseLevel(long wordCount, long sentenceCount, long syllableCount) {
-        // Using Flesch–Kincaid grading scale
-        double score = 206.835 - (1.015 * wordCount / sentenceCount) - (84.6 * syllableCount / wordCount);
+    static String getReadingEaseLevel(Book book) {
+        double score = getFleschKincaidScore(book);
+        return classifyKincaidScore(score);
+    }
 
+    private static String classifyKincaidScore(double score) {
         if (score <= 100) {
             if (score > 90) return "5th-grade";
             if (score > 80) return "6th-grade";
@@ -123,6 +123,11 @@ public class TextTools {
         }
 
         return "easiest";
+    }
+
+    private static double getFleschKincaidScore(Book book) {
+        return 206.835 - (1.015 * book.getWordCount() / book.getSentenceCount())
+                - (84.6 * book.getSyllableCount() / book.getWordCount());
     }
 
     static String getParentType(String type) {

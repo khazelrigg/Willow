@@ -1,18 +1,19 @@
 package kam.hazelrigg;
 
+import org.apache.commons.cli.Options;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 class BatchRunner {
     private static ArrayList<Runner> runners = new ArrayList<>();
 
-    static void passOptions(HashMap<String, Boolean> options) {
+    static void passOptions(Options options) {
         Runner.setOptions(options);
     }
 
@@ -66,7 +67,7 @@ class BatchRunner {
 class Runner extends Thread {
     private Book book;
     private final File file;
-    private static HashMap<String, Boolean> options = new HashMap<>();
+    private static Options options;
 
     Runner(File file, File sub) {
         new Thread(this);
@@ -79,7 +80,7 @@ class Runner extends Thread {
             this.book = new Book(parentOfSub);
         }
 
-        if (options.get("v")) {
+        if (options.hasOption("verbose")) {
             System.out.println("┌══════════[ NEW BOOK ]══════════╾\n│ ┌╾ " + parentOfSub
                     + "\n│ └──╾ " + file.getPath() + "\n└════════════════════════════════╾\n");
         }
@@ -91,7 +92,7 @@ class Runner extends Thread {
      * Actions to perform with each book
      */
     private void runBook() {
-        book.readText(options.get("e"));
+        book.readText(options.hasOption("economy"));
         long endReadTime = System.currentTimeMillis();
         System.out.println(OutputWriter.ANSI_GREEN +
                 "\n☑ - Finished analysis of " + book.getName() + " in "
@@ -100,15 +101,16 @@ class Runner extends Thread {
         OutputWriter ow = new OutputWriter(book);
         ow.writeTxt();
 
-        if (options.get("c")) {
-            ow.writeCSV();
-        }
-
-        if (options.get("j")) {
+        if (options.hasOption("json")) {
             ow.writeJson();
         }
 
-        if (options.get("i")) {
+
+        if (options.hasOption("csv")) {
+            ow.writeCSV();
+        }
+
+        if (options.hasOption("images")) {
             ow.makeDiffGraph();
             ow.makePosGraph();
         }
@@ -120,7 +122,7 @@ class Runner extends Thread {
         this.book = null;
     }
 
-    static void setOptions(HashMap<String, Boolean> options) {
+    static void setOptions(Options options) {
         Runner.options = options;
     }
 
@@ -128,12 +130,13 @@ class Runner extends Thread {
     public void run() {
         book.setTitleFromText(file);
 
-        if (options.get("o")) {
+        if (options.hasOption("overwrite")) {
             runBook();
-        } else if (book.hasResults(options.get("i"), options.get("j"))) {
+        } else if (book.hasResults(options.hasOption("images"), options.hasOption("json"))) {
             System.out.println("☑ - " + file.getName() + " already has results");
         } else {
             runBook();
         }
     }
+
 }
