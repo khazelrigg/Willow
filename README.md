@@ -20,8 +20,6 @@ of analysing a file to generate human readable text files and charts that show  
      -h,--help            Print help
      -i,--images          Create image outputs
      -j,--json            Create JSON output
-     -k,--interactive     Run interactive mode, choose options when run
-                          instead of in command line
      -o,--overwrite       Overwrite any existing results
      -t,--threads <arg>   Max number of threads to run, 0 = Use number of CPUs
                           available; default = 0
