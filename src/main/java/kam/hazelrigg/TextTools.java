@@ -5,25 +5,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
-public class TextTools {
+class TextTools {
     static HashMap<String, String> posAbbrev = nonAbbreviate();
 
-
-    /**
-     * Finds if a word is monosyllabic.
-     *
-     * @param s word to count syllables of
-     * @return true if word is monosyllabic, false otherwise
-     *//*
-    static int getSyllableCount(String word) {
-        Matcher m = Willow.p.matcher(word);
-        int syllables = 0;
-        while (m.find()) {
-            syllables++;
-        }
-        return syllables;
-    }
-    */
     static int getSyllableCount(String s) {
         s = s.trim();
         if (s.length() <= 3) {
@@ -66,23 +50,11 @@ public class TextTools {
 
     }
 
-    /**
-     * Uses average reading speed of 275wpm to find the time required to read in minutes
-     *
-     * @param wordCount Long number of words
-     * @return number of minutes
-     */
-    static int getReadingTime(long wordCount) {
+    static int getReadingTimeInMinutes(long wordCount) {
         return (int) (wordCount / 275);
     }
 
-    /**
-     * Uses the average speaking speed of 180wpm to find the time required to read in minutes
-     *
-     * @param wordCount Long number of words
-     * @return number of minutes
-     */
-    static int getSpeakingTime(long wordCount) {
+    static int getSpeakingTimeInMinutes(long wordCount) {
         return (int) (wordCount / 180);
     }
 
@@ -165,11 +137,6 @@ public class TextTools {
 
     }
 
-    /**
-     * Returns the non-abbreviated versions of abbreviations.
-     *
-     * @return Hash map containing the key as the abbreviation and the value as its full text
-     */
     private static HashMap<String, String> nonAbbreviate() {
 
         HashMap<String, String> posNoAbbrev = new HashMap<>();

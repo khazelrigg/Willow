@@ -32,16 +32,6 @@ public class FreqMap<K, V> extends HashMap<K, V> {
         }
     }
 
-    String getTopThree() {
-        sortByValue();
-        String[] values = frequency.keySet().toArray(new String[frequency.size()]);
-        return values[0] + ", " + values[1] + ", " + values[2];
-    }
-
-
-    /**
-     * Removes stop words from a FreqMap
-     */
     void stripStopWords() {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/stopwords-english.txt")))) {
             for (String line; (line = br.readLine()) != null; ) {
@@ -54,23 +44,6 @@ public class FreqMap<K, V> extends HashMap<K, V> {
         }
     }
 
-    /**
-     * Creates a string that contains keys and values separated with arrows.
-     *
-     * @return String of FreqMap
-     */
-    public String toString() {
-
-        StringBuilder result = new StringBuilder();
-        sortByValue();
-        frequency.forEach((key, value) -> result.append(String.format("%s, %d\n", key, value)));
-
-        return result.toString();
-    }
-
-    /**
-     * Sorts the FreqMap in descending order by its values.
-     */
     private void sortByValue() {
         // https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java
 
@@ -87,34 +60,40 @@ public class FreqMap<K, V> extends HashMap<K, V> {
         return keys;
     }
 
-    /**
-     * Format the FreqMaps contents for debugging, Format = KEY:VALUE|KEY:VALUE ...
-     *
-     * @return Formatted string
-     */
-    String getSimpleString() {
+    HashMap<String, Integer> toHashMap() {
+        sortByValue();
+        return frequency;
+    }
+
+    String getTopThree() {
+        sortByValue();
+        String[] values = frequency.keySet().toArray(new String[frequency.size()]);
+        return values[0] + ", " + values[1] + ", " + values[2];
+    }
+
+    public String toString() {
+
+        StringBuilder result = new StringBuilder();
+        sortByValue();
+        frequency.forEach((key, value) -> result.append(String.format("%s, %d\n", key, value)));
+
+        return result.toString();
+    }
+
+
+    String toSimpleString() {
         StringBuilder result = new StringBuilder();
         sortByValue();
         frequency.forEach((key, value) -> result.append(key).append(":").append(value).append("|"));
         return result.toString();
     }
 
-    String getCsvString() {
+    String toCsvString() {
         StringBuilder result = new StringBuilder();
         sortByValue();
         frequency.forEach((key, value) ->
                 result.append("\"").append(key).append("\", ").append(value).append("\n"));
         return result.toString();
-    }
-
-    /**
-     * Returns the FreqMap as a HashMap.
-     *
-     * @return HashMap version of FreqMap
-     */
-    HashMap<String, Integer> toHashMap() {
-        sortByValue();
-        return frequency;
     }
 
     int get(String key) {

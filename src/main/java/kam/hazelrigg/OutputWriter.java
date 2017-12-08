@@ -9,8 +9,14 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.awt.*;
-import java.io.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -80,9 +86,6 @@ public class OutputWriter {
         return dir.exists() || dir.mkdirs();
     }
 
-    /**
-     * Writes Book information to a text file
-     */
     public void writeTxt() {
         if (partsOfSpeech.size() > 0) {
             makeResultDirs();
@@ -208,8 +211,8 @@ public class OutputWriter {
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
                         + " to write at 13wpm it would take %d minute(s)."
                 , classifiedLength, wordCount, words.size(), gradeLevel,
-                polySyllable, monoSyllable, difficulty, TextTools.getReadingTime(wordCount),
-                TextTools.getSpeakingTime(wordCount), wordCount / 40, wordCount / 13);
+                polySyllable, monoSyllable, difficulty, TextTools.getReadingTimeInMinutes(wordCount),
+                TextTools.getSpeakingTimeInMinutes(wordCount), wordCount / 40, wordCount / 13);
 
         return wrap(conclusion + "\n", 100);
     }
@@ -230,17 +233,11 @@ public class OutputWriter {
         return wrap(concordance.toString() + "\n", 100);
     }
 
-    /**
-     * Create a pie chart showing the ratio of polysyllabic to monosyllabic words
-     */
-    public void makeDiffGraph() {
+    public void makeSyllableDistributionGraph() {
         makeGraph("Difficulty", syllables);
     }
 
-    /**
-     * Creates a parts of speech distribution pie graph.
-     */
-    public void makePosGraph() {
+    public void makePartsOfSpeechGraph() {
         makeGraph("POS Distribution", partsOfSpeech);
     }
 
@@ -442,11 +439,11 @@ public class OutputWriter {
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(outPath.toFile()))) {
             bw.write("Word, Count\n");
-            bw.write(words.getCsvString());
+            bw.write(words.toCsvString());
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return words.getCsvString();
+        return words.toCsvString();
     }
 }

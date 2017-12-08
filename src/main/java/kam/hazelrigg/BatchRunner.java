@@ -111,8 +111,8 @@ class Runner extends Thread {
         }
 
         if (options.hasOption("images")) {
-            ow.makeDiffGraph();
-            ow.makePosGraph();
+            ow.makeSyllableDistributionGraph();
+            ow.makePartsOfSpeechGraph();
         }
 
         long endTime = System.currentTimeMillis();
@@ -138,5 +138,4 @@ class Runner extends Thread {
             runBook();
         }
     }
-
 }

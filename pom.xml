@@ -107,7 +107,7 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>1.6</version>
                 <configuration>
-                    <finalName>WordCount</finalName>
+                    <finalName>Willow-shaded</finalName>
                     <artifactSet>
                         <excludes>
                             <exclude>junit:junit</exclude>

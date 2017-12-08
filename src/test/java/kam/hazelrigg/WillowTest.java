@@ -3,6 +3,8 @@ package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.PropertiesUtils;
+import org.apache.commons.cli.Options;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -18,12 +20,31 @@ import static org.junit.Assert.assertTrue;
 public class WillowTest {
     private ExpectedException e = ExpectedException.none();
 
-    private Properties props = new Properties(
-            PropertiesUtils.asProperties(
-                    "annotators", "tokenize, ssplit, pos, lemma"
-                    , "options", "untokenizable=noneKeep"
-                    , "tokenize.language", "en"));
-    private StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+    private static StanfordCoreNLP pipeline;
+    private static Options options = new Options();
+
+    @BeforeClass
+    public static void setUp() {
+
+        Properties props = new Properties(
+                PropertiesUtils.asProperties(
+                        "annotators", "tokenize, ssplit, pos, lemma"
+                        , "options", "untokenizable=noneKeep"
+                        , "tokenize.language", "en"));
+        pipeline = new StanfordCoreNLP(props);
+
+        options.addOption("h", "help", false, "Print help")
+                .addOption("v", "verbose", false, "Verbose output")
+                //.addOption("w", "words", false, "Only analyse a text for word counts, cannot be used with -i or -j")
+                .addOption("e", "economy", false, "Run in economy mode, greatly reduces memory usage at the cost of completion speed. Useful for computers with less memory")
+                .addOption("i", "images", false, "Create image outputs")
+                .addOption("j", "json", false, "Create JSON output")
+                .addOption("c", "csv", false, "Create CSV output")
+                .addOption("o", "overwrite", false, "Overwrite any existing results")
+                .addOption("t", "threads", true, "Max number of threads to run, 0 = Use number of CPUs available; default = 0");
+
+
+    }
 
     @Test
     public void getsCorrectWordCounts() {
@@ -34,7 +55,7 @@ public class WillowTest {
         test.givePipeline(pipeline);
         test.tagText(testString);
 
-        assertEquals("Failure creating word counts", test.getWords().getSimpleString(), expected);
+        assertEquals("Failure creating word counts", test.getWords().toSimpleString(), expected);
     }
 
     @Test
@@ -46,7 +67,7 @@ public class WillowTest {
         Book testBook = new Book();
         testBook.givePipeline(pipeline);
         testBook.tagText(testString);
-        assertEquals(testBook.getPartsOfSpeech().getSimpleString(), expected);
+        assertEquals(testBook.getPartsOfSpeech().toSimpleString(), expected);
     }
 
     /*
@@ -241,8 +262,8 @@ public class WillowTest {
 
         OutputWriter ow = new OutputWriter(test);
         ow.writeTxt();
-        ow.makeDiffGraph();
-        ow.makePosGraph();
+        ow.makeSyllableDistributionGraph();
+        ow.makePartsOfSpeechGraph();
         ow.writeJson();
 
         boolean hasResults = test.hasResults(true, true);
@@ -263,6 +284,14 @@ public class WillowTest {
     public void createsSubdirectoryBook() {
         Book test = new Book("dir");
         assertEquals(test.getSubdirectory(), "dir");
+    }
+
+    @Test
+    public void openDirectory() {
+        int threads = Runtime.getRuntime().availableProcessors();
+        File path = new File("/dir");
+        BatchRunner.passOptions(options);
+        BatchRunner.startRunners(path, threads);
     }
 
 }

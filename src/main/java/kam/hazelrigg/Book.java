@@ -46,10 +46,9 @@ public class Book {
     public Book(String subdirectory) {
         this.subdirectory = subdirectory;
     }
-    //TODO Add polysyndeton and parallelism statistics. Look into polyptoton and alliteration as well
 
     /**
-     * Get the title of a book.
+     * Get the title of a book by scanning first couple of lines for a title and author
      *
      * @param text File to find title of
      */
@@ -103,7 +102,7 @@ public class Book {
     }
 
     /**
-     * Finds the appropriate file type of book to then read text
+     * Finds the appropriate file type of book to then reads the text
      */
     public boolean readText(Boolean economy) {
         System.out.println("☐ - Starting analysis of " + getName());
@@ -317,82 +316,11 @@ public class Book {
         if (longestSentence == null || sentence.size() > longestSentence.size()) {
             longestSentence = sentence;
         }
-        // schemeAnalysis(sentence);
 
         for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
             updateStatsFromToken(token);
         }
     }
-
-    /**
-     * private void schemeAnalysis(CoreMap sentence) {
-     * boolean epizeuxis = isEpizeuxis(sentence);
-     * if (epizeuxis)
-     * System.out.println(sentence.toString());
-     * // isPolysyndeton(sentence);
-     * }
-     * <p>
-     * private boolean isEpizeuxis(CoreMap sentence) {
-     * List<CoreLabel> coreLabels = sentence.get(CoreAnnotations.TokensAnnotation.class);
-     * <p>
-     * for (int i = 0; i < coreLabels.size() - 1; i++) {
-     * String currentWord = coreLabels.get(i).word().replaceAll("\\W", "");
-     * String nextWord = coreLabels.get(i + 1).word().replaceAll("\\W", "");
-     * <p>
-     * if (currentWord.isEmpty()) {
-     * continue;
-     * }
-     * <p>
-     * if (nextWord.equals("s") || nextWord.equals("nt")) {
-     * currentWord = currentWord + nextWord;
-     * if (coreLabels.size() >= i + 2) {
-     * nextWord = coreLabels.get(i + 2).word();
-     * }
-     * i++;
-     * }
-     * <p>
-     * if (currentWord.equals(nextWord)) {
-     * System.out.println("MATCH");
-     * return true;
-     * }
-     * }
-     * return false;
-     * }
-     * <p>
-     * <p>
-     * private boolean isPolysyndeton(CoreMap sentence) {
-     * System.out.println("+=========================[ Sentence ]=========================+");
-     * System.out.println("SENTENCE: " + sentence.toString());
-     * <p>
-     * Collection<RelationTriple> triples =
-     * sentence.get(NaturalLogicAnnotations.RelationTriplesAnnotation.class);
-     * <p>
-     * Collection<SentenceFragment> sentenceFragments = sentence.get(NaturalLogicAnnotations.EntailedClausesAnnotation.class);
-     * System.out.println(sentence.get(NaturalLogicAnnotations.PolarityAnnotation.class).toString());
-     * <p>
-     * if (sentenceFragments != null) {
-     * for (SentenceFragment frag : sentenceFragments) {
-     * if (frag != null) {
-     * System.out.println("FRAGMENT:\t" + frag);
-     * }
-     * }
-     * }
-     * <p>
-     * System.out.println("CLAUSES: " + triples.size());
-     * <p>
-     * for (RelationTriple triple : triples) {
-     * System.out.println("+----------------------------[ TRIPLES ]-------------------------+");
-     * System.out.println(triple.asSentence());
-     * System.out.println(
-     * "CONFIDENCE:\t\t" + triple.confidence + "\n" +
-     * "LEMMA:\t\t" + triple.subjectLemmaGloss() + "\n" +
-     * "RELATION:\t\t" + triple.relationLemmaGloss() + "\n" +
-     * "LEMMA GLOSS:\t\t" + triple.objectLemmaGloss());
-     * }
-     * <p>
-     * return false;
-     * }
-     */
 
     private void updateStatsFromToken(CoreLabel token) {
         String word = token.word().toLowerCase();
@@ -437,11 +365,6 @@ public class Book {
         }
     }
 
-    /**
-     * Create a name for the book, format: title by author
-     *
-     * @return Formatted string
-     */
     public String getName() {
         // If there is no author don't add the " by XXX"
         if (author.isEmpty()) {
@@ -524,11 +447,11 @@ public class Book {
         return syllables;
     }
 
-    public long getSyllableCount() {
+    long getSyllableCount() {
         return syllableCount;
     }
 
-    public long getSentenceCount() {
+    long getSentenceCount() {
         return sentenceCount;
     }
 
@@ -540,7 +463,7 @@ public class Book {
         return subdirectory;
     }
 
-    public CoreMap getLongestSentence() {
+    CoreMap getLongestSentence() {
         return longestSentence;
     }
 }

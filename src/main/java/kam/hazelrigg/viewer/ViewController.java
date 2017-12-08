@@ -191,11 +191,11 @@ public class ViewController {
                     }
 
                     if (posChartToggle.isSelected()) {
-                        ow.makePosGraph();
+                        ow.makePartsOfSpeechGraph();
                     }
 
                     if (diffChartToggle.isSelected()) {
-                        ow.makeDiffGraph();
+                        ow.makeSyllableDistributionGraph();
                     }
 
                     long endTime = System.currentTimeMillis();

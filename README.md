@@ -1,7 +1,6 @@
-[![Build Status](https://travis-ci.org/khazelrigg/Willow.svg?branch=master)](https://travis-ci.org/khazelrigg/Willow)
-
 Willow
 ==========
+[![Build Status](https://travis-ci.org/khazelrigg/Willow.svg?branch=master)](https://travis-ci.org/khazelrigg/Willow)
 
 **Willow** is a Java application built using Stanford's Core NLP library with the main purpose 
 of analysing a file to generate human readable text files and charts that show  word counts and Parts Of Speech
