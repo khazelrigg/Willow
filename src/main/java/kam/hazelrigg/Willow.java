@@ -13,7 +13,7 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
-public class WordCount {
+public class Willow {
     public static Pattern p = Pattern.compile("[aeiouy]+[^$e(,.:;!?)]");
     static final long startTime = System.currentTimeMillis();
     static StanfordCoreNLP pipeline;
@@ -38,7 +38,7 @@ public class WordCount {
                 .addOption("j", "json", false, "Create JSON output")
                 .addOption("c", "csv", false, "Create CSV output")
                 .addOption("o", "overwrite", false, "Overwrite any existing results")
-                .addOption("t", "threads", true, "Max number of threads to run, 0 = Use CPUs available; default = 0");
+                .addOption("t", "threads", true, "Max number of threads to run, 0 = Use number of CPUs available; default = 0");
 
         HelpFormatter formatter = new HelpFormatter();
 
@@ -46,7 +46,7 @@ public class WordCount {
         try {
             CommandLine cmd = new DefaultParser().parse(options, args);
             if (cmd.getOptions().length == 0 && cmd.getArgs().length == 0) {
-                formatter.printHelp("wordCount [OPTIONS] [FILE]", "Acceptable file types: Plain text and pdf", options, "");
+                formatter.printHelp("Willow [OPTIONS] [FILE]", "Acceptable file types: Plain text and pdf", options, "");
                 System.exit(-1);
             }
 
@@ -58,7 +58,7 @@ public class WordCount {
                 path = runInteractive();
                 BatchRunner.passOptions(options);
             } else {
-                formatter.printHelp("wordCount [OPTIONS] [FILE]", "Acceptable file types: Plain text and pdf", options, "");
+                formatter.printHelp("Willow [OPTIONS] [FILE]", "Acceptable file types: Plain text and pdf", options, "");
                 //formatter.printHelp("wordCount [OPTION]... [FILE]...", options);
                 System.exit(-1);
             }

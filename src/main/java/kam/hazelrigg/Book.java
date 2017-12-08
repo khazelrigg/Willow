@@ -37,7 +37,7 @@ public class Book {
     private boolean gutenberg = false;
     private File path;
     private CoreMap longestSentence;
-    private StanfordCoreNLP pipeline = WordCount.pipeline;
+    private StanfordCoreNLP pipeline = Willow.pipeline;
 
     public Book() {
         this.subdirectory = "";

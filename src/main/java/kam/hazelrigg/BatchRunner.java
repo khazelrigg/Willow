@@ -96,7 +96,7 @@ class Runner extends Thread {
         long endReadTime = System.currentTimeMillis();
         System.out.println(OutputWriter.ANSI_GREEN +
                 "\n☑ - Finished analysis of " + book.getName() + " in "
-                + (endReadTime - WordCount.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
+                + (endReadTime - Willow.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
 
         OutputWriter ow = new OutputWriter(book);
         ow.writeTxt();
@@ -117,7 +117,7 @@ class Runner extends Thread {
 
         long endTime = System.currentTimeMillis();
         System.out.println("[FINISHED] Completely finished " + book.getName() + " in "
-                + (endTime - WordCount.startTime) / 1000 + "s.");
+                + (endTime - Willow.startTime) / 1000 + "s.");
 
         this.book = null;
     }

@@ -16,7 +16,7 @@ public class TextTools {
      * @return true if word is monosyllabic, false otherwise
      *//*
     static int getSyllableCount(String word) {
-        Matcher m = WordCount.p.matcher(word);
+        Matcher m = Willow.p.matcher(word);
         int syllables = 0;
         while (m.find()) {
             syllables++;
