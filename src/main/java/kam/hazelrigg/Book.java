@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 
+
 public class Book {
     private final FreqMap<String, Integer> partsOfSpeech = new FreqMap<>();
     private final FreqMap<String, Integer> words = new FreqMap<>();
@@ -48,8 +49,7 @@ public class Book {
     }
 
     /**
-     * Get the title of a book by scanning first couple of lines for a title and author
-     *
+     * Get the title of a book by scanning first couple of lines for a title and author.
      * @param text File to find title of
      */
     public void setTitleFromText(File text) {
@@ -92,7 +92,8 @@ public class Book {
             this.author = author;
 
         } catch (IOException e) {
-            System.out.println("[Error - SetTitle] Error opening " + text.getName() + " for setting title");
+            System.out.println("[Error - SetTitle] Error opening "
+                    + text.getName() + " for setting title");
             e.printStackTrace();
         }
     }
@@ -102,7 +103,7 @@ public class Book {
     }
 
     /**
-     * Finds the appropriate file type of book to then reads the text
+     * Finds the appropriate file type of book to then reads the text.
      */
     public boolean readText(Boolean economy) {
         System.out.println("☐ - Starting analysis of " + getName());
@@ -129,7 +130,7 @@ public class Book {
                     return readPlainText();
                 }
             case "application/pdf":
-                return readPDF();
+                return readPdf();
             default:
                 System.out.println("Unsupported format " + fileType);
                 System.exit(-3);
@@ -138,7 +139,7 @@ public class Book {
     }
 
     /**
-     * Reads and tags a plain text file sentence by sentence
+     * Reads and tags a plain text file sentence by sentence.
      *
      * @return true if successfully finished
      */
@@ -225,8 +226,7 @@ public class Book {
     }
 
     /**
-     * Reads and tags a plain text file by loading into memory
-     *
+     * Reads and tags a plain text file by loading into memory.
      * @return true if successfully finished
      */
     private boolean readPlainText() {
@@ -275,11 +275,10 @@ public class Book {
     }
 
     /**
-     * Reads and tags a PDF file
-     *
+     * Reads and tags a PDF file.
      * @return true if successfully finished
      */
-    private boolean readPDF() {
+    private boolean readPdf() {
         try {
             PDFTextStripper pdfStripper = new PDFTextStripper();
             PDFParser parser = new PDFParser(new RandomAccessFile(path, "r"));
@@ -288,7 +287,8 @@ public class Book {
             tagText(pdfStripper.getText(parser.getPDDocument()));
             return true;
         } catch (IOException e) {
-            System.out.println("[Error - readPDF] IOException when opening PDFParser for " + path.getName());
+            System.out.println("[Error - readPdf] IOException when opening PDFParser for "
+                    + path.getName());
             e.printStackTrace();
         }
         System.exit(2);
@@ -296,8 +296,7 @@ public class Book {
     }
 
     /**
-     * Tag a text for parts of speech
-     *
+     * Tag a text for parts of speech.
      * @param text Text to be tagged
      */
     void tagText(String text) {
@@ -404,8 +403,10 @@ public class Book {
 
     public boolean hasResults(boolean i, boolean j) {
         File txt = new File("results/txt/" + subdirectory + "/" + getName() + " Results.txt");
-        File img = new File("results/img/" + subdirectory + "/" + getName() + " POS Distribution Results.jpeg");
-        File diffImg = new File("results/img/" + subdirectory + "/" + getName() + " Difficulty Results.jpeg");
+        File img = new File("results/img/" + subdirectory + "/" + getName()
+                + " POS Distribution Results.jpeg");
+        File diffImg = new File("results/img/" + subdirectory + "/" + getName()
+                + " Difficulty Results.jpeg");
         File json = new File("results/json/" + subdirectory + "/" + getName() + " Results.json");
 
         if (!i && !j) {

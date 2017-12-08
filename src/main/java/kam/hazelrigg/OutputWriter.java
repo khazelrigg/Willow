@@ -53,7 +53,7 @@ public class OutputWriter {
     }
 
     /**
-     * Create folders for result subdirectories
+     * Create folders for result subdirectories.
      */
     private void makeResultDirs() {
         makeParentDirs();
@@ -62,6 +62,7 @@ public class OutputWriter {
             makeDir("results/img/" + subdirectory);
             makeDir("results/json/" + subdirectory);
         } catch (NullPointerException ignore) {
+            // Thrown from not having a subdirectory, not a problem
         }
     }
 
@@ -76,7 +77,7 @@ public class OutputWriter {
     }
 
     /**
-     * Create a directory
+     * Creates a directory if one does not already exist at a path.
      *
      * @param path Path of directory to be created
      * @return true if successful
@@ -114,10 +115,12 @@ public class OutputWriter {
                 bw.write("\n" + wrapInBox("Lemma Concordance") + createConcordance(lemmas));
 
                 bw.close();
-                System.out.println(ANSI_GREEN + "☑ - Finished writing TXT information for " + book.getName() + ANSI_RESET);
+                System.out.println(ANSI_GREEN
+                        + "☑ - Finished writing TXT information of " + book.getName() + ANSI_RESET);
 
             } catch (IOException e) {
-                System.out.println("[Error - writeTxt] Error opening " + outFile.getName() + "for writing");
+                System.out.println("[Error - writeTxt] Error opening " + outFile.getName()
+                        + "for writing");
                 e.printStackTrace();
             }
 
@@ -125,7 +128,7 @@ public class OutputWriter {
     }
 
     /**
-     * Formats a string into a 100 character wide box
+     * Formats a string into a 100 character wide box.
      *
      * @param text Text to be placed into box
      * @return Formatted String
@@ -170,7 +173,7 @@ public class OutputWriter {
     }
 
     /**
-     * Format a Book's data into a list style string
+     * Format a Book's data into a list style string.
      *
      * @return Formatted string
      */
@@ -189,7 +192,7 @@ public class OutputWriter {
     }
 
     /**
-     * Format a Book's data into a paragraph style String wrapped at 100 characters
+     * Format a Book's data into a paragraph style String wrapped at 100 characters.
      *
      * @return Formatted String
      */
@@ -209,16 +212,17 @@ public class OutputWriter {
                         + "monosyllabic words it can be speculated that this text is %s to read. To"
                         + " read this text at a rate of 275wpm it would take %d minute(s) to finish"
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
-                        + " to write at 13wpm it would take %d minute(s)."
-                , classifiedLength, wordCount, words.size(), gradeLevel,
-                polySyllable, monoSyllable, difficulty, TextTools.getReadingTimeInMinutes(wordCount),
+                        + " to write at 13wpm it would take %d minute(s).",
+                classifiedLength, wordCount, words.size(), gradeLevel,
+                polySyllable, monoSyllable,
+                difficulty, TextTools.getReadingTimeInMinutes(wordCount),
                 TextTools.getSpeakingTimeInMinutes(wordCount), wordCount / 40, wordCount / 13);
 
         return wrap(conclusion + "\n", 100);
     }
 
     /**
-     * Creates a concordance of all unique words in the text
+     * Creates a concordance of all unique words in the text.
      *
      * @param words FreqMap to load keys of
      * @return String wrapped at 100 characters
@@ -254,7 +258,8 @@ public class OutputWriter {
 
         // Create results directories
         if (makeDir("results/img/")) {
-            outPath = "results/img/" + subdirectory + "/" + book.getName() + " " + purpose + " Results.jpeg";
+            outPath = "results/img/" + subdirectory + "/" + book.getName() + " " + purpose
+                    + " Results.jpeg";
         } else {
             System.out.println("[Error] Failed to create image results directories");
             outPath = book.title + "  " + book.author + " " + purpose + "Results.jpeg";
@@ -266,7 +271,8 @@ public class OutputWriter {
                 .forEach(entry -> dataSet.setValue(entry.getKey(), entry.getValue()));
 
         JFreeChart chart = ChartFactory.createPieChart(
-                purpose + " of " + book.getName(), dataSet, false, true, false);
+                purpose + " of " + book.getName(), dataSet,
+                false, true, false);
 
         PiePlot plot = (PiePlot) chart.getPlot();
         plot = setColors(plot, purpose);
@@ -291,7 +297,7 @@ public class OutputWriter {
     }
 
     /**
-     * Sets the colors of a pie chart based on labels in order to keep charts consistent
+     * Sets the colors of a pie chart based on labels in order to keep charts consistent.
      *
      * @param chart Chart to modify label colors of
      * @return PieChart with color modifications
@@ -304,7 +310,8 @@ public class OutputWriter {
         } else if (purpose.equals("POS Distribution")) {
             try {
                 InputStreamReader inputStreamReader =
-                        new InputStreamReader(TextTools.class.getResourceAsStream("/posAbbreviations.txt"));
+                        new InputStreamReader(
+                                TextTools.class.getResourceAsStream("/posAbbreviations.txt"));
 
                 BufferedReader br = new BufferedReader(inputStreamReader);
                 String line = br.readLine();
@@ -372,12 +379,12 @@ public class OutputWriter {
                 typeParent.put("description", type);
 
                 // Basic setup
-                JSONArray typeArray = new JSONArray();
                 JSONObject typeObject = new JSONObject();
-
                 typeObject.put("name", type);
                 typeObject.put("description", type);
                 typeObject.put("size", partsOfSpeech.get(type));
+
+                JSONArray typeArray = new JSONArray();
                 typeArray.add(typeObject);
 
                 //Categorise each type
@@ -385,14 +392,19 @@ public class OutputWriter {
                 switch (TextTools.getParentType(type)) {
                     case "Noun":
                         jsonTypes.get("Nouns").add(typeParent);
+                        break;
                     case "Verb":
                         jsonTypes.get("Verbs").add(typeParent);
+                        break;
                     case "Adverb":
                         jsonTypes.get("Adverbs").add(typeParent);
+                        break;
                     case "Adjective":
                         jsonTypes.get("Adjectives").add(typeParent);
+                        break;
                     case "Pronoun":
                         jsonTypes.get("Pronouns").add(typeParent);
+                        break;
                     default:
                         jsonTypes.get("Other").add(typeParent);
                 }
@@ -413,11 +425,13 @@ public class OutputWriter {
 
             bw.write(rootObject.toJSONString());
             bw.close();
-            System.out.println(ANSI_GREEN + "☑ - Finished writing JSON information for " + book.getName() + ANSI_RESET);
+            System.out.println(ANSI_GREEN + "☑ - Finished writing JSON information for "
+                    + book.getName() + ANSI_RESET);
             return rootObject.toJSONString();
 
         } catch (IOException e) {
-            System.out.println("[Error - writeJSON] Error opening " + out.getName() + " for writing");
+            System.out.println("[Error - writeJSON] Error opening " + out.getName()
+                    + " for writing");
             makeResultDirs();
             e.printStackTrace();
             writeJson();
@@ -425,11 +439,12 @@ public class OutputWriter {
         return null;
     }
 
-    String writeCSV() {
+    String writeCsv() {
         Path outPath;
         if (makeDir("results/csv/")) {
             try {
-                outPath = Paths.get("results", "csv", subdirectory, book.getName() + " Results.csv");
+                outPath = Paths.get("results", "csv", subdirectory, book.getName()
+                        + " Results.csv");
             } catch (NullPointerException e) {
                 outPath = Paths.get("results", "csv", book.getName() + " Results.csv");
             }

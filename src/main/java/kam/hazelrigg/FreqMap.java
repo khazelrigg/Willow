@@ -33,7 +33,8 @@ public class FreqMap<K, V> extends HashMap<K, V> {
     }
 
     void stripStopWords() {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/stopwords-english.txt")))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                this.getClass().getResourceAsStream("/stopwords-english.txt")))) {
             for (String line; (line = br.readLine()) != null; ) {
                 frequency.remove(line);
             }
@@ -51,7 +52,8 @@ public class FreqMap<K, V> extends HashMap<K, V> {
         toSort.addAll(frequency.entrySet());
         toSort.sort(comparingByValue(Collections.reverseOrder()));
         frequency = toSort.stream()
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+                        (a, b) -> a, LinkedHashMap::new));
     }
 
     String[] getSortedKeys() {

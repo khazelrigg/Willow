@@ -18,7 +18,7 @@ class BatchRunner {
     }
 
     /**
-     * Start a thread pool to analyse texts
+     * Start a thread pool to analyse texts.
      *
      * @param file File/Dir to run
      * @param threads Number of threads to use in pool
@@ -31,12 +31,12 @@ class BatchRunner {
         }
 
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
-                runners.forEach(executor::execute);
+        runners.forEach(executor::execute);
         executor.shutdown();
     }
 
     /**
-     * Opens a directory analysing each file on its own thread
+     * Opens a directory analysing each file on its own thread.
      *
      * @param directory Directory to open
      */
@@ -88,14 +88,11 @@ class Runner extends Thread {
         this.book.setPath(file);
     }
 
-    /**
-     * Actions to perform with each book
-     */
     private void runBook() {
         book.readText(options.hasOption("economy"));
         long endReadTime = System.currentTimeMillis();
-        System.out.println(OutputWriter.ANSI_GREEN +
-                "\n☑ - Finished analysis of " + book.getName() + " in "
+        System.out.println(OutputWriter.ANSI_GREEN
+                + "\n☑ - Finished analysis of " + book.getName() + " in "
                 + (endReadTime - Willow.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
 
         OutputWriter ow = new OutputWriter(book);
@@ -107,7 +104,7 @@ class Runner extends Thread {
 
 
         if (options.hasOption("csv")) {
-            ow.writeCSV();
+            ow.writeCsv();
         }
 
         if (options.hasOption("images")) {

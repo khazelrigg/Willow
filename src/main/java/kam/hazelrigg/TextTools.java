@@ -20,7 +20,7 @@ class TextTools {
     }
 
     /**
-     * Uses Nebula Award classifications to classify a text based on its length
+     * Uses Nebula Award classifications to classify a text based on its length.
      *
      * @param wordCount Total number of words
      * @return String classification
@@ -28,10 +28,10 @@ class TextTools {
     static String classifyLength(long wordCount) {
         /*
         Classification    Word count
-        Novel 	          40,000 words or over
-        Novella 	      17,500 to 39,999 words
-        Novelette  	      7,500 to 17,499 words
-        Short story 	  under 7,500 words
+        Novel             40,000 words or over
+        Novella           17,500 to 39,999 words
+        Novelette         7,500 to 17,499 words
+        Short story       under 7,500 words
         */
 
         if (wordCount < 7500) {
@@ -59,7 +59,7 @@ class TextTools {
     }
 
     /**
-     * Compares number of mono/polysyllabic words to determine if a text is difficult
+     * Compares number of mono/polysyllabic words to determine if a text is difficult.
      *
      * @param mono int number of monosyllabic words
      * @param poly int number of polysyllabic words
@@ -73,7 +73,7 @@ class TextTools {
     }
 
     /**
-     * Uses the Flesch-Kincaid scale to classify a text's reading ease
+     * Uses the Flesch-Kincaid scale to classify a text's reading ease.
      *
      * @param book Book to use
      * @return String classification
@@ -85,13 +85,21 @@ class TextTools {
 
     private static String classifyKincaidScore(double score) {
         if (score <= 100) {
-            if (score > 90) return "5th-grade";
-            if (score > 80) return "6th-grade";
-            if (score > 70) return "7th-grade";
-            if (score > 60) return "8th & 9th grade";
-            if (score > 50) return "10th to 12th grade";
-            if (score > 30) return "College";
-            if (score < 30 && score > 0) return "College graduate";
+            if (score > 90) {
+                return "5th-grade";
+            } else if (score > 80) {
+                return "6th-grade";
+            } else if (score > 70) {
+                return "7th-grade";
+            } else if (score > 60) {
+                return "8th & 9th grade";
+            } else if (score > 50) {
+                return "10th to 12th grade";
+            } else if (score > 30) {
+                return "College";
+            } else if (score < 30 && score > 0) {
+                return "College graduate";
+            }
         }
 
         return "easiest";
@@ -143,7 +151,8 @@ class TextTools {
 
         try {
             InputStreamReader inputStreamReader =
-                    new InputStreamReader(TextTools.class.getClass().getResourceAsStream("/posAbbreviations.txt"));
+                    new InputStreamReader(TextTools.class.getClass()
+                            .getResourceAsStream("/posAbbreviations.txt"));
 
             BufferedReader br =
                     new BufferedReader(inputStreamReader);
@@ -152,7 +161,8 @@ class TextTools {
             while (line != null) {
                 String[] words = line.split(":");
                 // Set key to abbreviation and value to non abbreviated
-                posNoAbbrev.put(words[0].trim(), words[1].substring(0, words[1].lastIndexOf(">")).trim());
+                posNoAbbrev.put(words[0].trim(),
+                        words[1].substring(0, words[1].lastIndexOf(">")).trim());
                 line = br.readLine();
             }
 

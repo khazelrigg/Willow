@@ -111,7 +111,7 @@ public class WillowTest {
         Book testBook = new Book();
         testBook.givePipeline(pipeline);
         testBook.tagText(testString);
-        String resultCSV = new OutputWriter(testBook).writeCSV();
+        String resultCSV = new OutputWriter(testBook).writeCsv();
         assertEquals(resultCSV, expected);
     }
 

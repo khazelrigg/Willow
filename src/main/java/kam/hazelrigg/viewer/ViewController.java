@@ -65,9 +65,6 @@ public class ViewController {
         runButton.setDisable(true);
     }
 
-    /**
-     * Selects a file using fileChooser
-     */
     public void openFileChooser() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open file");
@@ -82,9 +79,6 @@ public class ViewController {
         }
     }
 
-    /**
-     * Selects a folder using directoryChooser
-     */
     public void openFolder() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Open folder");
@@ -122,7 +116,7 @@ public class ViewController {
     }
 
     /**
-     * Add a single file to sidebar list of files
+     * Add a single file to sidebar list of files.
      *
      * @param file file to add
      */
@@ -146,7 +140,7 @@ public class ViewController {
     }
 
     /**
-     * Changes the current book by updating images
+     * Changes the current book by updating images.
      */
     private void switchActiveBook(String listItemText) {
         //TODO test more use cases     (File not in subdir)
@@ -162,7 +156,7 @@ public class ViewController {
 
 
     /**
-     * Runs analysis on file(s) and updates gui
+     * Runs analysis on file(s) and updates gui.
      */
     public void run() {
 
@@ -174,7 +168,8 @@ public class ViewController {
                 long startTime = System.currentTimeMillis();
                 statusLabel.setText("Analysing file: " + book.getTitle());
 
-                if (book.hasResults((diffChartToggle.isSelected() && posChartToggle.isSelected()), writeJsonToggle.isSelected())) {
+                if (book.hasResults((diffChartToggle.isSelected()
+                        && posChartToggle.isSelected()), writeJsonToggle.isSelected())) {
                     showPosChart(book);
                     showDifficultyChart(book);
                 } else {
@@ -216,7 +211,8 @@ public class ViewController {
 
     //TODO get rid of absolute path for images
     private void showPosChart(Book cur) {
-        Image posGraph = new Image("file:results/img/" + cur.getSubdirectory() + "/" + cur.getName()
+        Image posGraph = new Image("file:results/img/" + cur.getSubdirectory()
+                + "/" + cur.getName()
                 + " POS Distribution Results.jpeg");
 
         posChartImageView.setImage(posGraph);
@@ -225,7 +221,8 @@ public class ViewController {
     }
 
     private void showDifficultyChart(Book cur) {
-        Image difficultyChart = new Image("file:results/img/" + cur.getSubdirectory() + "/" + cur.getName()
+        Image difficultyChart = new Image("file:results/img/" + cur.getSubdirectory()
+                + "/" + cur.getName()
                 + " Difficulty Results.jpeg");
 
         difficultyImageView.setImage(difficultyChart);
@@ -235,7 +232,8 @@ public class ViewController {
 
     public void openTextEditor() {
         try {
-            java.awt.Desktop.getDesktop().edit(new File("results/txt/" + book.getSubdirectory() + "/" + book.getName()
+            java.awt.Desktop.getDesktop().edit(new File("results/txt/" + book.getSubdirectory()
+                    + "/" + book.getName()
                     + " Results.jpeg"));
         } catch (IOException e) {
             e.printStackTrace();
