@@ -213,18 +213,6 @@ public class Book {
         return false;
     }
 
-    private boolean checkForGutenbergStartEnd(String line) {
-        if (line.contains("End of the Project Gutenberg")
-                || line.contains("End of Project Gutenberg’s")) {
-            return false;
-        } else if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
-                || line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
-            return true;
-        }
-
-        return false;
-    }
-
     /**
      * Reads and tags a plain text file by loading into memory.
      * @return true if successfully finished
@@ -258,7 +246,6 @@ public class Book {
                     text.append(line).append(" ");
                 }
             }
-
             tagText(text.toString());
 
             return true;
@@ -292,6 +279,18 @@ public class Book {
             e.printStackTrace();
         }
         System.exit(2);
+        return false;
+    }
+
+    private boolean checkForGutenbergStartEnd(String line) {
+        if (line.contains("End of the Project Gutenberg")
+                || line.contains("End of Project Gutenberg’s")) {
+            return false;
+        } else if (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
+                || line.contains("START OF THE PROJECT GUTENBERG EBOOK")) {
+            return true;
+        }
+
         return false;
     }
 

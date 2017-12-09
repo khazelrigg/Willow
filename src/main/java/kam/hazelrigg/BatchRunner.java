@@ -1,6 +1,6 @@
 package kam.hazelrigg;
 
-import org.apache.commons.cli.Options;
+import org.apache.commons.cli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,12 +13,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 class BatchRunner {
     private static ArrayList<Runner> runners = new ArrayList<>();
 
-    static void passOptions(Options options) {
-        Runner.setOptions(options);
+    static void passCommandLine(CommandLine cmd) {
+        Runner.setOptions(cmd);
     }
 
     /**
-     * Start a thread pool to analyse texts.
+     * Start a thread pool to analyse texts
      *
      * @param file File/Dir to run
      * @param threads Number of threads to use in pool
@@ -36,7 +36,7 @@ class BatchRunner {
     }
 
     /**
-     * Opens a directory analysing each file on its own thread.
+     * Opens a directory analysing each file on its own thread
      *
      * @param directory Directory to open
      */
@@ -67,7 +67,8 @@ class BatchRunner {
 class Runner extends Thread {
     private Book book;
     private final File file;
-    private static Options options;
+    private static CommandLine cmd;
+    private OutputWriter ow;
 
     Runner(File file, File sub) {
         new Thread(this);
@@ -80,7 +81,7 @@ class Runner extends Thread {
             this.book = new Book(parentOfSub);
         }
 
-        if (options.hasOption("verbose")) {
+        if (cmd.hasOption("verbose")) {
             System.out.println("┌══════════[ NEW BOOK ]══════════╾\n│ ┌╾ " + parentOfSub
                     + "\n│ └──╾ " + file.getPath() + "\n└════════════════════════════════╾\n");
         }
@@ -88,29 +89,21 @@ class Runner extends Thread {
         this.book.setPath(file);
     }
 
+    /**
+     * Actions to perform with each book
+     */
     private void runBook() {
-        book.readText(options.hasOption("economy"));
+        book.readText(cmd.hasOption("economy"));
         long endReadTime = System.currentTimeMillis();
-        System.out.println(OutputWriter.ANSI_GREEN
-                + "\n☑ - Finished analysis of " + book.getName() + " in "
+        System.out.println(OutputWriter.ANSI_GREEN +
+                "\n☑ - Finished analysis of " + book.getName() + " in "
                 + (endReadTime - Willow.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
 
-        OutputWriter ow = new OutputWriter(book);
+        this.ow = new OutputWriter(book);
         ow.writeTxt();
-
-        if (options.hasOption("json")) {
-            ow.writeJson();
-        }
-
-
-        if (options.hasOption("csv")) {
-            ow.writeCsv();
-        }
-
-        if (options.hasOption("images")) {
-            ow.makeSyllableDistributionGraph();
-            ow.makePartsOfSpeechGraph();
-        }
+        writeJson();
+        writeCsv();
+        makeImages();
 
         long endTime = System.currentTimeMillis();
         System.out.println("[FINISHED] Completely finished " + book.getName() + " in "
@@ -119,20 +112,40 @@ class Runner extends Thread {
         this.book = null;
     }
 
-    static void setOptions(Options options) {
-        Runner.options = options;
+    private void writeJson() {
+        if (cmd.hasOption("json")) {
+            ow.writeJson();
+        }
+    }
+
+    private void writeCsv() {
+        if (cmd.hasOption("csv")) {
+            ow.writeCsv();
+        }
+    }
+
+    private void makeImages() {
+        if (cmd.hasOption("images")) {
+            ow.makeSyllableDistributionGraph();
+            ow.makePartsOfSpeechGraph();
+        }
+    }
+
+    static void setOptions(CommandLine cmd) {
+        Runner.cmd = cmd;
     }
 
     @Override
     public void run() {
         book.setTitleFromText(file);
 
-        if (options.hasOption("overwrite")) {
+        if (cmd.hasOption("overwrite")) {
             runBook();
-        } else if (book.hasResults(options.hasOption("images"), options.hasOption("json"))) {
+        } else if (book.hasResults(cmd.hasOption("images"), cmd.hasOption("json"))) {
             System.out.println("☑ - " + file.getName() + " already has results");
         } else {
             runBook();
         }
     }
+
 }

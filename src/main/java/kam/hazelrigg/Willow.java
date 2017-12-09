@@ -19,11 +19,12 @@ public class Willow {
     private static Options options = createOptions();
 
     public static void main(String[] args) {
-        try {
-            File path = null;
-            CommandLine cmd = new DefaultParser().parse(options, args);
+        Thread.currentThread().setName("Willow");
 
-            if (commandLineOptionsAreEmpty(cmd) || commandLineArgIsEmpty(cmd)) {
+        File path = null;
+        try {
+            CommandLine cmd = new DefaultParser().parse(options, args);
+            if (commandLineOptionsAreEmpty(cmd) && commandLineArgIsEmpty(cmd)) {
                 printHelp();
             }
 
@@ -31,8 +32,8 @@ public class Willow {
                 path = new File(cmd.getArgs()[0]);
             }
 
-            BatchRunner.passOptions(options);
             pipeline = createPipeline();
+            BatchRunner.passCommandLine(cmd);
 
             if (cmd.hasOption("threads")) {
                 int threadArg = Integer.parseInt(cmd.getOptionValue("threads"));
@@ -40,9 +41,7 @@ public class Willow {
             } else {
                 startRunners(path, 0);
             }
-
         } catch (ParseException e) {
-            System.out.println("[Error - main] Error parsing command line options");
             e.printStackTrace();
         }
 
@@ -52,7 +51,6 @@ public class Willow {
         if (threads == 0) {
             threads = Runtime.getRuntime().availableProcessors();
         }
-
         BatchRunner.startRunners(path, threads);
     }
 

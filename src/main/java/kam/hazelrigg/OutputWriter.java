@@ -28,14 +28,18 @@ public class OutputWriter {
     static final String ANSI_RESET = "\u001B[0m";
     static final String ANSI_GREEN = "\u001B[32m";
     private final String subdirectory;
+
     private final FreqMap<String, Integer> words;
     private final FreqMap<String, Integer> partsOfSpeech;
     private final FreqMap<String, Integer> lemmas;
     private final FreqMap<String, Integer> syllables;
+
     private final long wordCount;
     private final long syllableCount;
     private final long sentenceCount;
     private final CoreMap longestSentence;
+
+    private boolean verbose = false;
 
     private Book book;
 
@@ -50,29 +54,33 @@ public class OutputWriter {
         this.syllableCount = book.getSyllableCount();
         this.sentenceCount = book.getSentenceCount();
         this.longestSentence = book.getLongestSentence();
+
+        makeResultDirectories();
     }
 
-    /**
-     * Create folders for result subdirectories.
-     */
-    private void makeResultDirs() {
-        makeParentDirs();
-        try {
-            makeDir("results/txt/" + subdirectory);
-            makeDir("results/img/" + subdirectory);
-            makeDir("results/json/" + subdirectory);
-        } catch (NullPointerException ignore) {
-            // Thrown from not having a subdirectory, not a problem
+    private void makeResultDirectories() {
+        makeResultRootDirectories();
+        if (!subdirectory.isEmpty()) {
+            makeResultSubdirectories();
         }
     }
 
-    /**
-     * Creates root results directories for files to be saved to.
-     */
-    private void makeParentDirs() {
-        if (!(makeDir("results/txt") || makeDir("results/img")
-                || makeDir("results/json"))) {
+
+    private void makeResultSubdirectories() {
+        makeDir("results/txt/" + subdirectory);
+        makeDir("results/img/" + subdirectory);
+        makeDir("results/json/" + subdirectory);
+        makeDir("results/csv/" + subdirectory);
+    }
+
+    private void makeResultRootDirectories() {
+        if (!(makeDir("results/txt")
+                || makeDir("results/img")
+                || makeDir("results/json")
+                || makeDir("results/csv"))) {
             System.out.println("[x] Failed to create result directories!");
+
+            //TODO add option to bail out of program if there are no result directories
         }
     }
 
@@ -89,7 +97,7 @@ public class OutputWriter {
 
     public void writeTxt() {
         if (partsOfSpeech.size() > 0) {
-            makeResultDirs();
+            makeResultSubdirectories();
             File outFile;
 
             try {
@@ -115,9 +123,8 @@ public class OutputWriter {
                 bw.write("\n" + wrapInBox("Lemma Concordance") + createConcordance(lemmas));
 
                 bw.close();
-                System.out.println(ANSI_GREEN
-                        + "☑ - Finished writing TXT information of " + book.getName() + ANSI_RESET);
 
+                printFinishedStatement("TXT");
             } catch (IOException e) {
                 System.out.println("[Error - writeTxt] Error opening " + outFile.getName()
                         + "for writing");
@@ -287,9 +294,7 @@ public class OutputWriter {
         // Save the chart to jpeg
         try {
             ChartUtilities.saveChartAsJPEG(new File(outPath), chart, resolution, resolution);
-            System.out.println(ANSI_GREEN + "☑ - Finished writing " + purpose
-                    + " chart for " + book.getName() + ANSI_RESET);
-
+            printFinishedStatement(purpose + " chart");
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
             ioe.printStackTrace();
@@ -425,14 +430,15 @@ public class OutputWriter {
 
             bw.write(rootObject.toJSONString());
             bw.close();
-            System.out.println(ANSI_GREEN + "☑ - Finished writing JSON information for "
-                    + book.getName() + ANSI_RESET);
+
+            printFinishedStatement("JSON");
+
             return rootObject.toJSONString();
 
         } catch (IOException e) {
             System.out.println("[Error - writeJSON] Error opening " + out.getName()
                     + " for writing");
-            makeResultDirs();
+            makeResultSubdirectories();
             e.printStackTrace();
             writeJson();
         }
@@ -441,15 +447,12 @@ public class OutputWriter {
 
     String writeCsv() {
         Path outPath;
+        // Create results directories
         if (makeDir("results/csv/")) {
-            try {
-                outPath = Paths.get("results", "csv", subdirectory, book.getName()
-                        + " Results.csv");
-            } catch (NullPointerException e) {
-                outPath = Paths.get("results", "csv", book.getName() + " Results.csv");
-            }
+            outPath = Paths.get("results/csv/", subdirectory, book.getName() + " Results.csv");
         } else {
-            outPath = Paths.get(book.getName() + "Results.csv");
+            System.out.println("[Error] Failed to create image results directories");
+            outPath = Paths.get(book.getName() + " Results.csv");
         }
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(outPath.toFile()))) {
@@ -459,6 +462,18 @@ public class OutputWriter {
             e.printStackTrace();
         }
 
+        printFinishedStatement("CSV");
         return words.toCsvString();
+    }
+
+    private void printFinishedStatement(String action) {
+        if (verbose) {
+            System.out.println(ANSI_GREEN + "☑ - Finished writing " + action + " output for "
+                    + book.getName() + ANSI_RESET);
+        }
+    }
+
+    void setVerbose(Boolean verbose) {
+        this.verbose = verbose;
     }
 }

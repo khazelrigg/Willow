@@ -290,7 +290,6 @@ public class WillowTest {
     public void openDirectory() {
         int threads = Runtime.getRuntime().availableProcessors();
         File path = new File("/dir");
-        BatchRunner.passOptions(options);
         BatchRunner.startRunners(path, threads);
     }
 
