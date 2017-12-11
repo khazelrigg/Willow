@@ -25,10 +25,12 @@ public class FreqMap<K, V> extends HashMap<K, V> {
      * @param key Key to increase value of
      */
     void increaseFreq(String key) {
-        if (frequency.containsKey(key)) {
-            frequency.put(key, frequency.get(key) + 1);
-        } else {
-            frequency.put(key, 1);
+        if (key != null) {
+            if (frequency.containsKey(key)) {
+                frequency.put(key, frequency.get(key) + 1);
+            } else {
+                frequency.put(key, 1);
+            }
         }
     }
 

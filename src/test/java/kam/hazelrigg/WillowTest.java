@@ -104,30 +104,13 @@ public class WillowTest {
 
     @Test
     public void getsTitleFromText() {
-        File testf = null;
-        try {
-            testf = new File(this.getClass().getResource("/test.txt").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        Book test = new Book();
-        test.setTitleFromText(testf);
-
+        Book test = getTestBook();
         assertEquals("2 B R 0 2 B", test.getTitle());
     }
 
     @Test
     public void getsNameFromText() {
-        File testf = null;
-        try {
-            testf = new File(this.getClass().getResource("/test.txt").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        Book test = new Book();
-        test.setTitleFromText(testf);
+        Book test = getTestBook();
 
         assertEquals("2 B R 0 2 B by Kurt Vonnegut", test.getName());
     }
@@ -149,74 +132,31 @@ public class WillowTest {
 
     @Test
     public void shouldGetIsGutenberg() {
-        File testf = null;
-        try {
-            testf = new File(this.getClass().getResource("/test.txt").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        Book test = new Book();
-        test.setTitleFromText(testf);
-
+        Book test = getTestBook();
         assertTrue(test.isGutenberg());
     }
 
     @Test
     public void shouldGetIsNotGutenberg() {
-        File testFile = null;
-        try {
-            testFile = new File(this.getClass().getResource("/test2.txt").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        Book test = new Book();
-        test.setPath(testFile);
-        test.setTitleFromText(testFile);
+        Book test = getTestBook("/test2.txt");
         assertFalse(test.isGutenberg());
     }
 
     @Test
     public void shouldGetIsGutenbergVariant() {
-        File testFile = null;
-        try {
-            testFile = new File(this.getClass().getResource("/test3.txt").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        Book test = new Book();
-        test.setTitleFromText(testFile);
-
+        Book test = getTestBook("/test3.txt");
         assertTrue(test.isGutenberg());
     }
 
     @Test
     public void shouldReadText() {
-        File testFile = null;
-        try {
-            testFile = new File(this.getClass().getResource("/test2.txt").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        Book test = new Book();
-        test.givePipeline(pipeline);
-        test.setPath(testFile);
+        Book test = getTestBook();
         assertTrue(test.readText(false));
     }
 
     @Test
     public void shouldReadGutenbergText() {
-        File testFile = null;
-        try {
-            testFile = new File(this.getClass().getResource("/test.txt").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        Book test = new Book();
-        test.givePipeline(pipeline);
-        test.setTitleFromText(testFile);
-        test.setPath(testFile);
+        Book test = getTestBook();
         assertTrue(test.isGutenberg());
     }
 
@@ -235,5 +175,66 @@ public class WillowTest {
         assertEquals(test.getSubdirectory(), "dir");
     }
 
+    @Test
+    public void createsTXT() {
+        Book test = getTestBook();
+        test.readText(false);
+        OutputWriter ow = new OutputWriter(test);
+        ow.setVerbose(true);
+        boolean wroteTxt = ow.writeTxt();
+        assertTrue(wroteTxt);
+    }
+
+    @Test
+    public void createsJSON() {
+        Book test = getTestBook();
+        test.readText(false);
+        OutputWriter ow = new OutputWriter(test);
+        assertTrue(ow.writeJson());
+    }
+
+    @Test
+    public void createsPartsOfSpeechChart() {
+        Book test = getTestBook();
+        test.readText(false);
+        OutputWriter ow = new OutputWriter(test);
+        assertTrue(ow.makePartsOfSpeechGraph());
+    }
+
+    @Test
+    public void createsSyllableDistributionChart() {
+        Book test = getTestBook();
+        test.readText(false);
+        OutputWriter ow = new OutputWriter(test);
+        assertTrue(ow.makeSyllableDistributionGraph());
+    }
+
+    private Book getTestBook() {
+        File testFile = null;
+        try {
+            testFile = new File(this.getClass().getResource("/test.txt").toURI());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        Book book = new Book();
+        book.givePipeline(pipeline);
+        book.setPath(testFile);
+        book.setTitleFromText(testFile);
+        return book;
+    }
+
+    private Book getTestBook(String path) {
+        File testFile = null;
+        try {
+            testFile = new File(this.getClass().getResource(path).toURI());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        Book book = new Book();
+        book.givePipeline(pipeline);
+        book.setPath(testFile);
+        book.setTitleFromText(testFile);
+        return book;
+    }
 
 }
