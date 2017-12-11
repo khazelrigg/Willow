@@ -17,7 +17,7 @@ import java.nio.file.Files;
 
 
 public class Book {
-    private BookStats bookStats = new BookStats();
+    private final BookStats bookStats = new BookStats();
     private String title = "";
     private String author = "";
 
@@ -38,6 +38,7 @@ public class Book {
 
     /**
      * Get the title of a book by scanning first couple of lines for a title and author.
+     *
      * @param text File to find title of
      */
     public void setTitleFromText(File text) {
@@ -203,6 +204,7 @@ public class Book {
 
     /**
      * Reads and tags a plain text file by loading into memory.
+     *
      * @return true if successfully finished
      */
     private boolean readPlainText() {
@@ -251,6 +253,7 @@ public class Book {
 
     /**
      * Reads and tags a PDF file.
+     *
      * @return true if successfully finished
      */
     private boolean readPdf() {
@@ -284,6 +287,7 @@ public class Book {
 
     /**
      * Tag a text for parts of speech.
+     *
      * @param text Text to be tagged
      */
     void tagText(String text) {
@@ -317,8 +321,7 @@ public class Book {
 
         bookStats.increaseSyllables(word);
 
-        // Skip over punctuation
-        if (!stripPunctuation(word).isEmpty()) {
+        if (!isPunctuation(word)) {
             bookStats.increaseWords(word);
             bookStats.increasePartsOfSpeech(tag);
             bookStats.increaseLemmas(lemma);
@@ -326,7 +329,6 @@ public class Book {
     }
 
     public String getName() {
-        // If there is no author don't add the " by XXX"
         if (author.isEmpty()) {
             return title;
         }
@@ -341,7 +343,7 @@ public class Book {
         this.path = path;
     }
 
-    public boolean hasResults(boolean i, boolean j) {
+    public boolean hasResults(boolean createImage, boolean createJson) {
         File txt = new File("results/txt/" + subdirectory + "/" + getName() + " Results.txt");
         File img = new File("results/img/" + subdirectory + "/" + getName()
                 + " POS Distribution Results.jpeg");
@@ -349,11 +351,11 @@ public class Book {
                 + " Difficulty Results.jpeg");
         File json = new File("results/json/" + subdirectory + "/" + getName() + " Results.json");
 
-        if (!i && !j) {
+        if (!createImage && !createJson) {
             return txt.exists();
-        } else if (i && j) {
+        } else if (createImage && createJson) {
             return txt.exists() && img.exists() && diffImg.exists() && json.exists();
-        } else if (i) {
+        } else if (createImage) {
             return txt.exists() && img.exists() && diffImg.exists();
         } else {
             return txt.exists() && json.exists();
@@ -374,6 +376,10 @@ public class Book {
 
     private String stripPunctuation(String word) {
         return word.replaceAll("\\W", "");
+    }
+
+    private boolean isPunctuation(String word) {
+        return stripPunctuation(word).isEmpty();
     }
 
     public String getSubdirectory() {

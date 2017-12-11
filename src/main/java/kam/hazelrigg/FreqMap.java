@@ -32,6 +32,9 @@ public class FreqMap<K, V> extends HashMap<K, V> {
         }
     }
 
+    /**
+     * Removes all stopwords using the list defined in stopwords-english.txt
+     */
     void stripStopWords() {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                 this.getClass().getResourceAsStream("/stopwords-english.txt")))) {
@@ -67,7 +70,7 @@ public class FreqMap<K, V> extends HashMap<K, V> {
         return frequency;
     }
 
-    String getTopThree() {
+    String getTopThreeValues() {
         sortByValue();
         String[] values = frequency.keySet().toArray(new String[frequency.size()]);
         return values[0] + ", " + values[1] + ", " + values[2];
@@ -81,7 +84,6 @@ public class FreqMap<K, V> extends HashMap<K, V> {
 
         return result.toString();
     }
-
 
     String toSimpleString() {
         StringBuilder result = new StringBuilder();

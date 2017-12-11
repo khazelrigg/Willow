@@ -20,7 +20,7 @@ class BatchRunner {
     /**
      * Start a thread pool to analyse texts
      *
-     * @param file File/Dir to run
+     * @param file    File/Dir to run
      * @param threads Number of threads to use in pool
      */
     static void startRunners(File file, int threads) {
@@ -65,9 +65,9 @@ class BatchRunner {
 }
 
 class Runner extends Thread {
-    private Book book;
-    private final File file;
     private static CommandLine cmd;
+    private final File file;
+    private Book book;
     private OutputWriter ow;
 
     Runner(File file, File sub) {
@@ -87,6 +87,10 @@ class Runner extends Thread {
         }
 
         this.book.setPath(file);
+    }
+
+    static void setOptions(CommandLine cmd) {
+        Runner.cmd = cmd;
     }
 
     /**
@@ -130,10 +134,6 @@ class Runner extends Thread {
             ow.makeSyllableDistributionGraph();
             ow.makePartsOfSpeechGraph();
         }
-    }
-
-    static void setOptions(CommandLine cmd) {
-        Runner.cmd = cmd;
     }
 
     @Override

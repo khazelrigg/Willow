@@ -19,37 +19,6 @@ class TextTools {
         return s.split("a").length - 1;
     }
 
-    /**
-     * Uses Nebula Award classifications to classify a text based on its length.
-     *
-     * @param wordCount Total number of words
-     * @return String classification
-     */
-    static String classifyLength(long wordCount) {
-        /*
-        Classification    Word count
-        Novel             40,000 words or over
-        Novella           17,500 to 39,999 words
-        Novelette         7,500 to 17,499 words
-        Short story       under 7,500 words
-        */
-
-        if (wordCount < 7500) {
-            return "short story";
-        }
-
-        if (wordCount < 17500) {
-            return "novelette";
-        }
-
-        if (wordCount < 40000) {
-            return "novella";
-        }
-
-        return "novel";
-
-    }
-
     static int getReadingTimeInMinutes(long wordCount) {
         return (int) (wordCount / 275);
     }
@@ -59,55 +28,48 @@ class TextTools {
     }
 
     /**
-     * Compares number of mono/polysyllabic words to determine if a text is difficult.
+     * Formats a string into a 100 character wide box.
      *
-     * @param mono int number of monosyllabic words
-     * @param poly int number of polysyllabic words
-     * @return String easy if there are more mono than poly, hard if else
+     * @param text Text to be placed into box
+     * @return Formatted String
      */
-    static String classifyDifficulty(int mono, int poly) {
-        if (mono > poly) {
-            return "easy";
-        }
-        return "difficult";
-    }
+    static String wrapInBox(String text) {
+        //                   TL   TC   TR   LL   LC   LR   COL
+        String[] boxParts = {"╒", "═", "╕", "└", "─", "┘", "│"};
+        StringBuilder wrapped = new StringBuilder();
 
-    /**
-     * Uses the Flesch-Kincaid scale to classify a text's reading ease.
-     *
-     * @param book Book to use
-     * @return String classification
-     */
-    static String getReadingEaseLevel(BookStats stats) {
-        double score = getFleschKincaidScore(stats);
-        return classifyKincaidScore(score);
-    }
-
-    private static String classifyKincaidScore(double score) {
-        if (score <= 100) {
-            if (score > 90) {
-                return "5th-grade";
-            } else if (score > 80) {
-                return "6th-grade";
-            } else if (score > 70) {
-                return "7th-grade";
-            } else if (score > 60) {
-                return "8th & 9th grade";
-            } else if (score > 50) {
-                return "10th to 12th grade";
-            } else if (score > 30) {
-                return "College";
-            } else if (score < 30 && score > 0) {
-                return "College graduate";
+        // Start with TL corner
+        wrapped.append(boxParts[0]);
+        for (int i = 0; i <= 98; i++) {
+            if (i == 98) {
+                // Add TR corner
+                wrapped.append(boxParts[2]).append("\n");
+            } else {
+                wrapped.append(boxParts[1]);
             }
         }
 
-        return "easiest";
-    }
+        // Add Column and text
+        wrapped.append(boxParts[6]).append(" ").append(text);
+        for (int i = 0; i <= 97 - text.length(); i++) {
+            if (i == 97 - text.length()) {
+                wrapped.append(boxParts[6]).append("\n");
+            } else {
+                wrapped.append(" ");
+            }
+        }
 
-    private static double getFleschKincaidScore(BookStats stats) {
-        return 206.835 - (1.015 * stats.getWordCount() / stats.getSentenceCount())
-                - (84.6 * stats.getSyllableCount() / stats.getWordCount());
+        // Draw bottom row
+        wrapped.append(boxParts[3]);
+        for (int i = 0; i <= 98; i++) {
+            if (i == 98) {
+                wrapped.append(boxParts[5]).append("\n");
+            } else {
+                wrapped.append(boxParts[4]);
+            }
+        }
+        wrapped.append("\n");
+        return wrapped.toString();
     }
 
     static String getParentType(String type) {

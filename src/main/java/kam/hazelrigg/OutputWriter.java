@@ -95,21 +95,16 @@ public class OutputWriter {
             }
 
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))) {
-                String header = "Auto generated results for " + title;
-                boolean hasAuthor = !book.getAuthor().isEmpty();
+                String header = "Auto generated results for " + book.getName();
 
-                if (hasAuthor) {
-                    header += " by " + author;
-                }
-
-                bw.write(wrapInBox(header));
-                bw.write("\n" + wrapInBox("Stats") + bookStats.toFormattedString());
-                bw.write("\n" + wrapInBox("Conclusion") + getConclusionString());
-                bw.write("\n" + wrapInBox("Parts of Speech") + partsOfSpeech.toString());
-                bw.write("\n" + wrapInBox("Word Counts") + words.toString());
-                bw.write("\n" + wrapInBox("Lemma Counts") + lemmas.toString());
-                bw.write("\n" + wrapInBox("Concordance") + createConcordance(words));
-                bw.write("\n" + wrapInBox("Lemma Concordance") + createConcordance(lemmas));
+                bw.write(TextTools.wrapInBox(header));
+                bw.write("\n" + TextTools.wrapInBox("Stats") + bookStats.toFormattedString());
+                bw.write("\n" + TextTools.wrapInBox("Conclusion") + getConclusionString());
+                bw.write("\n" + TextTools.wrapInBox("Parts of Speech") + partsOfSpeech.toString());
+                bw.write("\n" + TextTools.wrapInBox("Word Counts") + words.toString());
+                bw.write("\n" + TextTools.wrapInBox("Lemma Counts") + lemmas.toString());
+                bw.write("\n" + TextTools.wrapInBox("Concordance") + createConcordance(words));
+                bw.write("\n" + TextTools.wrapInBox("Lemma Concordance") + createConcordance(lemmas));
 
                 bw.close();
 
@@ -124,51 +119,6 @@ public class OutputWriter {
     }
 
     /**
-     * Formats a string into a 100 character wide box.
-     *
-     * @param text Text to be placed into box
-     * @return Formatted String
-     */
-    private String wrapInBox(String text) {
-        //                   TL   TC   TR   LL   LC   LR   COL
-        String[] boxParts = {"╒", "═", "╕", "└", "─", "┘", "│"};
-        StringBuilder wrapped = new StringBuilder();
-
-        // Start with TL corner
-        wrapped.append(boxParts[0]);
-        for (int i = 0; i <= 98; i++) {
-            if (i == 98) {
-                // Add TR corner
-                wrapped.append(boxParts[2]).append("\n");
-            } else {
-                wrapped.append(boxParts[1]);
-            }
-        }
-
-        // Add Column and text
-        wrapped.append(boxParts[6]).append(" ").append(text);
-        for (int i = 0; i <= 97 - text.length(); i++) {
-            if (i == 97 - text.length()) {
-                wrapped.append(boxParts[6]).append("\n");
-            } else {
-                wrapped.append(" ");
-            }
-        }
-
-        // Draw bottom row
-        wrapped.append(boxParts[3]);
-        for (int i = 0; i <= 98; i++) {
-            if (i == 98) {
-                wrapped.append(boxParts[5]).append("\n");
-            } else {
-                wrapped.append(boxParts[4]);
-            }
-        }
-        wrapped.append("\n");
-        return wrapped.toString();
-    }
-
-    /**
      * Format a Book's data into a paragraph style String wrapped at 100 characters.
      *
      * @return Formatted String
@@ -176,11 +126,11 @@ public class OutputWriter {
     private String getConclusionString() {
         String classifiedLength = bookStats.getClassifiedLength();
         long wordCount = bookStats.getWordCount();
-        long uniqueWords = bookStats.getWords().size();
+        long uniqueWords = bookStats.getUniqueWords();
         String gradeLevel = bookStats.getGradeLevel();
         long polySyllable = bookStats.getPolysyllablic();
         long monoSyllable = bookStats.getMonosyllablic();
-        String easeLevel = TextTools.getReadingEaseLevel(bookStats);
+        String easyDifficult = bookStats.getEasyDifficult();
 
 
         //TODO format times/
@@ -193,8 +143,8 @@ public class OutputWriter {
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
                         + " to write at 13wpm it would take %d minute(s).",
                 classifiedLength, wordCount, uniqueWords, gradeLevel,
-                polySyllable, monoSyllable,
-                easeLevel, TextTools.getReadingTimeInMinutes(wordCount),
+                polySyllable, monoSyllable, easyDifficult
+                , TextTools.getReadingTimeInMinutes(wordCount),
                 TextTools.getSpeakingTimeInMinutes(wordCount), wordCount / 40, wordCount / 13);
 
         return wrap(conclusion + "\n", 100);
@@ -263,7 +213,6 @@ public class OutputWriter {
         plot.setStartAngle(90f);
         plot.setLabelFont(new Font("Ubuntu San Serif", Font.PLAIN, 10));
 
-        // Save the chart to jpeg
         try {
             ChartUtilities.saveChartAsJPEG(new File(outPath), chart, resolution, resolution);
             printFinishedStatement(purpose + " chart");
@@ -418,7 +367,7 @@ public class OutputWriter {
     String writeCsv() {
         Path outPath;
         FreqMap<String, Integer> words = bookStats.getWords();
-        // Create results directories
+
         if (makeDir("results/csv/")) {
             outPath = Paths.get("results/csv/", subdirectory, book.getName() + " Results.csv");
         } else {
