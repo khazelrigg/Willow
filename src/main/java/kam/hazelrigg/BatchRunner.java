@@ -100,6 +100,7 @@ class Runner extends Thread {
                 + (endReadTime - Willow.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
 
         this.ow = new OutputWriter(book);
+        ow.setVerbose(cmd.hasOption("verbose"));
         ow.writeTxt();
         writeJson();
         writeCsv();

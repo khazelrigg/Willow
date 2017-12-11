@@ -1,6 +1,5 @@
 package kam.hazelrigg;
 
-import edu.stanford.nlp.util.CoreMap;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
@@ -28,33 +27,18 @@ public class OutputWriter {
     static final String ANSI_RESET = "\u001B[0m";
     static final String ANSI_GREEN = "\u001B[32m";
     private final String subdirectory;
-
-    private final FreqMap<String, Integer> words;
-    private final FreqMap<String, Integer> partsOfSpeech;
-    private final FreqMap<String, Integer> lemmas;
-    private final FreqMap<String, Integer> syllables;
-
-    private final long wordCount;
-    private final long syllableCount;
-    private final long sentenceCount;
-    private final CoreMap longestSentence;
-
-    private boolean verbose = false;
-
     private Book book;
+    private BookStats bookStats;
+    private String title;
+    private String author;
+    private boolean verbose = false;
 
     public OutputWriter(Book book) {
         this.book = book;
         this.subdirectory = book.getSubdirectory();
-        this.words = book.getWords();
-        this.partsOfSpeech = book.getPartsOfSpeech();
-        this.lemmas = book.getLemmas();
-        this.syllables = book.getSyllables();
-        this.wordCount = book.getWordCount();
-        this.syllableCount = book.getSyllableCount();
-        this.sentenceCount = book.getSentenceCount();
-        this.longestSentence = book.getLongestSentence();
-
+        this.bookStats = this.book.getStats();
+        this.title = book.getTitle();
+        this.author = book.getAuthor();
         makeResultDirectories();
     }
 
@@ -64,7 +48,6 @@ public class OutputWriter {
             makeResultSubdirectories();
         }
     }
-
 
     private void makeResultSubdirectories() {
         makeDir("results/txt/" + subdirectory);
@@ -96,6 +79,10 @@ public class OutputWriter {
     }
 
     public void writeTxt() {
+        FreqMap partsOfSpeech = bookStats.getPartsOfSpeech();
+        FreqMap words = bookStats.getWords();
+        FreqMap lemmas = bookStats.getLemmas();
+
         if (partsOfSpeech.size() > 0) {
             makeResultSubdirectories();
             File outFile;
@@ -108,13 +95,15 @@ public class OutputWriter {
             }
 
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))) {
-                String header = "Auto generated results for " + book.title;
-                if (!book.author.isEmpty()) {
-                    header += " by " + book.getAuthor();
+                String header = "Auto generated results for " + title;
+                boolean hasAuthor = !book.getAuthor().isEmpty();
+
+                if (hasAuthor) {
+                    header += " by " + author;
                 }
 
                 bw.write(wrapInBox(header));
-                bw.write("\n" + wrapInBox("Stats") + getStats());
+                bw.write("\n" + wrapInBox("Stats") + bookStats.toFormattedString());
                 bw.write("\n" + wrapInBox("Conclusion") + getConclusionString());
                 bw.write("\n" + wrapInBox("Parts of Speech") + partsOfSpeech.toString());
                 bw.write("\n" + wrapInBox("Word Counts") + words.toString());
@@ -180,36 +169,19 @@ public class OutputWriter {
     }
 
     /**
-     * Format a Book's data into a list style string.
-     *
-     * @return Formatted string
-     */
-    private String getStats() {
-        return "Total Words: " + wordCount
-                + "\nUnique Words: " + words.size()
-                + "\nPolysyllabic Words: " + syllables.get("Polysyllabic")
-                + "\nMonosyllabic Words: " + syllables.get("Monosyllabic")
-                + "\nTotal Syllables: " + syllableCount
-                + "\nTotal Sentences: " + sentenceCount
-                + "\nFlesch-Kincaid Grade: "
-                + TextTools.getReadingEaseLevel(book)
-                + "\nClassified Length: " + TextTools.classifyLength(wordCount)
-                + "\nTop 3 words: " + words.getTopThree()
-                + wrap("\nLongest Sentence; " + longestSentence, 100) + "\n";
-    }
-
-    /**
      * Format a Book's data into a paragraph style String wrapped at 100 characters.
      *
      * @return Formatted String
      */
     private String getConclusionString() {
-        int monoSyllable = syllables.get("Monosyllabic");
-        int polySyllable = syllables.get("Polysyllabic");
+        String classifiedLength = bookStats.getClassifiedLength();
+        long wordCount = bookStats.getWordCount();
+        long uniqueWords = bookStats.getWords().size();
+        String gradeLevel = bookStats.getGradeLevel();
+        long polySyllable = bookStats.getPolysyllablic();
+        long monoSyllable = bookStats.getMonosyllablic();
+        String easeLevel = TextTools.getReadingEaseLevel(bookStats);
 
-        String classifiedLength = TextTools.classifyLength(wordCount);
-        String gradeLevel = TextTools.getReadingEaseLevel(book);
-        String difficulty = TextTools.classifyDifficulty(monoSyllable, polySyllable);
 
         //TODO format times/
         String conclusion = String.format("This piece is classified as a %s based on the Nebula "
@@ -220,9 +192,9 @@ public class OutputWriter {
                         + " read this text at a rate of 275wpm it would take %d minute(s) to finish"
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
                         + " to write at 13wpm it would take %d minute(s).",
-                classifiedLength, wordCount, words.size(), gradeLevel,
+                classifiedLength, wordCount, uniqueWords, gradeLevel,
                 polySyllable, monoSyllable,
-                difficulty, TextTools.getReadingTimeInMinutes(wordCount),
+                easeLevel, TextTools.getReadingTimeInMinutes(wordCount),
                 TextTools.getSpeakingTimeInMinutes(wordCount), wordCount / 40, wordCount / 13);
 
         return wrap(conclusion + "\n", 100);
@@ -245,18 +217,18 @@ public class OutputWriter {
     }
 
     public void makeSyllableDistributionGraph() {
-        makeGraph("Difficulty", syllables);
+        makeGraph("Difficulty", bookStats.getSyllables());
     }
 
     public void makePartsOfSpeechGraph() {
-        makeGraph("POS Distribution", partsOfSpeech);
+        makeGraph("POS Distribution", bookStats.getPartsOfSpeech());
     }
 
     /**
      * Creates a graph using JFreeChart that is saved to a jpg.
      *
      * @param purpose Purpose of the graph, used in title of graph
-     * @param data FreqMap to use values off
+     * @param data    FreqMap to use values off
      */
     private void makeGraph(String purpose, FreqMap<String, Integer> data) {
         DefaultPieDataset dataSet = new DefaultPieDataset();
@@ -269,7 +241,7 @@ public class OutputWriter {
                     + " Results.jpeg";
         } else {
             System.out.println("[Error] Failed to create image results directories");
-            outPath = book.title + "  " + book.author + " " + purpose + "Results.jpeg";
+            outPath = title + "  " + author + " " + purpose + "Results.jpeg";
         }
 
         // Load POS data into data set
@@ -338,7 +310,6 @@ public class OutputWriter {
         return chart;
     }
 
-
     @SuppressWarnings("unchecked")
     public String writeJson() {
         String outPath;
@@ -375,7 +346,7 @@ public class OutputWriter {
                 jsonTypes.put(type, new JSONArray());
             }
 
-            String[] types = partsOfSpeech.getSortedKeys();
+            String[] types = bookStats.getPartsOfSpeech().getSortedKeys();
 
             Arrays.stream(types).forEach(type -> {
                 // Create temporary parent for each type
@@ -387,7 +358,7 @@ public class OutputWriter {
                 JSONObject typeObject = new JSONObject();
                 typeObject.put("name", type);
                 typeObject.put("description", type);
-                typeObject.put("size", partsOfSpeech.get(type));
+                typeObject.put("size", bookStats.getPartsOfSpeech().get(type));
 
                 JSONArray typeArray = new JSONArray();
                 typeArray.add(typeObject);
@@ -425,8 +396,7 @@ public class OutputWriter {
             bookJson.put("children", jsonParent);
 
             JSONObject rootObject = new JSONObject();
-            rootObject.put(book.title, bookJson);
-
+            rootObject.put(title, bookJson);
 
             bw.write(rootObject.toJSONString());
             bw.close();
@@ -447,6 +417,7 @@ public class OutputWriter {
 
     String writeCsv() {
         Path outPath;
+        FreqMap<String, Integer> words = bookStats.getWords();
         // Create results directories
         if (makeDir("results/csv/")) {
             outPath = Paths.get("results/csv/", subdirectory, book.getName() + " Results.csv");
@@ -473,7 +444,8 @@ public class OutputWriter {
         }
     }
 
-    void setVerbose(Boolean verbose) {
+    void setVerbose(boolean verbose) {
         this.verbose = verbose;
     }
+
 }

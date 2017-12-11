@@ -17,27 +17,15 @@ import java.nio.file.Files;
 
 
 public class Book {
-    private final FreqMap<String, Integer> partsOfSpeech = new FreqMap<>();
-    private final FreqMap<String, Integer> words = new FreqMap<>();
-    private final FreqMap<String, Integer> lemmas = new FreqMap<>();
-    private final FreqMap<String, Integer> syllables = new FreqMap<>();
-
-    String title = "";
-    String author = "";
+    private BookStats bookStats = new BookStats();
+    private String title = "";
+    private String author = "";
 
     private String subdirectory;
-    private long wordCount;
-
-    public void setSubdirectory(String subdirectory) {
-        this.subdirectory = subdirectory;
-    }
-
-    private long syllableCount;
-    private long sentenceCount;
 
     private boolean gutenberg = false;
     private File path;
-    private CoreMap longestSentence;
+
     private StanfordCoreNLP pipeline = Willow.pipeline;
 
     public Book() {
@@ -199,7 +187,7 @@ public class Book {
                 }
             }
 
-            removeStopWords();
+            bookStats.removeStopWords();
             return true;
         } catch (IOException e) {
             System.out.println("[Error - readPlainText] Couldn't find file at " + path);
@@ -306,13 +294,14 @@ public class Book {
             updateStatsFromSentence(sentence);
         }
 
-        removeStopWords();
+        bookStats.removeStopWords();
     }
 
     private void updateStatsFromSentence(CoreMap sentence) {
-        sentenceCount++;
+        bookStats.increaseSentenceCount();
+        CoreMap longestSentence = bookStats.getLongestSentence();
         if (longestSentence == null || sentence.size() > longestSentence.size()) {
-            longestSentence = sentence;
+            bookStats.setLongestSentence(sentence);
         }
 
         for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
@@ -326,40 +315,13 @@ public class Book {
         String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
         tag = TextTools.posAbbrev.get(tag);
 
-        updateSyllables(word);
+        bookStats.increaseSyllables(word);
 
         // Skip over punctuation
         if (!stripPunctuation(word).isEmpty()) {
-            updateWords(word);
-            updateLemmas(lemma);
-            updatePartsOfSpeech(tag);
-        }
-    }
-
-    private void updateWords(String word) {
-        wordCount++;
-        words.increaseFreq(word.toLowerCase());
-    }
-
-    private void updateSyllables(String word) {
-        int wordSyllables = TextTools.getSyllableCount(word);
-        syllableCount += wordSyllables;
-        if (wordSyllables == 1) {
-            syllables.increaseFreq("Monosyllabic");
-        } else {
-            syllables.increaseFreq("Polysyllabic");
-        }
-    }
-
-    private void updateLemmas(String lemma) {
-        if (!stripPunctuation(lemma).isEmpty()) {
-            lemmas.increaseFreq(lemma);
-        }
-    }
-
-    private void updatePartsOfSpeech(String tag) {
-        if (tag != null) {
-            partsOfSpeech.increaseFreq(tag);
+            bookStats.increaseWords(word);
+            bookStats.increasePartsOfSpeech(tag);
+            bookStats.increaseLemmas(lemma);
         }
     }
 
@@ -369,27 +331,6 @@ public class Book {
             return title;
         }
         return title + " by " + author;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    private void removeStopWords() {
-        words.stripStopWords();
-        lemmas.stripStopWords();
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
     }
 
     public File getPath() {
@@ -419,40 +360,16 @@ public class Book {
         }
     }
 
+    BookStats getStats() {
+        return this.bookStats;
+    }
+
     public void givePipeline(StanfordCoreNLP pipeline) {
         this.pipeline = pipeline;
     }
 
     public boolean isGutenberg() {
         return gutenberg;
-    }
-
-    long getWordCount() {
-        return wordCount;
-    }
-
-    FreqMap<String, Integer> getPartsOfSpeech() {
-        return partsOfSpeech;
-    }
-
-    public FreqMap<String, Integer> getWords() {
-        return words;
-    }
-
-    FreqMap<String, Integer> getLemmas() {
-        return lemmas;
-    }
-
-    public FreqMap<String, Integer> getSyllables() {
-        return syllables;
-    }
-
-    long getSyllableCount() {
-        return syllableCount;
-    }
-
-    long getSentenceCount() {
-        return sentenceCount;
     }
 
     private String stripPunctuation(String word) {
@@ -463,7 +380,15 @@ public class Book {
         return subdirectory;
     }
 
-    CoreMap getLongestSentence() {
-        return longestSentence;
+    public void setSubdirectory(String subdirectory) {
+        this.subdirectory = subdirectory;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getAuthor() {
+        return author;
     }
 }

@@ -78,8 +78,8 @@ class TextTools {
      * @param book Book to use
      * @return String classification
      */
-    static String getReadingEaseLevel(Book book) {
-        double score = getFleschKincaidScore(book);
+    static String getReadingEaseLevel(BookStats stats) {
+        double score = getFleschKincaidScore(stats);
         return classifyKincaidScore(score);
     }
 
@@ -105,9 +105,9 @@ class TextTools {
         return "easiest";
     }
 
-    private static double getFleschKincaidScore(Book book) {
-        return 206.835 - (1.015 * book.getWordCount() / book.getSentenceCount())
-                - (84.6 * book.getSyllableCount() / book.getWordCount());
+    private static double getFleschKincaidScore(BookStats stats) {
+        return 206.835 - (1.015 * stats.getWordCount() / stats.getSentenceCount())
+                - (84.6 * stats.getSyllableCount() / stats.getWordCount());
     }
 
     static String getParentType(String type) {
