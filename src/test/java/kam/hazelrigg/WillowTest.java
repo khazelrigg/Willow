@@ -162,11 +162,10 @@ public class WillowTest {
 
     @Test
     public void shouldBeMissingFile() {
-        e.expect(NullPointerException.class);
         Book test = new Book();
         test.givePipeline(pipeline);
         test.setPath(new File("whoops, nothing here"));
-        test.readText(false);
+        assertFalse(test.readText(false));
     }
 
     @Test

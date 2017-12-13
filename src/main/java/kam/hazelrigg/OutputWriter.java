@@ -36,7 +36,7 @@ public class OutputWriter {
     public OutputWriter(Book book) {
         this.book = book;
         this.subdirectory = book.getSubdirectory();
-        this.bookStats = this.book.getStats();
+        this.bookStats = book.getStats();
         this.title = book.getTitle();
         this.author = book.getAuthor();
         makeResultDirectories();
