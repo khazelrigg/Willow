@@ -5,6 +5,7 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.io.RandomAccessFile;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -97,14 +98,12 @@ public class Book {
     public boolean readText(Boolean economy) {
         System.out.println("☐ - Starting analysis of " + getName());
         try {
-            String fileType = Files.probeContentType(path.toPath());
+            if (path == null) {
+                throw new NullPointerException();
+            }
+            String fileType = FilenameUtils.getExtension(path.getName());
             return runFileType(fileType, economy);
-
-        } catch (IOException e) {
-            System.out.println("[Error - readText] IOException when probing file type");
-            e.printStackTrace();
         } catch (NullPointerException e) {
-            System.out.println("[Error - readText] NullPointerException when probing file type");
             e.printStackTrace();
         }
         return false;
@@ -112,17 +111,16 @@ public class Book {
 
     private boolean runFileType(String fileType, boolean economy) {
         switch (fileType) {
-            case "text/plain":
+            case "txt":
                 if (economy) {
                     return readPlainTextEconomy();
                 } else {
                     return readPlainText();
                 }
-            case "application/pdf":
+            case "pdf":
                 return readPdf();
             default:
                 System.out.println("Unsupported format " + fileType);
-                System.exit(-3);
         }
         return false;
     }

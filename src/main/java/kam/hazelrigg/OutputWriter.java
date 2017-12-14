@@ -36,7 +36,7 @@ public class OutputWriter {
     public OutputWriter(Book book) {
         this.book = book;
         this.subdirectory = book.getSubdirectory();
-        this.bookStats = this.book.getStats();
+        this.bookStats = book.getStats();
         this.title = book.getTitle();
         this.author = book.getAuthor();
         makeResultDirectories();
@@ -78,21 +78,27 @@ public class OutputWriter {
         return dir.exists() || dir.mkdirs();
     }
 
-    public void writeTxt() {
+    public boolean writeTxt() {
         FreqMap partsOfSpeech = bookStats.getPartsOfSpeech();
         FreqMap words = bookStats.getWords();
         FreqMap lemmas = bookStats.getLemmas();
 
         if (partsOfSpeech.size() > 0) {
             makeResultSubdirectories();
-            File outFile;
+            String outPath;
 
-            try {
-                outFile = new File("results/txt/" + subdirectory + "/" + book.getName()
-                        + " Results.txt");
-            } catch (NullPointerException e) {
-                outFile = new File("results/txt/" + book.getName() + " Results.txt");
+            if (makeDir("results/txt/")) {
+                if (subdirectory != null) {
+                    outPath = "results/txt/" + subdirectory + "/" + book.getName() + " Results.txt";
+                } else {
+                    outPath = "results/txt/" + book.getName() + " Results.txt";
+                }
+            } else {
+                System.out.println("[Error] Failed to create json results directory");
+                outPath = book.getName() + " Results.json";
             }
+
+            File outFile = new File(outPath);
 
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))) {
                 String header = "Auto generated results for " + book.getName();
@@ -109,13 +115,14 @@ public class OutputWriter {
                 bw.close();
 
                 printFinishedStatement("TXT");
+                return true;
             } catch (IOException e) {
                 System.out.println("[Error - writeTxt] Error opening " + outFile.getName()
                         + "for writing");
                 e.printStackTrace();
             }
-
         }
+        return false;
     }
 
     /**
@@ -166,12 +173,12 @@ public class OutputWriter {
         return wrap(concordance.toString() + "\n", 100);
     }
 
-    public void makeSyllableDistributionGraph() {
-        makeGraph("Difficulty", bookStats.getSyllables());
+    public boolean makeSyllableDistributionGraph() {
+        return makeGraph("Difficulty", bookStats.getSyllables());
     }
 
-    public void makePartsOfSpeechGraph() {
-        makeGraph("POS Distribution", bookStats.getPartsOfSpeech());
+    public boolean makePartsOfSpeechGraph() {
+        return makeGraph("POS Distribution", bookStats.getPartsOfSpeech());
     }
 
     /**
@@ -180,7 +187,7 @@ public class OutputWriter {
      * @param purpose Purpose of the graph, used in title of graph
      * @param data    FreqMap to use values off
      */
-    private void makeGraph(String purpose, FreqMap<String, Integer> data) {
+    private boolean makeGraph(String purpose, FreqMap<String, Integer> data) {
         DefaultPieDataset dataSet = new DefaultPieDataset();
         String outPath;
         int resolution = 1000;
@@ -216,10 +223,12 @@ public class OutputWriter {
         try {
             ChartUtilities.saveChartAsJPEG(new File(outPath), chart, resolution, resolution);
             printFinishedStatement(purpose + " chart");
+            return true;
         } catch (IOException ioe) {
             System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
             ioe.printStackTrace();
         }
+        return false;
     }
 
     /**
@@ -260,7 +269,7 @@ public class OutputWriter {
     }
 
     @SuppressWarnings("unchecked")
-    public String writeJson() {
+    public boolean writeJson() {
         String outPath;
 
         if (makeDir("results/json/")) {
@@ -352,7 +361,7 @@ public class OutputWriter {
 
             printFinishedStatement("JSON");
 
-            return rootObject.toJSONString();
+            return true;
 
         } catch (IOException e) {
             System.out.println("[Error - writeJSON] Error opening " + out.getName()
@@ -361,7 +370,7 @@ public class OutputWriter {
             e.printStackTrace();
             writeJson();
         }
-        return null;
+        return false;
     }
 
     String writeCsv() {
