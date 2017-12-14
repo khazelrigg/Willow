@@ -21,6 +21,7 @@ import kam.hazelrigg.OutputWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Properties;
@@ -75,7 +76,7 @@ public class ViewController {
 
         File file = fileChooser.showOpenDialog(chooserPane);
         if (file != null) {
-            openFile(file);
+            openFile(file.toPath());
         }
     }
 
@@ -90,7 +91,7 @@ public class ViewController {
             try {
                 Files.walk(Paths.get(dir.getAbsolutePath()))
                         .filter(Files::isRegularFile)
-                        .forEach(f -> openFile(f.toFile()));
+                        .forEach(this::openFile);
             } catch (IOException e) {
                 System.out.println("[Error - openFolder] IOException walking files in "
                         + dir.getName());
@@ -100,16 +101,17 @@ public class ViewController {
         }
     }
 
-    private void openFile(File file) {
+    private void openFile(Path file) {
         Platform.runLater(() -> {
             if (file != null) {
-                book.setSubdirectory(book.getPath().getParentFile().getName());
+                String subdirectory = book.getPath().getParent().getFileName().toString();
+                book.setSubdirectory(subdirectory);
                 book.givePipeline(pipeline);
                 book.setTitleFromText(file);
                 statusLabel.setText("Opened " + book.getTitle());
                 runButton.setDisable(false);
                 run();
-                addFileToList(file);
+                addFileToList(file.toFile());
                 switchActiveBook(book.getName());
             }
         });
@@ -124,8 +126,9 @@ public class ViewController {
         ObservableList<String> files = resultsFileListView.getItems();
 
         Book newBook = new Book();
-        newBook.setTitleFromText(file);
-        newBook.setSubdirectory(newBook.getPath().getParentFile().getName());
+        newBook.setTitleFromText(file.toPath());
+        String subdirectory = newBook.getPath().getParent().getFileName().toString();
+        newBook.setSubdirectory(subdirectory);
 
         if (!files.contains(newBook.getName())) {
             files.add(newBook.getName());

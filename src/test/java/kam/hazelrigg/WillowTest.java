@@ -1,6 +1,5 @@
 package kam.hazelrigg;
 
-
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.PropertiesUtils;
 import org.apache.commons.cli.Options;
@@ -8,9 +7,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -126,8 +125,8 @@ public class WillowTest {
     public void setTitleFakeFileTest() {
         e.expect(FileNotFoundException.class);
         Book test = new Book();
-        File fake = new File("akljajdflj.oops");
-        test.setTitleFromText(fake);
+        Path fakePath = Paths.get("thiscouldntbearealfileifitwantedtobe.okay");
+        test.setTitleFromText(fakePath);
     }
 
     @Test
@@ -138,7 +137,7 @@ public class WillowTest {
 
     @Test
     public void shouldGetIsNotGutenberg() {
-        Book test = getTestBook("/test2.txt");
+        Book test = getTestBook("test2.txt");
         assertFalse(test.isGutenberg());
     }
 
@@ -164,7 +163,7 @@ public class WillowTest {
     public void shouldBeMissingFile() {
         Book test = new Book();
         test.givePipeline(pipeline);
-        test.setPath(new File("whoops, nothing here"));
+        test.setPath(Paths.get("whoops, nothing here"));
         assertFalse(test.readText(false));
     }
 
@@ -209,31 +208,27 @@ public class WillowTest {
     }
 
     private Book getTestBook() {
-        File testFile = null;
-        try {
-            testFile = new File(this.getClass().getResource("/test.txt").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
         Book book = new Book();
         book.givePipeline(pipeline);
-        book.setPath(testFile);
-        book.setTitleFromText(testFile);
+        book.setPath(getTestPath());
+        book.setTitleFromText(getTestPath());
         return book;
     }
 
     private Book getTestBook(String path) {
-        File testFile = null;
-        try {
-            testFile = new File(this.getClass().getResource(path).toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
         Book book = new Book();
         book.givePipeline(pipeline);
-        book.setPath(testFile);
-        book.setTitleFromText(testFile);
+        book.setPath(getTestPath(path));
+        book.setTitleFromText(getTestPath(path));
         return book;
+    }
+
+    private Path getTestPath() {
+        return Paths.get("src","main","resources", "test.txt");
+    }
+
+    private Path getTestPath(String path) {
+        return Paths.get("src", "main", "resources", path);
     }
 
 }

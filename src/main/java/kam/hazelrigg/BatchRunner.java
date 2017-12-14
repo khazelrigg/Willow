@@ -2,13 +2,13 @@ package kam.hazelrigg;
 
 import org.apache.commons.cli.CommandLine;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Stream;
 
 class BatchRunner {
     private static ArrayList<Runner> runners = new ArrayList<>();
@@ -17,17 +17,11 @@ class BatchRunner {
         Runner.setOptions(cmd);
     }
 
-    /**
-     * Start a thread pool to analyse texts
-     *
-     * @param file    File/Dir to run
-     * @param threads Number of threads to use in pool
-     */
-    static void startRunners(File file, int threads) {
-        if (file.isDirectory()) {
-            openDirectory(file);
-        } else if (file.isFile()) {
-            openFile(file);
+    static void startRunners(Path path, int threads) {
+        if (Files.isDirectory(path)) {
+            openDirectory(path);
+        } else if (Files.isRegularFile(path)) {
+            openFile(path);
         }
 
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
@@ -40,42 +34,40 @@ class BatchRunner {
      *
      * @param directory Directory to open
      */
-    private static void openDirectory(File directory) {
-        try {
-            Files.walk(Paths.get(directory.getAbsolutePath())).filter(Files::isRegularFile)
-                    .forEach(f -> {
-                        File file = f.toFile();
-                        File subFolder = f.toAbsolutePath().getParent().getFileName().toFile();
-                        runners.add(new Runner(file, subFolder));
-                    });
+    private static void openDirectory(Path directory) {
+        try (Stream<Path> fileWalker = Files.walk(directory)) {
+            fileWalker
+                    .filter(Files::isRegularFile)
+                    .forEach(file -> runners.add(new Runner(file, file.getParent())));
+
         } catch (NullPointerException e) {
             System.out.println("[Error - openDirectory] NullPointer when walking files in "
-                    + directory.getName());
+                    + directory.getFileName().toString());
             e.printStackTrace();
         } catch (IOException e) {
             System.out.println("[Error - openDirectory] IOException when walking files in "
-                    + directory.getName());
+                    + directory.getFileName().toString());
             e.printStackTrace();
         }
     }
 
-    private static void openFile(File f) {
+    private static void openFile(Path f) {
         runners.add(new Runner(f, f));
     }
 }
 
 class Runner extends Thread {
     private static CommandLine cmd;
-    private final File file;
+    private final Path path;
     private Book book;
     private OutputWriter ow;
 
-    Runner(File file, File sub) {
+    Runner(Path path, Path sub) {
         new Thread(this);
-        this.file = file;
+        this.path = path;
 
-        String parentOfSub = sub.getName();
-        if (file == sub) {
+        String parentOfSub = sub.getFileName().toString();
+        if (path == sub) {
             this.book = new Book();
         } else {
             this.book = new Book(parentOfSub);
@@ -83,10 +75,10 @@ class Runner extends Thread {
 
         if (cmd.hasOption("verbose")) {
             System.out.println("┌══════════[ NEW BOOK ]══════════╾\n│ ┌╾ " + parentOfSub
-                    + "\n│ └──╾ " + file.getPath() + "\n└════════════════════════════════╾\n");
+                    + "\n│ └──╾ " + path.getFileName().toString() + "\n└════════════════════════════════╾\n");
         }
 
-        this.book.setPath(file);
+        this.book.setPath(path);
     }
 
     static void setOptions(CommandLine cmd) {
@@ -138,12 +130,12 @@ class Runner extends Thread {
 
     @Override
     public void run() {
-        book.setTitleFromText(file);
+        book.setTitleFromText(path);
 
         if (cmd.hasOption("overwrite")) {
             runBook();
         } else if (book.hasResults(cmd.hasOption("images"), cmd.hasOption("json"))) {
-            System.out.println("☑ - " + file.getName() + " already has results");
+            System.out.println("☑ - " + path.getFileName().toString() + " already has results");
         } else {
             runBook();
         }

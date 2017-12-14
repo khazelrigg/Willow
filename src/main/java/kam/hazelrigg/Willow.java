@@ -7,7 +7,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -21,25 +22,22 @@ public class Willow {
     public static void main(String[] args) {
         Thread.currentThread().setName("Willow");
 
-        File path = null;
+        Path filePath;
         try {
             CommandLine cmd = new DefaultParser().parse(options, args);
             if (commandLineOptionsAreEmpty(cmd) && commandLineArgIsEmpty(cmd)) {
                 printHelp();
             }
 
-            if (!commandLineArgIsEmpty(cmd)) {
-                path = new File(cmd.getArgs()[0]);
-            }
-
+            filePath = Paths.get(cmd.getArgs()[0]);
             pipeline = createPipeline();
             BatchRunner.passCommandLine(cmd);
 
             if (cmd.hasOption("threads")) {
                 int threadArg = Integer.parseInt(cmd.getOptionValue("threads"));
-                startRunners(path, threadArg);
+                startRunners(filePath, threadArg);
             } else {
-                startRunners(path, 0);
+                startRunners(filePath, 0);
             }
         } catch (ParseException e) {
             e.printStackTrace();
@@ -47,7 +45,7 @@ public class Willow {
 
     }
 
-    private static void startRunners(File path, int threads) {
+    private static void startRunners(Path path, int threads) {
         if (threads == 0) {
             threads = Runtime.getRuntime().availableProcessors();
         }

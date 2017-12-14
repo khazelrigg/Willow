@@ -12,10 +12,9 @@ import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
-
+import java.nio.file.Path;
 
 public class Book {
     private final BookStats bookStats = new BookStats();
@@ -25,8 +24,7 @@ public class Book {
     private String subdirectory;
 
     private boolean gutenberg = false;
-    private File path;
-
+    private Path path;
     private StanfordCoreNLP pipeline = Willow.pipeline;
 
     public Book() {
@@ -40,14 +38,14 @@ public class Book {
     /**
      * Get the title of a book by scanning first couple of lines for a title and author.
      *
-     * @param text File to find title of
+     * @param path File to find title of
      */
-    public void setTitleFromText(File text) {
+    public void setTitleFromText(Path path) {
         String title = null;
         String author = null;
 
         try {
-            BufferedReader br = new BufferedReader(new FileReader(text));
+            BufferedReader br = Files.newBufferedReader(path);
             String line = br.readLine();
 
             // If the first line is empty skip over it until finding a full line
@@ -73,7 +71,7 @@ public class Book {
                         author = line.substring(7).trim();
                     }
                 } else {
-                    title = text.getName();
+                    title = path.getFileName().toString();
                     author = "";
                 }
             }
@@ -83,7 +81,7 @@ public class Book {
 
         } catch (IOException e) {
             System.out.println("[Error - SetTitle] Error opening "
-                    + text.getName() + " for setting title");
+                    + path.getFileName().toString() + " for setting title");
             e.printStackTrace();
         }
     }
@@ -97,11 +95,12 @@ public class Book {
      */
     public boolean readText(Boolean economy) {
         System.out.println("☐ - Starting analysis of " + getName());
+
         try {
             if (path == null) {
                 throw new NullPointerException();
             }
-            String fileType = FilenameUtils.getExtension(path.getName());
+            String fileType = FilenameUtils.getExtension(path.getFileName().toString());
             return runFileType(fileType, economy);
         } catch (NullPointerException e) {
             e.printStackTrace();
@@ -131,8 +130,7 @@ public class Book {
      * @return true if successfully finished
      */
     private boolean readPlainTextEconomy() {
-
-        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+        try (BufferedReader br = Files.newBufferedReader(path)) {
             boolean atBook = !gutenberg;
             StringBuilder buffer = new StringBuilder();
             Annotation document;
@@ -206,7 +204,7 @@ public class Book {
      * @return true if successfully finished
      */
     private boolean readPlainText() {
-        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+        try (BufferedReader br = Files.newBufferedReader(path)) {
             boolean atBook = !gutenberg;
             StringBuilder text = new StringBuilder();
 
@@ -235,16 +233,9 @@ public class Book {
                 }
             }
             tagText(text.toString());
-
             return true;
         } catch (IOException e) {
-            System.out.println("[Error - readPlainText] Couldn't find file at " + path);
             e.printStackTrace();
-            System.exit(2);
-        } catch (NullPointerException e) {
-            System.out.println("[Error - readPlainText] Null pointer for file at " + path);
-            e.printStackTrace();
-            System.exit(2);
         }
         return false;
     }
@@ -257,14 +248,14 @@ public class Book {
     private boolean readPdf() {
         try {
             PDFTextStripper pdfStripper = new PDFTextStripper();
-            PDFParser parser = new PDFParser(new RandomAccessFile(path, "r"));
+            PDFParser parser = new PDFParser(new RandomAccessFile(path.toFile(), "r"));
             parser.parse();
 
             tagText(pdfStripper.getText(parser.getPDDocument()));
             return true;
         } catch (IOException e) {
             System.out.println("[Error - readPdf] IOException when opening PDFParser for "
-                    + path.getName());
+                    + path.getFileName());
             e.printStackTrace();
         }
         System.exit(2);
@@ -333,11 +324,11 @@ public class Book {
         return title + " by " + author;
     }
 
-    public File getPath() {
+    public Path getPath() {
         return path;
     }
 
-    public void setPath(File path) {
+    public void setPath(Path path) {
         this.path = path;
     }
 
