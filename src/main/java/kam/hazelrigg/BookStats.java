@@ -10,6 +10,8 @@ import java.util.HashMap;
 import static org.apache.commons.lang3.text.WordUtils.wrap;
 
 class BookStats {
+    private boolean gutenberg;
+
     private long syllableCount;
     private long wordCount;
     private long sentenceCount;
@@ -233,4 +235,11 @@ class BookStats {
         return posNoAbbrev;
     }
 
+    public boolean isGutenberg() {
+        return gutenberg;
+    }
+
+    public void setGutenberg(boolean gutenberg) {
+        this.gutenberg = gutenberg;
+    }
 }

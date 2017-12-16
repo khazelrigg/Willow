@@ -106,7 +106,6 @@ public class ViewController {
             if (file != null) {
                 String subdirectory = book.getPath().getParent().getFileName().toString();
                 book.setSubdirectory(subdirectory);
-                book.givePipeline(pipeline);
                 book.setTitleFromText(file);
                 statusLabel.setText("Opened " + book.getTitle());
                 runButton.setDisable(false);
