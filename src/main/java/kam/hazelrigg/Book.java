@@ -11,10 +11,15 @@ import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Book {
     private final BookStats bookStats = new BookStats();
@@ -44,8 +49,7 @@ public class Book {
         String title = null;
         String author = null;
 
-        try {
-            BufferedReader br = Files.newBufferedReader(path);
+        try (BufferedReader br = getDecodedBufferedReader()) {
             String line = br.readLine();
 
             // If the first line is empty skip over it until finding a full line
@@ -79,7 +83,7 @@ public class Book {
             this.title = title;
             this.author = author;
 
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             System.out.println("[Error - SetTitle] Error opening "
                     + path.getFileName().toString() + " for setting title");
             e.printStackTrace();
@@ -130,7 +134,7 @@ public class Book {
      * @return true if successfully finished
      */
     private boolean readPlainTextEconomy() {
-        try (BufferedReader br = Files.newBufferedReader(path)) {
+        try (BufferedReader br = getDecodedBufferedReader()) {
             boolean atBook = !gutenberg;
             StringBuilder buffer = new StringBuilder();
             Annotation document;
@@ -204,7 +208,7 @@ public class Book {
      * @return true if successfully finished
      */
     private boolean readPlainText() {
-        try (BufferedReader br = Files.newBufferedReader(path)) {
+        try (BufferedReader br = getDecodedBufferedReader()) {
             boolean atBook = !gutenberg;
             StringBuilder text = new StringBuilder();
 
@@ -306,7 +310,6 @@ public class Book {
         String word = token.word().toLowerCase();
         String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
         String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
-        tag = TextTools.posAbbrev.get(tag);
 
         bookStats.increaseSyllables(word);
 
@@ -333,21 +336,23 @@ public class Book {
     }
 
     public boolean hasResults(boolean createImage, boolean createJson) {
-        File txt = new File("results/txt/" + subdirectory + "/" + getName() + " Results.txt");
-        File img = new File("results/img/" + subdirectory + "/" + getName()
-                + " POS Distribution Results.jpeg");
-        File diffImg = new File("results/img/" + subdirectory + "/" + getName()
-                + " Difficulty Results.jpeg");
-        File json = new File("results/json/" + subdirectory + "/" + getName() + " Results.json");
+        Path txt = Paths.get("results", "txt", subdirectory, getName() + " Text Results.txt");
+        Path posImg = Paths.get("results", "img", subdirectory, getName() + " POS Distribution Results.jpeg");
+        Path syllImg = Paths.get("results", "img", subdirectory, getName() + " Difficulty Results.jpeg");
+        Path json = Paths.get("results", "json", subdirectory, getName() + " JSON Results.json");
+
+        boolean txtExists = Files.exists(txt);
+        boolean imagesExist = Files.exists(posImg) && Files.exists(syllImg);
+        boolean jsonExists = Files.exists(json);
 
         if (!createImage && !createJson) {
-            return txt.exists();
+            return txtExists;
         } else if (createImage && createJson) {
-            return txt.exists() && img.exists() && diffImg.exists() && json.exists();
+            return txtExists && imagesExist && jsonExists;
         } else if (createImage) {
-            return txt.exists() && img.exists() && diffImg.exists();
+            return txtExists && imagesExist;
         } else {
-            return txt.exists() && json.exists();
+            return txtExists && jsonExists;
         }
     }
 
@@ -383,7 +388,13 @@ public class Book {
         return title;
     }
 
-    public String getAuthor() {
-        return author;
+    private BufferedReader getDecodedBufferedReader() throws IOException {
+        CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
+        decoder.onMalformedInput(CodingErrorAction.IGNORE);
+
+        InputStream inputStream = Files.newInputStream(path);
+        InputStreamReader reader = new InputStreamReader(inputStream, decoder);
+
+        return new BufferedReader(reader);
     }
 }

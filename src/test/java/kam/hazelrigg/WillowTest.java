@@ -20,7 +20,7 @@ public class WillowTest {
     final private ExpectedException e = ExpectedException.none();
 
     private static StanfordCoreNLP pipeline;
-    private static Options options = new Options();
+    private static final Options options = new Options();
 
     @BeforeClass
     public static void setUp() {
@@ -69,26 +69,6 @@ public class WillowTest {
         testBook.tagText(testString);
         BookStats stats = testBook.getStats();
         assertEquals(stats.getPartsOfSpeech().toSimpleString(), expected);
-    }
-
-    @Test
-    public void createsCorrectCSV() {
-        String testString = "So they were trying to re-invent themselves and their universe."
-                + " Science fiction was a big help. They like science fiction";
-        String expected = "\"fiction\", 2\n" +
-                "\"science\", 2\n" +
-                "\"big\", 1\n" +
-                "\"like\", 1\n" +
-                "\"re-invent\", 1\n" +
-                "\"help\", 1\n" +
-                "\"trying\", 1\n" +
-                "\"universe\", 1\n";
-
-        Book testBook = new Book();
-        testBook.givePipeline(pipeline);
-        testBook.tagText(testString);
-        String resultCSV = new OutputWriter(testBook).writeCsv();
-        assertEquals(resultCSV, expected);
     }
 
     @Test
@@ -205,6 +185,26 @@ public class WillowTest {
         test.readText(false);
         OutputWriter ow = new OutputWriter(test);
         assertTrue(ow.makeSyllableDistributionGraph());
+    }
+
+    @Test
+    public void createsCorrectCSV() {
+        String testString = "So they were trying to re-invent themselves and their universe."
+                + " Science fiction was a big help. They like science fiction";
+        String expected = "\"fiction\", 2\n" +
+                "\"science\", 2\n" +
+                "\"big\", 1\n" +
+                "\"like\", 1\n" +
+                "\"re-invent\", 1\n" +
+                "\"help\", 1\n" +
+                "\"trying\", 1\n" +
+                "\"universe\", 1\n";
+
+        Book testBook = new Book();
+        testBook.givePipeline(pipeline);
+        testBook.tagText(testString);
+        String resultCSV = new OutputWriter(testBook).writeCsv();
+        assertEquals(resultCSV, expected);
     }
 
     private Book getTestBook() {

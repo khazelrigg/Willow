@@ -97,16 +97,20 @@ class Runner extends Thread {
 
         this.ow = new OutputWriter(book);
         ow.setVerbose(cmd.hasOption("verbose"));
-        ow.writeTxt();
-        writeJson();
-        writeCsv();
-        makeImages();
+        writeResults();
 
         long endTime = System.currentTimeMillis();
         System.out.println("[FINISHED] Completely finished " + book.getName() + " in "
                 + (endTime - Willow.startTime) / 1000 + "s.");
 
         this.book = null;
+    }
+
+    private void writeResults() {
+        ow.writeTxt();
+        writeJson();
+        writeCsv();
+        makeImages();
     }
 
     private void writeJson() {
@@ -123,6 +127,7 @@ class Runner extends Thread {
 
     private void makeImages() {
         if (cmd.hasOption("images")) {
+
             ow.makeSyllableDistributionGraph();
             ow.makePartsOfSpeechGraph();
         }

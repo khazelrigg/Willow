@@ -12,10 +12,10 @@ import java.awt.Color;
 import java.awt.Font;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -27,10 +27,9 @@ public class OutputWriter {
     static final String ANSI_RESET = "\u001B[0m";
     static final String ANSI_GREEN = "\u001B[32m";
     private final String subdirectory;
-    private Book book;
-    private BookStats bookStats;
-    private String title;
-    private String author;
+    private final Book book;
+    private final BookStats bookStats;
+    private final String title;
     private boolean verbose = false;
 
     public OutputWriter(Book book) {
@@ -38,44 +37,6 @@ public class OutputWriter {
         this.subdirectory = book.getSubdirectory();
         this.bookStats = book.getStats();
         this.title = book.getTitle();
-        this.author = book.getAuthor();
-        makeResultDirectories();
-    }
-
-    private void makeResultDirectories() {
-        makeResultRootDirectories();
-        if (!subdirectory.isEmpty()) {
-            makeResultSubdirectories();
-        }
-    }
-
-    private void makeResultSubdirectories() {
-        makeDir("results/txt/" + subdirectory);
-        makeDir("results/img/" + subdirectory);
-        makeDir("results/json/" + subdirectory);
-        makeDir("results/csv/" + subdirectory);
-    }
-
-    private void makeResultRootDirectories() {
-        if (!(makeDir("results/txt")
-                || makeDir("results/img")
-                || makeDir("results/json")
-                || makeDir("results/csv"))) {
-            System.out.println("[x] Failed to create result directories!");
-
-            //TODO add option to bail out of program if there are no result directories
-        }
-    }
-
-    /**
-     * Creates a directory if one does not already exist at a path.
-     *
-     * @param path Path of directory to be created
-     * @return true if successful
-     */
-    private boolean makeDir(String path) {
-        File dir = new File(path);
-        return dir.exists() || dir.mkdirs();
     }
 
     public boolean writeTxt() {
@@ -84,40 +45,27 @@ public class OutputWriter {
         FreqMap lemmas = bookStats.getLemmas();
 
         if (partsOfSpeech.size() > 0) {
-            makeResultSubdirectories();
-            String outPath;
+            Path outPath = getOutPath("txt", "Text", "txt");
 
-            if (makeDir("results/txt/")) {
-                if (subdirectory != null) {
-                    outPath = "results/txt/" + subdirectory + "/" + book.getName() + " Results.txt";
-                } else {
-                    outPath = "results/txt/" + book.getName() + " Results.txt";
-                }
-            } else {
-                System.out.println("[Error] Failed to create json results directory");
-                outPath = book.getName() + " Results.json";
-            }
 
-            File outFile = new File(outPath);
-
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(outFile))) {
+            try (BufferedWriter bw = Files.newBufferedWriter(outPath)) {
                 String header = "Auto generated results for " + book.getName();
 
-                bw.write(TextTools.wrapInBox(header));
-                bw.write("\n" + TextTools.wrapInBox("Stats") + bookStats.toFormattedString());
-                bw.write("\n" + TextTools.wrapInBox("Conclusion") + getConclusionString());
-                bw.write("\n" + TextTools.wrapInBox("Parts of Speech") + partsOfSpeech.toString());
-                bw.write("\n" + TextTools.wrapInBox("Word Counts") + words.toString());
-                bw.write("\n" + TextTools.wrapInBox("Lemma Counts") + lemmas.toString());
-                bw.write("\n" + TextTools.wrapInBox("Concordance") + createConcordance(words));
-                bw.write("\n" + TextTools.wrapInBox("Lemma Concordance") + createConcordance(lemmas));
+                bw.write(wrapInBox(header));
+                bw.write("\n" + wrapInBox("Stats") + bookStats.toFormattedString());
+                bw.write("\n" + wrapInBox("Conclusion") + getConclusionString());
+                bw.write("\n" + wrapInBox("Parts of Speech") + partsOfSpeech.toString());
+                bw.write("\n" + wrapInBox("Word Counts") + words.toString());
+                bw.write("\n" + wrapInBox("Lemma Counts") + lemmas.toString());
+                bw.write("\n" + wrapInBox("Concordance") + createConcordance(words));
+                bw.write("\n" + wrapInBox("Lemma Concordance") + createConcordance(lemmas));
 
                 bw.close();
 
                 printFinishedStatement("TXT");
                 return true;
             } catch (IOException e) {
-                System.out.println("[Error - writeTxt] Error opening " + outFile.getName()
+                System.out.println("[Error - writeTxt] Error opening " + outPath.toString()
                         + "for writing");
                 e.printStackTrace();
             }
@@ -125,11 +73,6 @@ public class OutputWriter {
         return false;
     }
 
-    /**
-     * Format a Book's data into a paragraph style String wrapped at 100 characters.
-     *
-     * @return Formatted String
-     */
     private String getConclusionString() {
         String classifiedLength = bookStats.getClassifiedLength();
         long wordCount = bookStats.getWordCount();
@@ -150,19 +93,13 @@ public class OutputWriter {
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
                         + " to write at 13wpm it would take %d minute(s).",
                 classifiedLength, wordCount, uniqueWords, gradeLevel,
-                polySyllable, monoSyllable, easyDifficult
-                , TextTools.getReadingTimeInMinutes(wordCount),
-                TextTools.getSpeakingTimeInMinutes(wordCount), wordCount / 40, wordCount / 13);
+                polySyllable, monoSyllable, easyDifficult,
+                getReadingTimeInMinutes(wordCount), getSpeakingTimeInMinutes(wordCount),
+                wordCount / 40, wordCount / 13);
 
         return wrap(conclusion + "\n", 100);
     }
 
-    /**
-     * Creates a concordance of all unique words in the text.
-     *
-     * @param words FreqMap to load keys of
-     * @return String wrapped at 100 characters
-     */
     private String createConcordance(FreqMap words) {
         StringBuilder concordance = new StringBuilder();
 
@@ -181,25 +118,11 @@ public class OutputWriter {
         return makeGraph("POS Distribution", bookStats.getPartsOfSpeech());
     }
 
-    /**
-     * Creates a graph using JFreeChart that is saved to a jpg.
-     *
-     * @param purpose Purpose of the graph, used in title of graph
-     * @param data    FreqMap to use values off
-     */
     private boolean makeGraph(String purpose, FreqMap<String, Integer> data) {
         DefaultPieDataset dataSet = new DefaultPieDataset();
-        String outPath;
         int resolution = 1000;
 
-        // Create results directories
-        if (makeDir("results/img/")) {
-            outPath = "results/img/" + subdirectory + "/" + book.getName() + " " + purpose
-                    + " Results.jpeg";
-        } else {
-            System.out.println("[Error] Failed to create image results directories");
-            outPath = title + "  " + author + " " + purpose + "Results.jpeg";
-        }
+        Path outPath = getOutPath("img", purpose, "jpeg");
 
         // Load POS data into data set
         data.toHashMap().entrySet().stream()
@@ -221,7 +144,8 @@ public class OutputWriter {
         plot.setLabelFont(new Font("Ubuntu San Serif", Font.PLAIN, 10));
 
         try {
-            ChartUtilities.saveChartAsJPEG(new File(outPath), chart, resolution, resolution);
+            OutputStream imageStream = Files.newOutputStream(outPath);
+            ChartUtilities.writeChartAsJPEG(imageStream, chart, resolution, resolution);
             printFinishedStatement(purpose + " chart");
             return true;
         } catch (IOException ioe) {
@@ -231,12 +155,6 @@ public class OutputWriter {
         return false;
     }
 
-    /**
-     * Sets the colors of a pie chart based on labels in order to keep charts consistent.
-     *
-     * @param chart Chart to modify label colors of
-     * @return PieChart with color modifications
-     */
     private PiePlot setColors(PiePlot chart, String purpose) {
 
         if (purpose.equals("Difficulty")) {
@@ -246,7 +164,7 @@ public class OutputWriter {
             try {
                 InputStreamReader inputStreamReader =
                         new InputStreamReader(
-                                TextTools.class.getResourceAsStream("/posAbbreviations.txt"));
+                                OutputWriter.class.getResourceAsStream("/posAbbreviations.txt"));
 
                 BufferedReader br = new BufferedReader(inputStreamReader);
                 String line = br.readLine();
@@ -270,22 +188,9 @@ public class OutputWriter {
 
     @SuppressWarnings("unchecked")
     public boolean writeJson() {
-        String outPath;
+        Path outPath = getOutPath("json", "JSON", "json");
 
-        if (makeDir("results/json/")) {
-            if (subdirectory != null) {
-                outPath = "results/json/" + subdirectory + "/" + book.getName() + " Results.json";
-            } else {
-                outPath = "results/json/" + "/" + book.getName() + " Results.json";
-            }
-        } else {
-            System.out.println("[Error] Failed to create json results directory");
-            outPath = book.getName() + " Results.json";
-        }
-
-        File out = new File(outPath);
-
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
+        try (BufferedWriter bw = Files.newBufferedWriter(outPath)) {
 
             JSONObject bookJson = new JSONObject();
             bookJson.put("name", book.getName());
@@ -323,7 +228,7 @@ public class OutputWriter {
 
                 //Categorise each type
                 typeParent.put("children", typeArray);
-                switch (TextTools.getParentType(type)) {
+                switch (getParentType(type)) {
                     case "Noun":
                         jsonTypes.get("Nouns").add(typeParent);
                         break;
@@ -364,27 +269,19 @@ public class OutputWriter {
             return true;
 
         } catch (IOException e) {
-            System.out.println("[Error - writeJSON] Error opening " + out.getName()
+            System.out.println("[Error - writeJSON] Error opening " + outPath.toString()
                     + " for writing");
-            makeResultSubdirectories();
             e.printStackTrace();
-            writeJson();
         }
         return false;
     }
 
     String writeCsv() {
-        Path outPath;
+        Path outPath = getOutPath("csv", "CSV", "csv");
         FreqMap<String, Integer> words = bookStats.getWords();
 
-        if (makeDir("results/csv/")) {
-            outPath = Paths.get("results/csv/", subdirectory, book.getName() + " Results.csv");
-        } else {
-            System.out.println("[Error] Failed to create image results directories");
-            outPath = Paths.get(book.getName() + " Results.csv");
-        }
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(outPath.toFile()))) {
+        try (BufferedWriter bw = Files.newBufferedWriter(outPath)) {
             bw.write("Word, Count\n");
             bw.write(words.toCsvString());
         } catch (IOException e) {
@@ -395,6 +292,35 @@ public class OutputWriter {
         return words.toCsvString();
     }
 
+    private Path getOutPath(String typeFolder, String descriptor, String extension) {
+        Path outPath;
+        String fileName = book.getName() + " " + descriptor + " Results." + extension;
+        boolean typeFolderExists = makeDir(Paths.get("results", typeFolder));
+
+        if (typeFolderExists) {
+            if (!subdirectory.isEmpty()) {
+                makeDir(Paths.get("results", typeFolder, subdirectory));
+                outPath = Paths.get("results", typeFolder, subdirectory, fileName);
+            } else {
+                outPath = Paths.get("results", typeFolder, fileName);
+            }
+        } else {
+            System.out.println("[Error] Failed to create txt results directory");
+            outPath = Paths.get(fileName);
+        }
+        return outPath;
+    }
+
+    private boolean makeDir(Path path) {
+        try {
+            Files.createDirectories(path);
+        } catch (IOException e) {
+            System.out.println("Failed to create output folder at " + path.toString());
+            e.printStackTrace();
+        }
+        return Files.isDirectory(path);
+    }
+
     private void printFinishedStatement(String action) {
         if (verbose) {
             System.out.println(ANSI_GREEN + "☑ - Finished writing " + action + " output for "
@@ -402,8 +328,90 @@ public class OutputWriter {
         }
     }
 
+    private static String wrapInBox(String text) {
+        //                   TL   TC   TR   LL   LC   LR   COL
+        String[] boxParts = {"╒", "═", "╕", "└", "─", "┘", "│"};
+        StringBuilder wrapped = new StringBuilder();
+
+        // Start with TL corner
+        wrapped.append(boxParts[0]);
+        for (int i = 0; i <= 98; i++) {
+            if (i == 98) {
+                // Add TR corner
+                wrapped.append(boxParts[2]).append("\n");
+            } else {
+                wrapped.append(boxParts[1]);
+            }
+        }
+
+        // Add Column and text
+        wrapped.append(boxParts[6]).append(" ").append(text);
+        for (int i = 0; i <= 97 - text.length(); i++) {
+            if (i == 97 - text.length()) {
+                wrapped.append(boxParts[6]).append("\n");
+            } else {
+                wrapped.append(" ");
+            }
+        }
+
+        // Draw bottom row
+        wrapped.append(boxParts[3]);
+        for (int i = 0; i <= 98; i++) {
+            if (i == 98) {
+                wrapped.append(boxParts[5]).append("\n");
+            } else {
+                wrapped.append(boxParts[4]);
+            }
+        }
+        wrapped.append("\n");
+        return wrapped.toString();
+    }
+
     void setVerbose(boolean verbose) {
         this.verbose = verbose;
+    }
+
+    private static int getReadingTimeInMinutes(long wordCount) {
+        return (int) (wordCount / 275);
+    }
+
+    private static int getSpeakingTimeInMinutes(long wordCount) {
+        return (int) (wordCount / 180);
+    }
+
+    private static String getParentType(String type) {
+
+        if (type.equals("Noun, singular or mass") || type.equals("Noun, plural")
+                || type.equals("Proper noun, singular")
+                || type.equals("Proper noun, plural")) {
+            return "Noun";
+        }
+
+        if (type.equals("Verb, base form") || type.equals("Verb, past tense")
+                || type.equals("Verb, gerund or present participle")
+                || type.equals("Verb, past participle")
+                || type.equals("Verb, non-3rd person singular present")
+                || type.equals("Verb, 3rd person singular present")) {
+            return "Verb";
+        }
+
+        if (type.equals("Adverb") || type.equals("Adverb, comparative")
+                || type.equals("Adverb, superlative") || type.equals("Wh-adverb")) {
+            return "Adverb";
+        }
+
+        if (type.equals("Adjective") || type.equals("Adjective, comparative")
+                || type.equals("Adjective, superlative")) {
+            return "Adjective";
+        }
+
+        if (type.equals("Personal pronoun") || type.equals("Possessive pronoun")
+                || type.equals("Possessive wh pronoun") || type.equals("Wh-pronoun")) {
+            return "Pronoun";
+        }
+
+        return "Other";
+
     }
 
 }

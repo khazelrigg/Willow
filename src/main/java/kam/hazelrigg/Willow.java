@@ -10,14 +10,11 @@ import org.apache.commons.cli.ParseException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
-
-public class Willow {
-    public static Pattern p = Pattern.compile("[aeiouy]+[^$e(,.:;!?)]");
+class Willow {
     static final long startTime = System.currentTimeMillis();
     static StanfordCoreNLP pipeline;
-    private static Options options = createOptions();
+    private static final Options options = createOptions();
 
     public static void main(String[] args) {
         Thread.currentThread().setName("Willow");

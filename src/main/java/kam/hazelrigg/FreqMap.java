@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Map.Entry.comparingByValue;
 
-public class FreqMap<K, V> extends HashMap<K, V> {
+class FreqMap<K, V> extends HashMap<K, V> {
     private HashMap<String, Integer> frequency;
 
     FreqMap() {

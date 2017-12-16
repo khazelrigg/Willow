@@ -2,6 +2,11 @@ package kam.hazelrigg;
 
 import edu.stanford.nlp.util.CoreMap;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+
 import static org.apache.commons.lang3.text.WordUtils.wrap;
 
 class BookStats {
@@ -13,6 +18,7 @@ class BookStats {
     private FreqMap<String, Integer> lemmas;
     private FreqMap<String, Integer> partsOfSpeech;
     private FreqMap<String, Integer> syllables;
+    private static HashMap<String, String> posAbbrev = nonAbbreviate();
 
     private CoreMap longestSentence;
 
@@ -35,11 +41,12 @@ class BookStats {
     }
 
     void increasePartsOfSpeech(String tag) {
+        tag = posAbbrev.get(tag);
         partsOfSpeech.increaseFreq(tag);
     }
 
     void increaseSyllables(String word) {
-        int wordSyllables = TextTools.getSyllableCount(word);
+        int wordSyllables = getSyllableCount(word);
         syllableCount += wordSyllables;
         if (wordSyllables == 1) {
             syllables.increaseFreq("Monosyllabic");
@@ -186,4 +193,44 @@ class BookStats {
     String getClassifiedLength() {
         return classifyLength();
     }
+
+    private static int getSyllableCount(String s) {
+        s = s.trim();
+        if (s.length() <= 3) {
+            return 1;
+        }
+        s = s.toLowerCase();
+        s = s.replaceAll("[aeiouy]+", "a");
+        s = "x" + s + "x";
+        return s.split("a").length - 1;
+    }
+
+    private static HashMap<String, String> nonAbbreviate() {
+
+        HashMap<String, String> posNoAbbrev = new HashMap<>();
+
+        try {
+            InputStreamReader inputStreamReader = new InputStreamReader(BookStats.class.getClass()
+                    .getResourceAsStream("/posAbbreviations.txt"));
+
+            BufferedReader br = new BufferedReader(inputStreamReader);
+
+            String line = br.readLine();
+            while (line != null) {
+                String[] words = line.split(":");
+                // Set key to abbreviation and value to non abbreviated
+                posNoAbbrev.put(words[0].trim(),
+                        words[1].substring(0, words[1].lastIndexOf(">")).trim());
+                line = br.readLine();
+            }
+
+            br.close();
+            return posNoAbbrev;
+        } catch (IOException ioe) {
+            System.out.println("[Error - nonAbbreviate] " + ioe);
+        }
+
+        return posNoAbbrev;
+    }
+
 }
