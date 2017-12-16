@@ -239,7 +239,7 @@ class BookStats {
         return gutenberg;
     }
 
-    public void setGutenberg(boolean gutenberg) {
-        this.gutenberg = gutenberg;
+    public void setGutenberg(boolean isGutenberg) {
+        this.gutenberg = isGutenberg;
     }
 }

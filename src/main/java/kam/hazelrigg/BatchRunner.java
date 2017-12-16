@@ -135,8 +135,6 @@ class Runner extends Thread {
 
     @Override
     public void run() {
-        book.setTitleFromText(path);
-
         if (cmd.hasOption("overwrite")) {
             runBook();
         } else if (book.hasResults(cmd.hasOption("images"), cmd.hasOption("json"))) {

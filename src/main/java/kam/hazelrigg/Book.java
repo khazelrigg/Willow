@@ -17,6 +17,8 @@ public class Book {
     private String title = "";
     private String author = "";
     private String subdirectory;
+    private boolean economy;
+    TextReader textReader;
 
     public Book() {
         this.subdirectory = "";
@@ -28,12 +30,11 @@ public class Book {
 
     /**
      * Get the title of a book by scanning first couple of lines for a title and author.
-     *
-     * @param path File to find title of
      */
-    public void setTitleFromText(Path path) {
+    public void setTitleFromText() {
         String title = null;
         String author = null;
+        boolean gutenberg = false;
 
         try (BufferedReader br = getDecodedBufferedReader()) {
             String line = br.readLine();
@@ -44,7 +45,7 @@ public class Book {
             }
 
             if (lineContainsGutenberg(line)) {
-                bookStats.setGutenberg(true);
+                gutenberg = true;
                 while (title == null || author == null) {
                     line = br.readLine();
                     if (line.contains("Title:")) {
@@ -68,8 +69,10 @@ public class Book {
 
             this.title = title;
             this.author = author;
+            bookStats.setGutenberg(gutenberg);
+            System.out.println("IS GUTENBERG: " + gutenberg);
 
-        } catch (IOException | NullPointerException e) {
+        } catch (IOException e) {
             System.out.println("[Error - SetTitle] Error opening "
                     + path.getFileName().toString() + " for setting title");
             e.printStackTrace();
@@ -85,15 +88,18 @@ public class Book {
      */
     public boolean readText(Boolean economy) {
         System.out.println("☐ - Starting analysis of " + getName());
-
+        this.economy = economy;
         try {
+            setTitleFromText();
             TextReaderFactory factory = new TextReaderFactory();
-            TextReader reader = factory.getTextReader(path, economy);
-            reader.readText();
-            this.bookStats = reader.getStats();
+            textReader = factory.getTextReader(this);
+            textReader.readText();
+
             return true;
         } catch (IOException e) {
             System.out.println("Unsupported format for " + path.toString());
+            e.printStackTrace();
+        } catch (NullPointerException e) {
             e.printStackTrace();
         }
         return false;
@@ -151,6 +157,10 @@ public class Book {
         return title;
     }
 
+    public TextReader getTextReader() {
+        return textReader;
+    }
+
     private BufferedReader getDecodedBufferedReader() throws IOException {
         CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
         decoder.onMalformedInput(CodingErrorAction.IGNORE);
@@ -159,5 +169,9 @@ public class Book {
         InputStreamReader reader = new InputStreamReader(inputStream, decoder);
 
         return new BufferedReader(reader);
+    }
+
+    public boolean getEconomy() {
+        return economy;
     }
 }

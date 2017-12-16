@@ -7,7 +7,10 @@ import java.nio.file.Path;
 
 class TextReaderFactory {
 
-    TextReader getTextReader(Path path, boolean economy) throws IOException {
+    TextReader getTextReader(Book book) throws IOException {
+        Path path = book.getPath();
+        boolean economy = book.getEconomy();
+        BookStats bookStats = book.getStats();
         String fileType = FilenameUtils.getExtension(path.getFileName().toString());
         TextReader textReader;
 
@@ -15,18 +18,23 @@ class TextReaderFactory {
             case ("txt"):
                 if (economy) {
                     textReader = new EconomyTextReader();
-                    textReader.setPath(path);
                 } else {
                     textReader = new PlainTextReader();
-                    textReader.setPath(path);
                 }
+
+                textReader.setPath(path);
+                textReader.setBookStats(bookStats);
                 return textReader;
+
             case ("pdf"):
                 textReader = new PdfTextReader();
                 textReader.setPath(path);
+                textReader.setBookStats(bookStats);
                 return textReader;
+
             default:
                 throw new IOException("Unsupported file format \"" + fileType + "\"");
         }
     }
+
 }

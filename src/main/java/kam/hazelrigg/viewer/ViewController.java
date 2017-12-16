@@ -106,7 +106,7 @@ public class ViewController {
             if (file != null) {
                 String subdirectory = book.getPath().getParent().getFileName().toString();
                 book.setSubdirectory(subdirectory);
-                book.setTitleFromText(file);
+                book.setTitleFromText();
                 statusLabel.setText("Opened " + book.getTitle());
                 runButton.setDisable(false);
                 run();
@@ -125,7 +125,7 @@ public class ViewController {
         ObservableList<String> files = resultsFileListView.getItems();
 
         Book newBook = new Book();
-        newBook.setTitleFromText(file.toPath());
+        newBook.setTitleFromText();
         String subdirectory = newBook.getPath().getParent().getFileName().toString();
         newBook.setSubdirectory(subdirectory);
 
