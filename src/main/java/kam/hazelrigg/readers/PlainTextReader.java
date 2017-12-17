@@ -12,11 +12,12 @@ public class PlainTextReader extends TextReader {
             boolean atBook = !gutenberg;
             StringBuilder text = new StringBuilder();
 
-            for (String line; (line = br.readLine()) != null; ) {
+            String line;
+            while ((line = br.readLine()) != null) {
 
                 if (!atBook && isGutenbergStart(line)) {
                     atBook = true;
-                    continue;
+                    line = "";
                 }
 
                 if (atBook) {

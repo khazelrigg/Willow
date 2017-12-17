@@ -62,13 +62,10 @@ class BatchRunner {
 class Runner implements Runnable {
     private static CommandLine cmd;
     private static Logger logger = Willow.getLogger();
-    private final Path path;
     private Book book;
     private OutputWriter ow;
 
     Runner(Path path, Path sub) {
-        this.path = path;
-
         String parentOfSub = sub.getFileName().toString();
         if (path == sub) {
             this.book = new Book();
@@ -134,10 +131,13 @@ class Runner implements Runnable {
     }
 
     public void run() {
+        boolean hasResults = book.hasResults(cmd.hasOption("images"), cmd.hasOption("json"));
+
         if (cmd.hasOption("overwrite")) {
             runBook();
-        } else if (book.hasResults(cmd.hasOption("images"), cmd.hasOption("json"))) {
-            logger.info("{} already has results", path.getFileName().toString());
+        } else if (hasResults) {
+            String pathString = book.getPath().getFileName().toString();
+            logger.info("{} already has results", pathString);
         } else {
             runBook();
         }

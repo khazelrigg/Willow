@@ -53,7 +53,8 @@ public class OutputWriter {
 
                 bw.write(wrapInBox(header));
                 bw.write("\n" + wrapInBox("Stats") + bookStats.toFormattedString());
-                bw.write("\n" + wrapInBox("Conclusion") + getConclusionString());
+                bw.write("\n" + wrapInBox("Conclusion"));
+                writeConclusionString(bw);
                 bw.write("\n" + wrapInBox("Parts of Speech") + partsOfSpeech.toString());
                 bw.write("\n" + wrapInBox("Word Counts") + words.toString());
                 bw.write("\n" + wrapInBox("Concordance") + createConcordance(words));
@@ -70,31 +71,27 @@ public class OutputWriter {
         return false;
     }
 
-    private String getConclusionString() {
+    private void writeConclusionString(BufferedWriter bw) throws IOException {
         String classifiedLength = bookStats.getClassifiedLength();
+        String gradeLevel = bookStats.getGradeLevel();
+        String easyDifficult = bookStats.getEasyDifficult();
         long wordCount = bookStats.getWordCount();
         long uniqueWords = bookStats.getUniqueWords();
-        String gradeLevel = bookStats.getGradeLevel();
         long polySyllable = bookStats.getPolysyllablic();
         long monoSyllable = bookStats.getMonosyllablic();
-        String easyDifficult = bookStats.getEasyDifficult();
 
-
-        //TODO format times/
-        String conclusion = String.format("This piece is classified as a %s based on the Nebula "
+        bw.write(wrap(String.format("This piece is classified as a %s based on the Nebula "
                         + "Award categories. It has a total of %d words with %d of those being "
                         + "unique. Using the Flesch-Kincaid reading ease test, this text is rated "
                         + "at the %s level. Comparing the ratio of (%d) polysyllabic words to (%d) "
                         + "monosyllabic words it can be speculated that this text is %s to read. To"
                         + " read this text at a rate of 275wpm it would take %d minute(s) to finish"
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
-                        + " to write at 13wpm it would take %d minute(s).",
+                        + " to write at 13wpm it would take %d minute(s).\n",
                 classifiedLength, wordCount, uniqueWords, gradeLevel,
                 polySyllable, monoSyllable, easyDifficult,
-                getReadingTimeInMinutes(wordCount), getSpeakingTimeInMinutes(wordCount),
-                wordCount / 40, wordCount / 13);
-
-        return wrap(conclusion + "\n", 100);
+                getReadingTimeInMinutes(), getSpeakingTimeInMinutes(),
+                getTypingTimeInMinutes(), getWritingTimeInMinutes()), 100));
     }
 
     private String createConcordance(FreqMap words) {
@@ -362,12 +359,24 @@ public class OutputWriter {
         this.verbose = verbose;
     }
 
-    private static int getReadingTimeInMinutes(long wordCount) {
-        return (int) (wordCount / 275);
+    private int getReadingTimeInMinutes() {
+        long wordCount = book.getStats().getWordCount();
+        return (int) wordCount / 275;
     }
 
-    private static int getSpeakingTimeInMinutes(long wordCount) {
-        return (int) (wordCount / 180);
+    private int getSpeakingTimeInMinutes() {
+        long wordCount = book.getStats().getWordCount();
+        return (int) wordCount / 180;
+    }
+
+    private int getTypingTimeInMinutes() {
+        long wordCount = book.getStats().getWordCount();
+        return (int) wordCount / 40;
+    }
+
+    private int getWritingTimeInMinutes() {
+        long wordCount = book.getStats().getWordCount();
+        return (int) wordCount / 13;
     }
 
     private static String getParentType(String type) {
