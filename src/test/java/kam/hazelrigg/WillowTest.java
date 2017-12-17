@@ -1,6 +1,9 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import kam.hazelrigg.readers.EconomyTextReader;
+import kam.hazelrigg.readers.PdfTextReader;
+import kam.hazelrigg.readers.PlainTextReader;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -25,6 +28,39 @@ public class WillowTest {
     }
 
     @Test
+    public void copiedFreqmapsAreEqual() {
+        FreqMap one = new FreqMap();
+        one.increaseFreq("test");
+
+        FreqMap two = one;
+
+        assertTrue(one.equals(two));
+    }
+
+
+    @Test
+    public void freqmapsAreEqual() {
+        FreqMap one = new FreqMap();
+        one.increaseFreq("test");
+        one.increaseFreq("best");
+
+        FreqMap two = new FreqMap();
+        two.increaseFreq("test");
+        two.increaseFreq("best");
+
+        assertTrue(one.equals(two));
+    }
+
+    @Test
+    public void freqmapsAreNotEqual() {
+        FreqMap one = new FreqMap();
+        one.increaseFreq("test");
+        FreqMap two = new FreqMap();
+        one.increaseFreq("toast");
+        assertFalse(one.equals(two));
+    }
+
+    @Test
     public void getsTitleFromText() {
         Book test = getTestBook();
         test.setTitleFromText();
@@ -38,9 +74,8 @@ public class WillowTest {
         assertEquals("2 B R 0 2 B by Kurt Vonnegut", test.getName());
     }
 
-    @Test
+    @Test(expected = NullPointerException.class)
     public void nullReadFileTest() {
-        e.expect(NullPointerException.class);
         Book test = new Book();
         test.readText(false);
     }
@@ -94,7 +129,7 @@ public class WillowTest {
     @Test
     public void createsSubdirectoryBook() {
         Book test = new Book("dir");
-        assertEquals(test.getSubdirectory(), "dir");
+        assertEquals("dir", test.getSubdirectory());
     }
 
     @Test
@@ -102,7 +137,6 @@ public class WillowTest {
         Book test = getTestBook();
         test.readText(false);
         OutputWriter ow = new OutputWriter(test);
-        ow.setVerbose(true);
         boolean wroteTxt = ow.writeTxt();
         assertTrue(wroteTxt);
     }
@@ -157,7 +191,7 @@ public class WillowTest {
         Book test = getTestBook();
         test.readText(false);
         BookStats stats = test.getStats();
-        assertEquals(3046, stats.getWordCount());
+        assertEquals(2662, stats.getWordCount());
     }
 
     @Test
@@ -165,18 +199,20 @@ public class WillowTest {
         Book test = getTestBook();
         test.readText(false);
         BookStats stats = test.getStats();
-        assertEquals(585, stats.getPartsOfSpeech().get("Noun, singular or mass"));
+        assertEquals(360, stats.getPartsOfSpeech().get("Noun, singular or mass"));
     }
 
     private Book getTestBook() {
         Book book = new Book();
         book.setPath(getTestPath());
+        book.setTitleFromText();
         return book;
     }
 
     private Book getTestBook(String path) {
         Book book = new Book();
         book.setPath(getTestPath(path));
+        book.setTitleFromText();
         return book;
     }
 

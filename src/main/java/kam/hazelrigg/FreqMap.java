@@ -1,5 +1,7 @@
 package kam.hazelrigg;
 
+import org.slf4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,15 +40,14 @@ class FreqMap<K, V> extends HashMap<K, V> {
      * Removes all stopwords using the list defined in stopwords-english.txt
      */
     void stripStopWords() {
+        Logger loggger = Willow.getLogger();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                 this.getClass().getResourceAsStream("/stopwords-english.txt")))) {
             for (String line; (line = br.readLine()) != null; ) {
                 frequency.remove(line);
             }
-            br.close();
         } catch (IOException e) {
-            System.out.println("[Error - stripStopWords] Error opening stop words file");
-            e.printStackTrace();
+            loggger.error("Error opening stop words file");
         }
     }
 
@@ -78,22 +79,6 @@ class FreqMap<K, V> extends HashMap<K, V> {
         return values[0] + ", " + values[1] + ", " + values[2];
     }
 
-    public String toString() {
-
-        StringBuilder result = new StringBuilder();
-        sortByValue();
-        frequency.forEach((key, value) -> result.append(String.format("%s, %d\n", key, value)));
-
-        return result.toString();
-    }
-
-    String toSimpleString() {
-        StringBuilder result = new StringBuilder();
-        sortByValue();
-        frequency.forEach((key, value) -> result.append(key).append(":").append(value).append("|"));
-        return result.toString();
-    }
-
     String toCsvString() {
         StringBuilder result = new StringBuilder();
         sortByValue();
@@ -106,7 +91,43 @@ class FreqMap<K, V> extends HashMap<K, V> {
         return frequency.get(key);
     }
 
+    @Override
+    public String toString() {
+
+        StringBuilder result = new StringBuilder();
+        sortByValue();
+        frequency.forEach((key, value) -> result.append(String.format("%s, %d%n", key, value)));
+
+        return result.toString();
+    }
+
+    @Override
     public int size() {
         return frequency.keySet().size();
     }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object == this) {
+            return true;
+        }
+
+        if (!(object instanceof FreqMap)) {
+            return false;
+        }
+        FreqMap objectFreq = (FreqMap) object;
+        return objectFreq.hashCode() == this.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 4;
+        int valueHash = Arrays.hashCode(this.toHashMap().values().toArray());
+        int keysHash = Arrays.hashCode(this.toHashMap().keySet().toArray());
+        int val = valueHash + keysHash;
+
+        result = 31 * result + val;
+        return result;
+    }
+
 }

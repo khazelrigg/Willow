@@ -89,16 +89,6 @@
 
                 <Separator/>
 
-                <Button fx:id="openTextButton" onAction="#openTextEditor">
-                    <graphic>
-                        <ImageView>
-                            <Image url="@icons/document.png"/>
-                        </ImageView>
-                    </graphic>
-                </Button>
-
-                <Separator/>
-
                 <Pane HBox.hgrow="ALWAYS"/>
 
                 <Button fx:id="runButton" onAction="#run">

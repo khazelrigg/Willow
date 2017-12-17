@@ -1,6 +1,7 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.util.CoreMap;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,45 +10,37 @@ import java.util.HashMap;
 
 import static org.apache.commons.lang3.text.WordUtils.wrap;
 
-class BookStats {
+public class BookStats {
+    private static Logger logger = Willow.getLogger();
     private boolean gutenberg;
 
-    private long syllableCount;
-    private long wordCount;
+    private long syllableCount = 0;
+    private long wordCount = 0;
     private long sentenceCount;
 
-    private FreqMap<String, Integer> words;
-    private FreqMap<String, Integer> lemmas;
-    private FreqMap<String, Integer> partsOfSpeech;
-    private FreqMap<String, Integer> syllables;
-    private static HashMap<String, String> posAbbrev = nonAbbreviate();
+    private final FreqMap<String, Integer> words = new FreqMap<>();
+    private final FreqMap<String, Integer> lemmas = new FreqMap<>();
+    private final FreqMap<String, Integer> partsOfSpeech = new FreqMap<>();
+    private final FreqMap<String, Integer> syllables = new FreqMap<>();
+    private static final HashMap<String, String> posAbbrev = nonAbbreviate();
 
     private CoreMap longestSentence;
 
-    BookStats() {
-        this.syllableCount = 0;
-        this.wordCount = 0;
-        this.words = new FreqMap<>();
-        this.lemmas = new FreqMap<>();
-        this.partsOfSpeech = new FreqMap<>();
-        this.syllables = new FreqMap<>();
-    }
-
-    void increaseWords(String word) {
+    public void increaseWords(String word) {
         wordCount++;
         words.increaseFreq(word);
     }
 
-    void increaseLemmas(String lemma) {
+    public void increaseLemmas(String lemma) {
         lemmas.increaseFreq(lemma);
     }
 
-    void increasePartsOfSpeech(String tag) {
+    public void increasePartsOfSpeech(String tag) {
         tag = posAbbrev.get(tag);
         partsOfSpeech.increaseFreq(tag);
     }
 
-    void increaseSyllables(String word) {
+    public void increaseSyllables(String word) {
         int wordSyllables = getSyllableCount(word);
         syllableCount += wordSyllables;
         if (wordSyllables == 1) {
@@ -57,11 +50,11 @@ class BookStats {
         }
     }
 
-    void increaseSentenceCount() {
+    public void increaseSentenceCount() {
         sentenceCount++;
     }
 
-    void setLongestSentence(CoreMap longestSentence) {
+    public void setLongestSentence(CoreMap longestSentence) {
         this.longestSentence = longestSentence;
     }
 
@@ -127,7 +120,7 @@ class BookStats {
 
     }
 
-    void removeStopWords() {
+    public void removeStopWords() {
         words.stripStopWords();
         lemmas.stripStopWords();
     }
@@ -171,7 +164,7 @@ class BookStats {
         return syllables;
     }
 
-    CoreMap getLongestSentence() {
+    public CoreMap getLongestSentence() {
         return longestSentence;
     }
 
@@ -222,14 +215,14 @@ class BookStats {
                 String[] words = line.split(":");
                 // Set key to abbreviation and value to non abbreviated
                 posNoAbbrev.put(words[0].trim(),
-                        words[1].substring(0, words[1].lastIndexOf(">")).trim());
+                        words[1].substring(0, words[1].lastIndexOf('>')).trim());
                 line = br.readLine();
             }
 
             br.close();
             return posNoAbbrev;
         } catch (IOException ioe) {
-            System.out.println("[Error - nonAbbreviate] " + ioe);
+            logger.error("IOException reading abbreviations from disk");
         }
 
         return posNoAbbrev;

@@ -6,15 +6,19 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-class Willow {
-    static final long startTime = System.currentTimeMillis();
+public class Willow {
+    static final long START_TIME = System.currentTimeMillis();
     static StanfordCoreNLP pipeline;
     private static final Options options = createOptions();
+    private static Logger logger = LoggerFactory.getLogger(Willow.class);
+    private static int threads = 0;
 
     public static void main(String[] args) {
         Thread.currentThread().setName("Willow");
@@ -30,23 +34,21 @@ class Willow {
             pipeline = createPipeline();
             BatchRunner.passCommandLine(cmd);
 
-            if (cmd.hasOption("threads")) {
-                int threadArg = Integer.parseInt(cmd.getOptionValue("threads"));
-                startRunners(filePath, threadArg);
-            } else {
-                startRunners(filePath, 0);
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
 
+            if (cmd.hasOption("t")) {
+                threads = Integer.parseInt(cmd.getOptionValue("t"));
+            }
+            startRunners(filePath, threads);
+        } catch (ParseException e) {
+            logger.error("Parse exception for {}", e.toString());
+        }
     }
 
-    private static void startRunners(Path path, int threads) {
-        if (threads == 0) {
-            threads = Runtime.getRuntime().availableProcessors();
+    private static void startRunners(Path path, int threadArg) {
+        if (threadArg == 0) {
+            threadArg = Runtime.getRuntime().availableProcessors();
         }
-        BatchRunner.startRunners(path, threads);
+        BatchRunner.startRunners(path, threadArg);
     }
 
 
@@ -55,8 +57,9 @@ class Willow {
         options.addOption("h", "help", false, "Print help")
                 .addOption("v", "verbose", false, "Verbose output")
                 .addOption("e", "economy", false,
-                        "Run in economy mode, greatly reduces memory usage at the cost "
+                        "Run in economy mode, reduces memory usage at the cost "
                                 + "of completion speed. Useful for computers with less memory")
+                .addOption("s", "simple", false, "Simply get wordcounts")
                 .addOption("i", "images", false,
                         "Create image outputs")
                 .addOption("j", "json", false, "Create JSON output")
@@ -64,17 +67,15 @@ class Willow {
                 .addOption("o", "overwrite", false,
                         "Overwrite any existing results")
                 .addOption("t", "threads", true,
-                        "Max number of threads to run, 0 = Use number of CPUs available;"
+                        "Max number of threads to run in pool, 0 = Use number of CPUs available;"
                                 + " default = 0");
         return options;
     }
 
     private static StanfordCoreNLP createPipeline() {
         Properties properties = new Properties();
-        properties.put("annotators",
-                "tokenize, ssplit, pos, lemma");
+        properties.put("annotators", "tokenize, ssplit, pos, lemma");
         properties.put("tokenize.options", "untokenizable=noneDelete");
-
         return new StanfordCoreNLP(properties);
     }
 
@@ -91,6 +92,14 @@ class Willow {
         formatter.printHelp("Willow [OPTIONS] [FILE]",
                 "Acceptable file types: Plain text and pdf", options, "");
         System.exit(-1);
+    }
+
+    public static StanfordCoreNLP getPipeline() {
+        return pipeline;
+    }
+
+    public static Logger getLogger() {
+        return logger;
     }
 
 }

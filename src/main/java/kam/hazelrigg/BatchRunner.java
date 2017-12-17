@@ -1,6 +1,7 @@
 package kam.hazelrigg;
 
 import org.apache.commons.cli.CommandLine;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,16 +12,22 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Stream;
 
 class BatchRunner {
-    private static ArrayList<Runner> runners = new ArrayList<>();
+    private static Logger logger = Willow.getLogger();
+
+    private BatchRunner() {
+        throw new IllegalStateException("Utility class");
+    }
+
+    private static final ArrayList<Runner> runners = new ArrayList<>();
 
     static void passCommandLine(CommandLine cmd) {
         Runner.setOptions(cmd);
     }
 
     static void startRunners(Path path, int threads) {
-        if (Files.isDirectory(path)) {
+        if (path.toFile().isDirectory()) {
             openDirectory(path);
-        } else if (Files.isRegularFile(path)) {
+        } else if (path.toFile().isFile()) {
             openFile(path);
         }
 
@@ -41,13 +48,9 @@ class BatchRunner {
                     .forEach(file -> runners.add(new Runner(file, file.getParent())));
 
         } catch (NullPointerException e) {
-            System.out.println("[Error - openDirectory] NullPointer when walking files in "
-                    + directory.getFileName().toString());
-            e.printStackTrace();
+            logger.error("Null pointer walking files in {}", directory.getFileName().toString());
         } catch (IOException e) {
-            System.out.println("[Error - openDirectory] IOException when walking files in "
-                    + directory.getFileName().toString());
-            e.printStackTrace();
+            logger.error("IOException walking files in {}", directory.getFileName().toString());
         }
     }
 
@@ -56,14 +59,14 @@ class BatchRunner {
     }
 }
 
-class Runner extends Thread {
+class Runner implements Runnable {
     private static CommandLine cmd;
+    private static Logger logger = Willow.getLogger();
     private final Path path;
     private Book book;
     private OutputWriter ow;
 
     Runner(Path path, Path sub) {
-        new Thread(this);
         this.path = path;
 
         String parentOfSub = sub.getFileName().toString();
@@ -74,8 +77,7 @@ class Runner extends Thread {
         }
 
         if (cmd.hasOption("verbose")) {
-            System.out.println("┌══════════[ NEW BOOK ]══════════╾\n│ ┌╾ " + parentOfSub
-                    + "\n│ └──╾ " + path.getFileName().toString() + "\n└════════════════════════════════╾\n");
+            logger.info("New book with path at {}", book.getPath());
         }
 
         this.book.setPath(path);
@@ -89,21 +91,13 @@ class Runner extends Thread {
      * Actions to perform with each book
      */
     private void runBook() {
+        book.setTitleFromText();
         book.readText(cmd.hasOption("economy"));
-        long endReadTime = System.currentTimeMillis();
-        System.out.println(OutputWriter.ANSI_GREEN +
-                "\n☑ - Finished analysis of " + book.getName() + " in "
-                + (endReadTime - Willow.startTime) / 1000 + "s." + OutputWriter.ANSI_RESET);
 
         this.ow = new OutputWriter(book);
         ow.setVerbose(cmd.hasOption("verbose"));
         writeResults();
-
-        long endTime = System.currentTimeMillis();
-        System.out.println("[FINISHED] Completely finished " + book.getName() + " in "
-                + (endTime - Willow.startTime) / 1000 + "s.");
-
-        this.book = null;
+        printFinishTime();
     }
 
     private void writeResults() {
@@ -133,12 +127,17 @@ class Runner extends Thread {
         }
     }
 
-    @Override
+    private void printFinishTime() {
+        long currentTime = System.currentTimeMillis();
+        int seconds = (int) ((currentTime - Willow.START_TIME) / 1000);
+        logger.info("Finished analysis of {} in {}s.", book.getName(), seconds);
+    }
+
     public void run() {
         if (cmd.hasOption("overwrite")) {
             runBook();
         } else if (book.hasResults(cmd.hasOption("images"), cmd.hasOption("json"))) {
-            System.out.println("☑ - " + path.getFileName().toString() + " already has results");
+            logger.info("{} already has results", path.getFileName().toString());
         } else {
             runBook();
         }

@@ -1,11 +1,11 @@
-package kam.hazelrigg;
+package kam.hazelrigg.readers;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 
-class PlainTextReader extends TextReader {
+public class PlainTextReader extends TextReader {
 
-    void readText() {
+    public void readText() {
         boolean gutenberg = bookStats.isGutenberg();
 
         try (BufferedReader br = getDecodedBufferedReader()) {
@@ -13,26 +13,23 @@ class PlainTextReader extends TextReader {
             StringBuilder text = new StringBuilder();
 
             for (String line; (line = br.readLine()) != null; ) {
-                if (line.isEmpty()) {
+
+                if (!atBook && isGutenbergStart(line)) {
+                    atBook = true;
                     continue;
                 }
 
-                if (gutenberg) {
-                    if (isGutenbergStart(line)) {
-                        atBook = true;
-                    } else if (isGutenbergEnd(line)) {
-                        atBook = false;
-                    }
-                }
-
                 if (atBook) {
+                    if (isGutenbergEnd(line)) {
+                        atBook = false;
+                        continue;
+                    }
                     text.append(line).append(" ");
                 }
             }
             tagText(text.toString());
         } catch (IOException | NullPointerException e) {
-            System.out.println("Error opening path");
-            e.printStackTrace();
+            logger.error("Error reading file at {}", path.toString());
         }
     }
 

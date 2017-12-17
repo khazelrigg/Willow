@@ -1,6 +1,5 @@
 package kam.hazelrigg.viewer;
 
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -17,6 +16,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import kam.hazelrigg.Book;
 import kam.hazelrigg.OutputWriter;
+import kam.hazelrigg.Willow;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,41 +24,36 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Properties;
+import java.util.stream.Stream;
 
 public class ViewController {
-    private StanfordCoreNLP pipeline;
 
     // Top bars
-    public ToggleButton writeDocumentToggle;
-    public ToggleButton posChartToggle;
-    public ToggleButton diffChartToggle;
-    public ToggleButton writeJsonToggle;
-    public Button runButton;
+    ToggleButton writeDocumentToggle;
+    ToggleButton posChartToggle;
+    ToggleButton diffChartToggle;
+    ToggleButton writeJsonToggle;
+    Button runButton;
 
     // Content
-    public ListView<String> resultsFileListView;
+    ListView<String> resultsFileListView;
 
-    private ImageView posChartImageView = new ImageView();
-    private ImageView difficultyImageView = new ImageView();
+    private final ImageView posChartImageView = new ImageView();
+    private final ImageView difficultyImageView = new ImageView();
 
     // Bottom status
-    public Label statusLabel;
-    public Label timerLabel;
-    public VBox posTab;
-    public VBox diffTab;
+    Label statusLabel;
+    Label timerLabel;
+    VBox posTab;
+    VBox diffTab;
 
-    private Book book = new Book();
-    private Stage chooserPane = new Stage();
+    private final Book book = new Book();
+    private final Stage chooserPane = new Stage();
 
-    private HashMap<String, Book> bookMap = new HashMap<>();
+    private final HashMap<String, Book> bookMap = new HashMap<>();
 
     @FXML
     public void initialize() {
-        Properties props = new Properties();
-        props.put("annotators", "tokenize, ssplit, pos, lemma");
-        pipeline = new StanfordCoreNLP(props);
-
         writeDocumentToggle.setSelected(true);
         writeJsonToggle.setSelected(true);
         posChartToggle.setSelected(true);
@@ -88,14 +83,13 @@ public class ViewController {
 
         File dir = directoryChooser.showDialog(chooserPane);
         if (dir != null) {
-            try {
-                Files.walk(Paths.get(dir.getAbsolutePath()))
+            try (Stream<Path> dirWalker = Files.walk(Paths.get(dir.getAbsolutePath()))) {
+                dirWalker
                         .filter(Files::isRegularFile)
                         .forEach(this::openFile);
+
             } catch (IOException e) {
-                System.out.println("[Error - openFolder] IOException walking files in "
-                        + dir.getName());
-                e.printStackTrace();
+                Willow.getLogger().error("IOException walking files in {}", dir.getName());
             }
             runButton.setDisable(false);
         }
@@ -110,7 +104,7 @@ public class ViewController {
                 statusLabel.setText("Opened " + book.getTitle());
                 runButton.setDisable(false);
                 run();
-                addFileToList(file.toFile());
+                addFileToList();
                 switchActiveBook(book.getName());
             }
         });
@@ -118,10 +112,8 @@ public class ViewController {
 
     /**
      * Add a single file to sidebar list of files.
-     *
-     * @param file file to add
      */
-    private void addFileToList(File file) {
+    private void addFileToList() {
         ObservableList<String> files = resultsFileListView.getItems();
 
         Book newBook = new Book();
@@ -145,7 +137,6 @@ public class ViewController {
      * Changes the current book by updating images.
      */
     private void switchActiveBook(String listItemText) {
-        //TODO test more use cases     (File not in subdir)
         Platform.runLater(() -> {
             // Get new book from map using the book name
             Book cur = bookMap.get(listItemText);
@@ -166,7 +157,6 @@ public class ViewController {
 
             @Override
             protected Void call() throws Exception {
-                OutputWriter ow = new OutputWriter(book);
                 long startTime = System.currentTimeMillis();
                 statusLabel.setText("Analysing file: " + book.getTitle());
 
@@ -179,21 +169,7 @@ public class ViewController {
 
                     statusLabel.setText("Displaying results for: " + book.getTitle());
 
-                    if (writeDocumentToggle.isSelected()) {
-                        ow.writeTxt();
-                    }
-
-                    if (writeJsonToggle.isSelected()) {
-                        ow.writeJson();
-                    }
-
-                    if (posChartToggle.isSelected()) {
-                        ow.makePartsOfSpeechGraph();
-                    }
-
-                    if (diffChartToggle.isSelected()) {
-                        ow.makeSyllableDistributionGraph();
-                    }
+                    writeResults();
 
                     long endTime = System.currentTimeMillis();
                     timerLabel.setText((endTime - startTime) / 1000 + " secs.");
@@ -203,15 +179,27 @@ public class ViewController {
             }
         };
         task.run();
-
-        Platform.runLater(() -> {
-
-        });
     }
 
+    private void writeResults() {
+        OutputWriter ow = new OutputWriter(book);
+        if (writeDocumentToggle.isSelected()) {
+            ow.writeTxt();
+        }
 
+        if (writeJsonToggle.isSelected()) {
+            ow.writeJson();
+        }
 
-    //TODO get rid of absolute path for images
+        if (posChartToggle.isSelected()) {
+            ow.makePartsOfSpeechGraph();
+        }
+
+        if (diffChartToggle.isSelected()) {
+            ow.makeSyllableDistributionGraph();
+        }
+    }
+
     private void showPosChart(Book cur) {
         Image posGraph = new Image("file:results/img/" + cur.getSubdirectory()
                 + "/" + cur.getName()
@@ -232,13 +220,4 @@ public class ViewController {
         diffTab.getChildren().add(difficultyImageView);
     }
 
-    public void openTextEditor() {
-        try {
-            java.awt.Desktop.getDesktop().edit(new File("results/txt/" + book.getSubdirectory()
-                    + "/" + book.getName()
-                    + " Results.jpeg"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

@@ -1,10 +1,13 @@
-package kam.hazelrigg;
+package kam.hazelrigg.readers;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
+import kam.hazelrigg.BookStats;
+import kam.hazelrigg.Willow;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,12 +19,13 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-abstract class TextReader {
+public abstract class TextReader {
     Path path;
     BookStats bookStats;
-    StanfordCoreNLP pipeline = Willow.pipeline;
+    final StanfordCoreNLP pipeline = Willow.getPipeline();
+    Logger logger = Willow.getLogger();
 
-    abstract void readText();
+    public abstract void readText();
 
     void setPath(Path path) {
         this.path = path;
@@ -29,10 +33,6 @@ abstract class TextReader {
 
     void setBookStats(BookStats stats) {
         this.bookStats = stats;
-    }
-
-    BookStats getStats() {
-        return bookStats;
     }
 
     void tagText(String text) {
@@ -59,14 +59,14 @@ abstract class TextReader {
         }
     }
 
-    boolean isGutenbergStart(String line) {
-        return line.contains("End of the Project Gutenberg")
-                || line.contains("End of Project Gutenberg’s");
+    boolean isGutenbergEnd(String line) {
+        line = line.toLowerCase();
+        return bookStats.isGutenberg() && (line.contains("end of the project gutenberg"));
     }
 
-    boolean isGutenbergEnd(String line) {
-        return line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
-                || line.contains("START OF THE PROJECT GUTENBERG EBOOK");
+    boolean isGutenbergStart(String line) {
+        return bookStats.isGutenberg() && (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
+                || line.contains("START OF THE PROJECT GUTENBERG EBOOK"));
     }
 
     BufferedReader getDecodedBufferedReader() throws IOException {

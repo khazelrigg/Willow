@@ -1,11 +1,11 @@
-package kam.hazelrigg;
+package kam.hazelrigg.readers;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.IOException;
 
-class PdfTextReader extends TextReader {
+public class PdfTextReader extends TextReader {
 
     public void readText() {
         try {
@@ -15,9 +15,7 @@ class PdfTextReader extends TextReader {
 
             tagText(pdfStripper.getText(pdDocument));
         } catch (IOException | NullPointerException e) {
-            System.out.println("[Error - readPdf] IOException when opening PDFParser for "
-                    + path.getFileName());
-            e.printStackTrace();
+            logger.error("IOException parsing PDF at {}", path.getFileName());
         }
     }
 

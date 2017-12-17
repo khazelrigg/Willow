@@ -1,13 +1,15 @@
-package kam.hazelrigg;
+package kam.hazelrigg.readers;
 
+import kam.hazelrigg.Book;
+import kam.hazelrigg.BookStats;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-class TextReaderFactory {
+public class TextReaderFactory {
 
-    TextReader getTextReader(Book book) throws IOException {
+    public TextReader getTextReader(Book book) throws IOException {
         Path path = book.getPath();
         boolean economy = book.getEconomy();
         BookStats bookStats = book.getStats();
@@ -22,19 +24,18 @@ class TextReaderFactory {
                     textReader = new PlainTextReader();
                 }
 
-                textReader.setPath(path);
                 textReader.setBookStats(bookStats);
+                textReader.setPath(path);
                 return textReader;
 
             case ("pdf"):
                 textReader = new PdfTextReader();
-                textReader.setPath(path);
                 textReader.setBookStats(bookStats);
+                textReader.setPath(path);
                 return textReader;
 
             default:
                 throw new IOException("Unsupported file format \"" + fileType + "\"");
         }
     }
-
 }

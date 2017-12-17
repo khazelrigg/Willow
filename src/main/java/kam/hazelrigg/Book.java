@@ -1,5 +1,9 @@
 package kam.hazelrigg;
 
+import kam.hazelrigg.readers.TextReader;
+import kam.hazelrigg.readers.TextReaderFactory;
+import org.slf4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,13 +16,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Book {
-    private BookStats bookStats = new BookStats();
+    private final BookStats bookStats = new BookStats();
     private Path path;
     private String title = "";
     private String author = "";
     private String subdirectory;
     private boolean economy;
-    TextReader textReader;
+    private TextReader textReader;
+    private Logger logger = Willow.getLogger();
 
     public Book() {
         this.subdirectory = "";
@@ -32,8 +37,6 @@ public class Book {
      * Get the title of a book by scanning first couple of lines for a title and author.
      */
     public void setTitleFromText() {
-        String title = null;
-        String author = null;
         boolean gutenberg = false;
 
         try (BufferedReader br = getDecodedBufferedReader()) {
@@ -46,36 +49,15 @@ public class Book {
 
             if (lineContainsGutenberg(line)) {
                 gutenberg = true;
-                while (title == null || author == null) {
-                    line = br.readLine();
-                    if (line.contains("Title:")) {
-                        title = line.substring(6).trim();
-                    } else if (line.contains("Author:")) {
-                        author = line.substring(7).trim();
-                    }
-                }
+                getGutenbergInfo(br);
             } else {
-                if (line.toLowerCase().contains("title:")) {
-                    title = line.substring(6).trim();
-                    line = br.readLine().toLowerCase();
-                    if (line.contains("author")) {
-                        author = line.substring(7).trim();
-                    }
-                } else {
-                    title = path.getFileName().toString();
-                    author = "";
-                }
+                getRegularTextInfo(br, line);
             }
 
-            this.title = title;
-            this.author = author;
             bookStats.setGutenberg(gutenberg);
-            System.out.println("IS GUTENBERG: " + gutenberg);
 
         } catch (IOException e) {
-            System.out.println("[Error - SetTitle] Error opening "
-                    + path.getFileName().toString() + " for setting title");
-            e.printStackTrace();
+            logger.error("Could not open {} to set title", path.getFileName().toString());
         }
     }
 
@@ -83,24 +65,46 @@ public class Book {
         return line.toLowerCase().contains("gutenberg");
     }
 
+    private void getGutenbergInfo(BufferedReader br) throws IOException {
+        while (title.isEmpty() || author.isEmpty()) {
+            String line = br.readLine();
+            if (line.contains("itle:")) {
+                title = line.substring(6).trim();
+            } else if (line.contains("Author:")) {
+                author = line.substring(7).trim();
+            }
+        }
+    }
+
+    private void getRegularTextInfo(BufferedReader br, String line) throws IOException {
+        if (line.toLowerCase().contains("title:")) {
+            title = line.substring(6).trim();
+            line = br.readLine().toLowerCase();
+            if (line.contains("author")) {
+                author = line.substring(7).trim();
+            }
+        } else {
+            title = path.getFileName().toString();
+            author = "";
+        }
+    }
+
     /**
      * Finds the appropriate file type of book to then reads the text.
      */
     public boolean readText(Boolean economy) {
-        System.out.println("☐ - Starting analysis of " + getName());
         this.economy = economy;
         try {
-            setTitleFromText();
+            logger.debug("Starting analysis of {}", getName());
             TextReaderFactory factory = new TextReaderFactory();
             textReader = factory.getTextReader(this);
             textReader.readText();
 
             return true;
-        } catch (IOException e) {
-            System.out.println("Unsupported format for " + path.toString());
-            e.printStackTrace();
         } catch (NullPointerException e) {
-            e.printStackTrace();
+            logger.error("Null pointer exception for file {}", path.toString());
+        } catch (IOException e) {
+            logger.error("Unsupported format for file {}", path.toString());
         }
         return false;
     }
@@ -121,14 +125,21 @@ public class Book {
     }
 
     public boolean hasResults(boolean createImage, boolean createJson) {
-        Path txt = Paths.get("results", "txt", subdirectory, getName() + " Text Results.txt");
-        Path posImg = Paths.get("results", "img", subdirectory, getName() + " POS Distribution Results.jpeg");
-        Path syllImg = Paths.get("results", "img", subdirectory, getName() + " Difficulty Results.jpeg");
-        Path json = Paths.get("results", "json", subdirectory, getName() + " JSON Results.json");
+        setTitleFromText();
+        String resultsDirectory = "results";
 
-        boolean txtExists = Files.exists(txt);
-        boolean imagesExist = Files.exists(posImg) && Files.exists(syllImg);
-        boolean jsonExists = Files.exists(json);
+        Path txt = Paths.get(resultsDirectory, "txt", subdirectory, getName()
+                + " Text Results.txt");
+        Path posImg = Paths.get(resultsDirectory, "img", subdirectory, getName()
+                + " POS Distribution Results.jpeg");
+        Path syllableImage = Paths.get(resultsDirectory, "img", subdirectory, getName()
+                + " Difficulty Results.jpeg");
+        Path json = Paths.get(resultsDirectory, "json", subdirectory, getName()
+                + " JSON Results.json");
+
+        boolean txtExists = txt.toFile().exists();
+        boolean imagesExist = posImg.toFile().exists() && syllableImage.toFile().exists();
+        boolean jsonExists = json.toFile().exists();
 
         if (!createImage && !createJson) {
             return txtExists;
@@ -141,7 +152,7 @@ public class Book {
         }
     }
 
-    BookStats getStats() {
+    public BookStats getStats() {
         return this.bookStats;
     }
 
@@ -157,7 +168,7 @@ public class Book {
         return title;
     }
 
-    public TextReader getTextReader() {
+    TextReader getTextReader() {
         return textReader;
     }
 

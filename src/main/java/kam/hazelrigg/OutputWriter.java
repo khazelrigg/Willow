@@ -7,6 +7,7 @@ import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -24,8 +25,7 @@ import java.util.HashMap;
 import static org.apache.commons.lang3.text.WordUtils.wrap;
 
 public class OutputWriter {
-    static final String ANSI_RESET = "\u001B[0m";
-    static final String ANSI_GREEN = "\u001B[32m";
+    private static Logger logger = Willow.getLogger();
     private final String subdirectory;
     private final Book book;
     private final BookStats bookStats;
@@ -56,18 +56,15 @@ public class OutputWriter {
                 bw.write("\n" + wrapInBox("Conclusion") + getConclusionString());
                 bw.write("\n" + wrapInBox("Parts of Speech") + partsOfSpeech.toString());
                 bw.write("\n" + wrapInBox("Word Counts") + words.toString());
-                bw.write("\n" + wrapInBox("Lemma Counts") + lemmas.toString());
                 bw.write("\n" + wrapInBox("Concordance") + createConcordance(words));
-                bw.write("\n" + wrapInBox("Lemma Concordance") + createConcordance(lemmas));
 
-                bw.close();
+                bw.write("\n" + wrapInBox("Lemma Counts") + lemmas.toString());
+                bw.write("\n" + wrapInBox("Lemma Concordance") + createConcordance(lemmas));
 
                 printFinishedStatement("TXT");
                 return true;
             } catch (IOException e) {
-                System.out.println("[Error - writeTxt] Error opening " + outPath.toString()
-                        + "for writing");
-                e.printStackTrace();
+                logger.error("Error writing to {}", outPath.toString());
             }
         }
         return false;
@@ -133,8 +130,8 @@ public class OutputWriter {
                 purpose + " of " + book.getName(), dataSet,
                 false, true, false);
 
-        PiePlot plot = (PiePlot) chart.getPlot();
-        plot = setColors(plot, purpose);
+
+        PiePlot plot = setColors((PiePlot) chart.getPlot(), purpose);
 
         plot.setBaseSectionOutlinePaint(new Color(0, 0, 0));
         plot.setShadowPaint(null);
@@ -149,8 +146,7 @@ public class OutputWriter {
             printFinishedStatement(purpose + " chart");
             return true;
         } catch (IOException ioe) {
-            System.out.println("[Error - makeGraph] Failed to make pie chart " + ioe);
-            ioe.printStackTrace();
+            logger.error("Failed to make pie chart at {}", outPath);
         }
         return false;
     }
@@ -170,8 +166,8 @@ public class OutputWriter {
                 String line = br.readLine();
 
                 while (line != null) {
-                    String label = line.substring(line.indexOf(":") + 1, line.indexOf(">")).trim();
-                    String hexColor = line.substring(line.indexOf(">") + 1).trim();
+                    String label = line.substring(line.indexOf(':') + 1, line.indexOf('>')).trim();
+                    String hexColor = line.substring(line.indexOf('>') + 1).trim();
                     Color color = Color.decode(hexColor);
 
                     chart.setSectionPaint(label, color);
@@ -179,8 +175,7 @@ public class OutputWriter {
                 }
                 br.close();
             } catch (IOException e) {
-                System.out.println("[Error - setColors] Error reading posAbbreviations file");
-                e.printStackTrace();
+                logger.error("Error reading posAbbreviations file to set pie chart colors");
             }
         }
         return chart;
@@ -189,12 +184,14 @@ public class OutputWriter {
     @SuppressWarnings("unchecked")
     public boolean writeJson() {
         Path outPath = getOutPath("json", "JSON", "json");
+        String d3Children = "children";
 
         try (BufferedWriter bw = Files.newBufferedWriter(outPath)) {
+            String description = "description";
 
             JSONObject bookJson = new JSONObject();
             bookJson.put("name", book.getName());
-            bookJson.put("description", "Parts of speech for " + book.getName());
+            bookJson.put(description, "Parts of speech for " + book.getName());
 
             String[] posTypes = {"Nouns", "Verbs", "Adverbs", "Adjectives", "Pronouns", "Other"};
             HashMap<String, JSONObject> jsonObjects = new HashMap<>();
@@ -203,7 +200,7 @@ public class OutputWriter {
             for (String type : posTypes) {
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("name", type);
-                jsonObject.put("description", type);
+                jsonObject.put(description, type);
                 jsonObjects.put(type, jsonObject);
 
                 jsonTypes.put(type, new JSONArray());
@@ -211,72 +208,68 @@ public class OutputWriter {
 
             String[] types = bookStats.getPartsOfSpeech().getSortedKeys();
 
-            Arrays.stream(types).forEach(type -> {
+            Arrays.stream(types).forEach((String type) -> {
+
                 // Create temporary parent for each type
                 JSONObject typeParent = new JSONObject();
                 typeParent.put("name", type);
-                typeParent.put("description", type);
+                typeParent.put(description, type);
 
                 // Basic setup
                 JSONObject typeObject = new JSONObject();
                 typeObject.put("name", type);
-                typeObject.put("description", type);
+                typeObject.put(description, type);
                 typeObject.put("size", bookStats.getPartsOfSpeech().get(type));
 
                 JSONArray typeArray = new JSONArray();
                 typeArray.add(typeObject);
 
                 //Categorise each type
-                typeParent.put("children", typeArray);
+                typeParent.put(d3Children, typeArray);
                 switch (getParentType(type)) {
                     case "Noun":
-                        jsonTypes.get("Nouns").add(typeParent);
+                        jsonTypes.get(posTypes[0]).add(typeParent);
                         break;
                     case "Verb":
-                        jsonTypes.get("Verbs").add(typeParent);
+                        jsonTypes.get(posTypes[1]).add(typeParent);
                         break;
                     case "Adverb":
-                        jsonTypes.get("Adverbs").add(typeParent);
+                        jsonTypes.get(posTypes[2]).add(typeParent);
                         break;
                     case "Adjective":
-                        jsonTypes.get("Adjectives").add(typeParent);
+                        jsonTypes.get(posTypes[3]).add(typeParent);
                         break;
                     case "Pronoun":
-                        jsonTypes.get("Pronouns").add(typeParent);
+                        jsonTypes.get(posTypes[4]).add(typeParent);
                         break;
                     default:
-                        jsonTypes.get("Other").add(typeParent);
+                        jsonTypes.get(posTypes[5]).add(typeParent);
                 }
             });
 
             JSONArray jsonParent = new JSONArray();
 
             Arrays.stream(posTypes).forEach(type -> {
-                jsonObjects.get(type).put("children", jsonTypes.get(type));
+                jsonObjects.get(type).put(d3Children, jsonTypes.get(type));
                 jsonParent.add(jsonObjects.get(type));
             });
 
-            bookJson.put("children", jsonParent);
+            bookJson.put(d3Children, jsonParent);
 
             JSONObject rootObject = new JSONObject();
             rootObject.put(title, bookJson);
 
             bw.write(rootObject.toJSONString());
-            bw.close();
 
             printFinishedStatement("JSON");
-
             return true;
-
         } catch (IOException e) {
-            System.out.println("[Error - writeJSON] Error opening " + outPath.toString()
-                    + " for writing");
-            e.printStackTrace();
+            logger.error("Unable to write JSON results to {}", outPath.toString());
         }
         return false;
     }
 
-    String writeCsv() {
+    void writeCsv() {
         Path outPath = getOutPath("csv", "CSV", "csv");
         FreqMap<String, Integer> words = bookStats.getWords();
 
@@ -285,27 +278,27 @@ public class OutputWriter {
             bw.write("Word, Count\n");
             bw.write(words.toCsvString());
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Unable to write CSV results to {}", outPath);
         }
 
         printFinishedStatement("CSV");
-        return words.toCsvString();
     }
 
     private Path getOutPath(String typeFolder, String descriptor, String extension) {
         Path outPath;
+        String rootFolder = "results";
         String fileName = book.getName() + " " + descriptor + " Results." + extension;
-        boolean typeFolderExists = makeDir(Paths.get("results", typeFolder));
+        boolean typeFolderExists = makeDir(Paths.get(rootFolder, typeFolder));
 
         if (typeFolderExists) {
             if (!subdirectory.isEmpty()) {
-                makeDir(Paths.get("results", typeFolder, subdirectory));
-                outPath = Paths.get("results", typeFolder, subdirectory, fileName);
+                makeDir(Paths.get(rootFolder, typeFolder, subdirectory));
+                outPath = Paths.get(rootFolder, typeFolder, subdirectory, fileName);
             } else {
-                outPath = Paths.get("results", typeFolder, fileName);
+                outPath = Paths.get(rootFolder, typeFolder, fileName);
             }
         } else {
-            System.out.println("[Error] Failed to create txt results directory");
+            logger.error("Failed to create results directory {}", typeFolder);
             outPath = Paths.get(fileName);
         }
         return outPath;
@@ -315,16 +308,14 @@ public class OutputWriter {
         try {
             Files.createDirectories(path);
         } catch (IOException e) {
-            System.out.println("Failed to create output folder at " + path.toString());
-            e.printStackTrace();
+            logger.error("Failed to create directory at {}", path.toString());
         }
-        return Files.isDirectory(path);
+        return path.toFile().isDirectory();
     }
 
     private void printFinishedStatement(String action) {
         if (verbose) {
-            System.out.println(ANSI_GREEN + "☑ - Finished writing " + action + " output for "
-                    + book.getName() + ANSI_RESET);
+            logger.info("Finished writing {} for {}", action, book.getName());
         }
     }
 
@@ -380,33 +371,25 @@ public class OutputWriter {
     }
 
     private static String getParentType(String type) {
+        type = type.toLowerCase();
 
-        if (type.equals("Noun, singular or mass") || type.equals("Noun, plural")
-                || type.equals("Proper noun, singular")
-                || type.equals("Proper noun, plural")) {
+        if (type.contains("noun")) {
             return "Noun";
         }
 
-        if (type.equals("Verb, base form") || type.equals("Verb, past tense")
-                || type.equals("Verb, gerund or present participle")
-                || type.equals("Verb, past participle")
-                || type.equals("Verb, non-3rd person singular present")
-                || type.equals("Verb, 3rd person singular present")) {
+        if (type.contains("verb")) {
             return "Verb";
         }
 
-        if (type.equals("Adverb") || type.equals("Adverb, comparative")
-                || type.equals("Adverb, superlative") || type.equals("Wh-adverb")) {
+        if (type.contains("adverb")) {
             return "Adverb";
         }
 
-        if (type.equals("Adjective") || type.equals("Adjective, comparative")
-                || type.equals("Adjective, superlative")) {
+        if (type.contains("adjective")) {
             return "Adjective";
         }
 
-        if (type.equals("Personal pronoun") || type.equals("Possessive pronoun")
-                || type.equals("Possessive wh pronoun") || type.equals("Wh-pronoun")) {
+        if (type.contains("pronoun")) {
             return "Pronoun";
         }
 
