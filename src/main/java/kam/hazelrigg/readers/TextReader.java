@@ -5,6 +5,7 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
+import kam.hazelrigg.Book;
 import kam.hazelrigg.BookStats;
 import kam.hazelrigg.Willow;
 import org.slf4j.Logger;
@@ -21,18 +22,20 @@ import java.nio.file.Path;
 
 public abstract class TextReader {
     Path path;
+    Book book;
     BookStats bookStats;
     final StanfordCoreNLP pipeline = Willow.getPipeline();
     Logger logger = Willow.getLogger();
 
     public abstract void readText();
 
-    void setPath(Path path) {
-        this.path = path;
+    void setBook(Book book) {
+        this.book = book;
+        this.bookStats = book.getStats();
     }
 
-    void setBookStats(BookStats stats) {
-        this.bookStats = stats;
+    void setPath(Path path) {
+        this.path = path;
     }
 
     void tagText(String text) {

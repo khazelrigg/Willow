@@ -268,7 +268,7 @@ public class OutputWriter {
         return false;
     }
 
-    void writeCsv() {
+    boolean writeCsv() {
         Path outPath = getOutPath("csv", "CSV", "csv");
         FreqMap<String, Integer> words = bookStats.getWords();
 
@@ -276,11 +276,12 @@ public class OutputWriter {
         try (BufferedWriter bw = Files.newBufferedWriter(outPath)) {
             bw.write("Word, Count\n");
             bw.write(words.toCsvString());
+            printFinishedStatement("CSV");
+            return true;
         } catch (IOException e) {
             logger.error("Unable to write CSV results to {}", outPath);
         }
-
-        printFinishedStatement("CSV");
+        return false;
     }
 
     private Path getOutPath(String typeFolder, String descriptor, String extension) {

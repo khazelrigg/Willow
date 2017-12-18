@@ -40,7 +40,6 @@ public class WillowTest {
     public void copiedFreqmapsAreEqual() {
         FreqMap one = new FreqMap();
         one.increaseFreq("test");
-
         FreqMap two = one;
 
         assertTrue(one.equals(two));
@@ -157,6 +156,16 @@ public class WillowTest {
         OutputWriter ow = new OutputWriter(test);
         assertTrue(ow.writeJson());
     }
+
+    @Test
+    public void createsCSV() {
+        Book test = getTestBook();
+        test.readText(false);
+        OutputWriter ow = new OutputWriter(test);
+        assertTrue(ow.writeCsv());
+    }
+
+
 
     @Test
     public void createsPartsOfSpeechChart() {
