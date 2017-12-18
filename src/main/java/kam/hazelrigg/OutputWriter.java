@@ -16,6 +16,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,7 +88,7 @@ public class OutputWriter {
                         + "monosyllabic words it can be speculated that this text is %s to read. To"
                         + " read this text at a rate of 275wpm it would take %d minute(s) to finish"
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
-                        + " to write at 13wpm it would take %d minute(s).\n",
+                        + " to write at 13wpm it would take %d minute(s).%n",
                 classifiedLength, wordCount, uniqueWords, gradeLevel,
                 polySyllable, monoSyllable, easyDifficult,
                 getReadingTimeInMinutes(), getSpeakingTimeInMinutes(),
@@ -157,7 +158,8 @@ public class OutputWriter {
             try {
                 InputStreamReader inputStreamReader =
                         new InputStreamReader(
-                                OutputWriter.class.getResourceAsStream("/posAbbreviations.txt"));
+                                OutputWriter.class.getResourceAsStream("/posAbbreviations.txt")
+                                , StandardCharsets.UTF_8);
 
                 BufferedReader br = new BufferedReader(inputStreamReader);
                 String line = br.readLine();

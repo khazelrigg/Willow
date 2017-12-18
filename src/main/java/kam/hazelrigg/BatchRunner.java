@@ -18,17 +18,19 @@ class BatchRunner {
         throw new IllegalStateException("Utility class");
     }
 
-    private static final ArrayList<Runner> runners = new ArrayList<>();
+    private static ArrayList<Runner> runners = new ArrayList<>();
 
     static void passCommandLine(CommandLine cmd) {
         Runner.setOptions(cmd);
     }
 
-    static void startRunners(Path path, int threads) {
+    static void startRunners(Path path, int threads) throws IOException {
         if (path.toFile().isDirectory()) {
             openDirectory(path);
         } else if (path.toFile().isFile()) {
             openFile(path);
+        } else {
+            throw new IOException("No such file " + path.toString());
         }
 
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
@@ -46,7 +48,6 @@ class BatchRunner {
             fileWalker
                     .filter(Files::isRegularFile)
                     .forEach(file -> runners.add(new Runner(file, file.getParent())));
-
         } catch (NullPointerException e) {
             logger.error("Null pointer walking files in {}", directory.getFileName().toString());
         } catch (IOException e) {
@@ -56,6 +57,14 @@ class BatchRunner {
 
     private static void openFile(Path f) {
         runners.add(new Runner(f, f));
+    }
+
+    static ArrayList<Runner> getRunners() {
+        return runners;
+    }
+
+    static void clear() {
+        runners = new ArrayList<>();
     }
 }
 
@@ -89,12 +98,14 @@ class Runner implements Runnable {
      */
     private void runBook() {
         book.setTitleFromText();
-        book.readText(cmd.hasOption("economy"));
+        boolean readSuccess = book.readText(cmd.hasOption("economy"));
 
-        this.ow = new OutputWriter(book);
-        ow.setVerbose(cmd.hasOption("verbose"));
-        writeResults();
-        printFinishTime();
+        if (readSuccess) {
+            this.ow = new OutputWriter(book);
+            ow.setVerbose(cmd.hasOption("verbose"));
+            writeResults();
+            printFinishTime();
+        }
     }
 
     private void writeResults() {
@@ -124,6 +135,10 @@ class Runner implements Runnable {
         }
     }
 
+    Book getBook() {
+        return book;
+    }
+
     private void printFinishTime() {
         long currentTime = System.currentTimeMillis();
         int seconds = (int) ((currentTime - Willow.START_TIME) / 1000);
@@ -141,6 +156,10 @@ class Runner implements Runnable {
         } else {
             runBook();
         }
+    }
+
+    static void setCmd(CommandLine commandLine) {
+        cmd = commandLine;
     }
 
 }

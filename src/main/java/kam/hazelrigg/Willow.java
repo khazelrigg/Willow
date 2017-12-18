@@ -9,6 +9,7 @@ import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
@@ -25,7 +26,7 @@ public class Willow {
 
         Path filePath;
         try {
-            CommandLine cmd = new DefaultParser().parse(options, args);
+            CommandLine cmd = getCommandLine(args);
             if (commandLineOptionsAreEmpty(cmd) && commandLineArgIsEmpty(cmd)) {
                 printHelp();
             }
@@ -48,7 +49,11 @@ public class Willow {
         if (threadArg == 0) {
             threadArg = Runtime.getRuntime().availableProcessors();
         }
-        BatchRunner.startRunners(path, threadArg);
+        try {
+            BatchRunner.startRunners(path, threadArg);
+        } catch (IOException e) {
+            logger.error("No such file {}", path);
+        }
     }
 
 
@@ -59,7 +64,6 @@ public class Willow {
                 .addOption("e", "economy", false,
                         "Run in economy mode, reduces memory usage at the cost "
                                 + "of completion speed. Useful for computers with less memory")
-                .addOption("s", "simple", false, "Simply get wordcounts")
                 .addOption("i", "images", false,
                         "Create image outputs")
                 .addOption("j", "json", false, "Create JSON output")
@@ -91,7 +95,7 @@ public class Willow {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("Willow [OPTIONS] [FILE]",
                 "Acceptable file types: Plain text and pdf", options, "");
-        System.exit(-1);
+        throw new IllegalArgumentException("No args");
     }
 
     public static StanfordCoreNLP getPipeline() {
@@ -102,4 +106,7 @@ public class Willow {
         return logger;
     }
 
+    static CommandLine getCommandLine(String[] args) throws ParseException {
+        return new DefaultParser().parse(options, args);
+    }
 }

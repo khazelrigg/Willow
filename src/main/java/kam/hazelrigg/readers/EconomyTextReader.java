@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 public class EconomyTextReader extends TextReader {
@@ -90,7 +91,7 @@ public class EconomyTextReader extends TextReader {
     }
 
     private void writeToScratch(String key, String value) throws IOException {
-        randomAccessFile.write((key + "|" + value + "\n").getBytes());
+        randomAccessFile.write((key + "|" + value + "\n").getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

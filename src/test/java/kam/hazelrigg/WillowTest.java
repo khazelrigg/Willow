@@ -4,14 +4,18 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import kam.hazelrigg.readers.EconomyTextReader;
 import kam.hazelrigg.readers.PdfTextReader;
 import kam.hazelrigg.readers.PlainTextReader;
+import org.apache.commons.cli.ParseException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -25,6 +29,11 @@ public class WillowTest {
     @BeforeClass
     public static void setUp() {
         Willow.pipeline = createPipeline();
+        try {
+            BatchRunner.passCommandLine(Willow.getCommandLine(new String[]{""}));
+        } catch (ParseException e1) {
+            e1.printStackTrace();
+        }
     }
 
     @Test
@@ -200,6 +209,57 @@ public class WillowTest {
         test.readText(false);
         BookStats stats = test.getStats();
         assertEquals(360, stats.getPartsOfSpeech().get("Noun, singular or mass"));
+    }
+
+    @Test
+    public void runBatchSetOfFiles() throws IOException {
+        BatchRunner.startRunners(getTestPath("dir"), 3);
+        ArrayList<Runner> runners = BatchRunner.getRunners();
+
+        ArrayList<String> realPaths = new ArrayList<>();
+        realPaths.add("test.txt");
+        realPaths.add("test2.txt");
+        realPaths.add("test3.txt");
+
+        ArrayList<String> paths = new ArrayList<>();
+        for (Runner runner : runners) {
+            paths.add(runner.getBook().getPath().getFileName().toString());
+        }
+
+        Collections.sort(paths);
+        assertEquals(realPaths, paths);
+    }
+
+    @Test
+    public void batchRunnerSingleFile() throws IOException {
+        BatchRunner.clear();
+        BatchRunner.startRunners(getTestPath(), 1);
+        assertEquals(1, BatchRunner.getRunners().size());
+    }
+
+    @Test
+    public void runnerCreatesResults() throws IOException, ParseException {
+        Runner.setCmd(Willow.getCommandLine(new String[]{"-o"}));
+        Runner runner = new Runner(getTestPath(), getTestPath());
+        runner.run();
+        assertTrue(runner.getBook().hasResults(false, false));
+    }
+
+    @Test(expected = IOException.class)
+    public void batchRunnerNullFile() throws IOException {
+        BatchRunner.clear();
+        BatchRunner.startRunners(getTestPath("notarealfile"), 0);
+    }
+
+    @Test
+    public void runWillow() {
+        Willow.main(new String[]{"-o", "src/test/resources/dir"});
+        assertTrue(BatchRunner.getRunners().get(0).getBook().hasResults(false, false));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void willowPrintsHelp() {
+        Willow.main(new String[]{});
     }
 
     private Book getTestBook() {

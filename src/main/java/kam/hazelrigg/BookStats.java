@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 import static org.apache.commons.lang3.text.WordUtils.wrap;
@@ -206,7 +207,7 @@ public class BookStats {
 
         try {
             InputStreamReader inputStreamReader = new InputStreamReader(BookStats.class.getClass()
-                    .getResourceAsStream("/posAbbreviations.txt"));
+                    .getResourceAsStream("/posAbbreviations.txt"), StandardCharsets.UTF_8);
 
             BufferedReader br = new BufferedReader(inputStreamReader);
 

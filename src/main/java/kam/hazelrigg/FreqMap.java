@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,7 +43,9 @@ class FreqMap<K, V> extends HashMap<K, V> {
     void stripStopWords() {
         Logger loggger = Willow.getLogger();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                this.getClass().getResourceAsStream("/stopwords-english.txt")))) {
+                this.getClass().getResourceAsStream("/stopwords-english.txt"),
+                StandardCharsets.UTF_8))) {
+
             for (String line; (line = br.readLine()) != null; ) {
                 frequency.remove(line);
             }
