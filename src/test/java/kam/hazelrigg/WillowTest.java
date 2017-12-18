@@ -251,12 +251,6 @@ public class WillowTest {
         BatchRunner.startRunners(getTestPath("notarealfile"), 0);
     }
 
-    @Test
-    public void runWillow() {
-        Willow.main(new String[]{"-o", "src/test/resources/dir"});
-        assertTrue(BatchRunner.getRunners().get(0).getBook().hasResults(false, false));
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void willowPrintsHelp() {
         Willow.main(new String[]{});
