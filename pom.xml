@@ -145,10 +145,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <sonar.projectKey>kam.hazelrigg:Willow</sonar.projectKey>
-        <sonar.projectName>${project.name}</sonar.projectName>
-        <sonar.projectVersion>${project.version}</sonar.projectVersion>
-        <sonar.sources>.</sonar.sources>
     </properties>
 
 
