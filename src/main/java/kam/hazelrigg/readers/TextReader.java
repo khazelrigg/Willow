@@ -29,12 +29,12 @@ public abstract class TextReader {
 
     public abstract void readText();
 
-    void setBook(Book book) {
+    public void setBook(Book book) {
         this.book = book;
         this.bookStats = book.getStats();
     }
 
-    void setPath(Path path) {
+    public void setPath(Path path) {
         this.path = path;
     }
 
@@ -45,7 +45,6 @@ public abstract class TextReader {
         for (CoreMap sentence : doc.get(CoreAnnotations.SentencesAnnotation.class)) {
             updateStatsFromSentence(sentence);
         }
-
         bookStats.removeStopWords();
     }
 
@@ -68,8 +67,9 @@ public abstract class TextReader {
     }
 
     boolean isGutenbergStart(String line) {
-        return bookStats.isGutenberg() && (line.contains("START OF THIS PROJECT GUTENBERG EBOOK")
-                || line.contains("START OF THE PROJECT GUTENBERG EBOOK"));
+        line = line.toLowerCase();
+        return bookStats.isGutenberg() && line.contains("start of this project gutenberg")
+                || line.contains("start of the project gutenberg");
     }
 
     BufferedReader getDecodedBufferedReader() throws IOException {
@@ -87,9 +87,8 @@ public abstract class TextReader {
         String lemma = token.get(CoreAnnotations.LemmaAnnotation.class);
         String tag = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
 
-        bookStats.increaseSyllables(word);
-
         if (!isPunctuation(word)) {
+            bookStats.increaseSyllables(word);
             bookStats.increaseWords(word);
             bookStats.increasePartsOfSpeech(tag);
             bookStats.increaseLemmas(lemma);

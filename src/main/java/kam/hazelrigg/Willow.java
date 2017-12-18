@@ -56,7 +56,6 @@ public class Willow {
         }
     }
 
-
     private static Options createOptions() {
         Options options = new Options();
         options.addOption("h", "help", false, "Print help")
@@ -109,4 +108,5 @@ public class Willow {
     static CommandLine getCommandLine(String[] args) throws ParseException {
         return new DefaultParser().parse(options, args);
     }
+
 }

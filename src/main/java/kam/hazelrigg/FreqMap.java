@@ -96,7 +96,6 @@ class FreqMap<K, V> extends HashMap<K, V> {
 
     @Override
     public String toString() {
-
         StringBuilder result = new StringBuilder();
         sortByValue();
         frequency.forEach((key, value) -> result.append(String.format("%s, %d%n", key, value)));

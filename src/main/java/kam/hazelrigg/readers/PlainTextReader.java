@@ -7,23 +7,19 @@ public class PlainTextReader extends TextReader {
 
     public void readText() {
         boolean gutenberg = bookStats.isGutenberg();
-
+        StringBuilder text = new StringBuilder();
         try (BufferedReader br = getDecodedBufferedReader()) {
             boolean atBook = !gutenberg;
-            StringBuilder text = new StringBuilder();
 
             String line;
             while ((line = br.readLine()) != null) {
-
                 if (!atBook && isGutenbergStart(line)) {
                     atBook = true;
-                    line = "";
                 }
 
                 if (atBook) {
                     if (isGutenbergEnd(line)) {
-                        atBook = false;
-                        continue;
+                        break;
                     }
                     text.append(line).append(" ");
                 }

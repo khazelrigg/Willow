@@ -1,6 +1,8 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import kam.hazelrigg.readers.DocTextReader;
+import kam.hazelrigg.readers.DocxTextReader;
 import kam.hazelrigg.readers.EconomyTextReader;
 import kam.hazelrigg.readers.PdfTextReader;
 import kam.hazelrigg.readers.PlainTextReader;
@@ -44,7 +46,6 @@ public class WillowTest {
 
         assertTrue(one.equals(two));
     }
-
 
     @Test
     public void freqmapsAreEqual() {
@@ -115,7 +116,7 @@ public class WillowTest {
 
     @Test
     public void shouldGetIsGutenbergVariant() {
-        Book test = getTestBook("/test3.txt");
+        Book test = getTestBook("test3.txt");
         test.setTitleFromText();
         BookStats stats = test.getStats();
         assertTrue(stats.isGutenberg());
@@ -165,8 +166,6 @@ public class WillowTest {
         assertTrue(ow.writeCsv());
     }
 
-
-
     @Test
     public void createsPartsOfSpeechChart() {
         Book test = getTestBook();
@@ -184,32 +183,14 @@ public class WillowTest {
     }
 
     @Test
-    public void getsEconomyTextReader() {
-        Book test = getTestBook();
-        test.readText(true);
-        assertTrue(test.getTextReader() instanceof EconomyTextReader);
-    }
+    public void getsCorrectWordCount() throws ParseException {
+        Runner testEconomyRunner = new Runner(getTestPath(), getTestPath());
+        testEconomyRunner.setCommandLine(Willow.getCommandLine(new String[]{"-oe"}));
+        testEconomyRunner.run();
 
-    @Test
-    public void getsPlainTextReader() {
-        Book test = getTestBook();
-        test.readText(false);
-        assertTrue(test.getTextReader() instanceof PlainTextReader);
-    }
-
-    @Test
-    public void getsPdfTextReader() {
-        Book test = getTestBook("test.pdf");
-        test.readText(false);
-        assertTrue(test.getTextReader() instanceof PdfTextReader);
-    }
-
-    @Test
-    public void getsCorrectWordCount() {
-        Book test = getTestBook();
-        test.readText(false);
+        Book test = testEconomyRunner.getBook();
         BookStats stats = test.getStats();
-        assertEquals(2662, stats.getWordCount());
+        assertEquals(2672, stats.getWordCount());
     }
 
     @Test
@@ -217,7 +198,7 @@ public class WillowTest {
         Book test = getTestBook();
         test.readText(false);
         BookStats stats = test.getStats();
-        assertEquals(360, stats.getPartsOfSpeech().get("Noun, singular or mass"));
+        assertEquals(363, stats.getPartsOfSpeech().get("Noun, singular or mass"));
     }
 
     @Test
@@ -248,8 +229,8 @@ public class WillowTest {
 
     @Test
     public void runnerCreatesResults() throws IOException, ParseException {
-        Runner.setCmd(Willow.getCommandLine(new String[]{"-o"}));
         Runner runner = new Runner(getTestPath(), getTestPath());
+        runner.setCommandLine(Willow.getCommandLine(new String[]{"-o"}));
         runner.run();
         assertTrue(runner.getBook().hasResults(false, false));
     }
@@ -260,32 +241,117 @@ public class WillowTest {
         BatchRunner.startRunners(getTestPath("notarealfile"), 0);
     }
 
+    // Text Readers
+    @Test
+    public void economyModeGetsCorrectWordCounts() throws ParseException {
+        Runner testEconomyRunner = new Runner(getTestPath(), getTestPath());
+        testEconomyRunner.setCommandLine(Willow.getCommandLine(new String[]{"-oe"}));
+        testEconomyRunner.run();
+
+        Book test = testEconomyRunner.getBook();
+        BookStats stats = test.getStats();
+        long wordCount = stats.getWordCount();
+        assertEquals(2672, wordCount);
+    }
+
+    @Test
+    public void getsEconomyTextReader() {
+        Book test = getTestBook();
+        test.readText(true);
+        assertTrue(test.getTextReader() instanceof EconomyTextReader);
+    }
+
+    @Test
+    public void getsPlainTextReader() {
+        Book test = getTestBook();
+        test.readText(false);
+        assertTrue(test.getTextReader() instanceof PlainTextReader);
+    }
+
+    @Test
+    public void getsPdfTextReader() {
+        Book test = getTestBook("test.pdf");
+        test.readText(false);
+        assertTrue(test.getTextReader() instanceof PdfTextReader);
+    }
+
+    @Test
+    public void getsDocTextReader() {
+        Book test = getTestBook("TestWordDoc.doc");
+        test.readText(false);
+        assertTrue(test.getTextReader() instanceof DocTextReader);
+    }
+
+    @Test
+    public void getsDocxTextReader() {
+        Book test = getTestBook("demo.docx");
+        test.readText(false);
+        assertTrue(test.getTextReader() instanceof DocxTextReader);
+    }
+
+    @Test
+    public void plainTextIOException() {
+        e.expect(IOException.class);
+        Book test = new Book();
+        PlainTextReader reader = new PlainTextReader();
+        reader.setBook(test);
+        reader.setPath(Paths.get(""));
+        reader.readText();
+    }
+
+    @Test
+    public void pdfReaderIOException() {
+        e.expect(IOException.class);
+        Book test = new Book();
+        PdfTextReader reader = new PdfTextReader();
+        reader.setBook(test);
+        reader.setPath(Paths.get(""));
+        reader.readText();
+    }
+
+    @Test
+    public void economyIOException() {
+        e.expect(IOException.class);
+        Book test = new Book();
+        EconomyTextReader reader = new EconomyTextReader();
+        reader.setBook(test);
+        reader.setPath(Paths.get(""));
+        reader.readText();
+    }
+
+    @Test
+    public void economyScratchException() {
+        e.expect(IOException.class);
+        Book test = new Book();
+        EconomyTextReader reader = new EconomyTextReader();
+        reader.setBook(test);
+        reader.setPath(Paths.get(""));
+        reader.readText();
+    }
+
+    @Test
+    public void docxIOException() {
+        e.expect(IOException.class);
+        Book test = new Book();
+        DocxTextReader reader = new DocxTextReader();
+        reader.setBook(test);
+        reader.setPath(Paths.get(""));
+        reader.readText();
+    }
+
+    @Test
+    public void docIOException() {
+        e.expect(IOException.class);
+        Book test = new Book();
+        DocTextReader reader = new DocTextReader();
+        reader.setBook(test);
+        reader.setPath(Paths.get(""));
+        reader.readText();
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void willowPrintsHelp() {
         Willow.main(new String[]{});
-    }
-
-    private Book getTestBook() {
-        Book book = new Book();
-        book.setPath(getTestPath());
-        book.setTitleFromText();
-        return book;
-    }
-
-    private Book getTestBook(String path) {
-        Book book = new Book();
-        book.setPath(getTestPath(path));
-        book.setTitleFromText();
-        return book;
-    }
-
-    private Path getTestPath() {
-        return new File("src/test/resources/test.txt").toPath();
-        //
-    }
-
-    private Path getTestPath(String path) {
-        return new File("src/test/resources/" + path).toPath();
     }
 
     private static StanfordCoreNLP createPipeline() {
@@ -295,6 +361,28 @@ public class WillowTest {
         properties.put("tokenize.options", "untokenizable=noneDelete");
 
         return new StanfordCoreNLP(properties);
+    }
+
+    static Book getTestBook() {
+        Book book = new Book();
+        book.setPath(getTestPath());
+        book.setTitleFromText();
+        return book;
+    }
+
+    static Book getTestBook(String path) {
+        Book book = new Book();
+        book.setPath(getTestPath(path));
+        book.setTitleFromText();
+        return book;
+    }
+
+    static Path getTestPath() {
+        return new File("src/test/resources/test.txt").toPath();
+    }
+
+    static Path getTestPath(String path) {
+        return new File("src/test/resources/" + path).toPath();
     }
 
 

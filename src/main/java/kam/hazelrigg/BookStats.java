@@ -126,7 +126,7 @@ public class BookStats {
         lemmas.stripStopWords();
     }
 
-    long getWordCount() {
+    public long getWordCount() {
         return wordCount;
     }
 
