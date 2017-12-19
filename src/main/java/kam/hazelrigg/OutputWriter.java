@@ -25,22 +25,21 @@ import java.util.HashMap;
 
 import static org.apache.commons.lang3.text.WordUtils.wrap;
 
-public class OutputWriter {
+class OutputWriter {
     private static Logger logger = Willow.getLogger();
     private final String subdirectory;
     private final Book book;
     private final BookStats bookStats;
     private final String title;
-    private boolean verbose = false;
 
-    public OutputWriter(Book book) {
+    OutputWriter(Book book) {
         this.book = book;
         this.subdirectory = book.getSubdirectory();
         this.bookStats = book.getStats();
         this.title = book.getTitle();
     }
 
-    public boolean writeTxt() {
+    boolean writeTxt() {
         FreqMap partsOfSpeech = bookStats.getPartsOfSpeech();
         FreqMap words = bookStats.getWords();
         FreqMap lemmas = bookStats.getLemmas();
@@ -56,6 +55,7 @@ public class OutputWriter {
                 bw.write("\n" + wrapInBox("Stats") + bookStats.toFormattedString());
                 bw.write("\n" + wrapInBox("Conclusion"));
                 writeConclusionString(bw);
+
                 bw.write("\n" + wrapInBox("Parts of Speech") + partsOfSpeech.toString());
                 bw.write("\n" + wrapInBox("Word Counts") + words.toString());
                 bw.write("\n" + wrapInBox("Concordance") + createConcordance(words));
@@ -84,7 +84,8 @@ public class OutputWriter {
         bw.write(wrap(String.format("This piece is classified as a %s based on the Nebula "
                         + "Award categories. It has a total of %d words with %d of those being "
                         + "unique. Using the Flesch-Kincaid reading ease test, this text is rated "
-                        + "at the %s level. Comparing the ratio of (%d) polysyllabic words to (%d) "
+                        + "at the %s level."
+                        + "Comparing the ratio of (%d) polysyllabic words to (%d) "
                         + "monosyllabic words it can be speculated that this text is %s to read. To"
                         + " read this text at a rate of 275wpm it would take %d minute(s) to finish"
                         + ",to speak at 180wpm, %d minute(s), to type at 40wpm, %d minutes and "
@@ -105,11 +106,11 @@ public class OutputWriter {
         return wrap(concordance.toString() + "\n", 100);
     }
 
-    public boolean makeSyllableDistributionGraph() {
+    boolean makeSyllableDistributionGraph() {
         return makeGraph("Difficulty", bookStats.getSyllables());
     }
 
-    public boolean makePartsOfSpeechGraph() {
+    boolean makePartsOfSpeechGraph() {
         return makeGraph("POS Distribution", bookStats.getPartsOfSpeech());
     }
 
@@ -181,7 +182,7 @@ public class OutputWriter {
     }
 
     @SuppressWarnings("unchecked")
-    public boolean writeJson() {
+    boolean writeJson() {
         Path outPath = getOutPath("json", "JSON", "json");
         String d3Children = "children";
 
@@ -225,7 +226,8 @@ public class OutputWriter {
 
                 //Categorise each type
                 typeParent.put(d3Children, typeArray);
-                switch (getParentType(type)) {
+                type = getParentType(type);
+                switch (type) {
                     case "Noun":
                         jsonTypes.get(posTypes[0]).add(typeParent);
                         break;
@@ -314,9 +316,7 @@ public class OutputWriter {
     }
 
     private void printFinishedStatement(String action) {
-        if (verbose) {
-            logger.info("Finished writing {} for {}", action, book.getName());
-        }
+        logger.info("Finished writing {} for {}", action, book.getName());
     }
 
     private static String wrapInBox(String text) {
@@ -358,10 +358,6 @@ public class OutputWriter {
         return wrapped.toString();
     }
 
-    void setVerbose(boolean verbose) {
-        this.verbose = verbose;
-    }
-
     private int getReadingTimeInMinutes() {
         long wordCount = book.getStats().getWordCount();
         return (int) wordCount / 275;
@@ -385,24 +381,24 @@ public class OutputWriter {
     private static String getParentType(String type) {
         type = type.toLowerCase();
 
-        if (type.contains("noun")) {
-            return "Noun";
+        if (type.contains("pronoun")) {
+            return "Pronoun";
         }
 
-        if (type.contains("verb")) {
-            return "Verb";
+        if (type.contains("noun")) {
+            return "Noun";
         }
 
         if (type.contains("adverb")) {
             return "Adverb";
         }
 
-        if (type.contains("adjective")) {
-            return "Adjective";
+        if (type.contains("verb")) {
+            return "Verb";
         }
 
-        if (type.contains("pronoun")) {
-            return "Pronoun";
+        if (type.contains("adjective")) {
+            return "Adjective";
         }
 
         return "Other";

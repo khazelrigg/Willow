@@ -42,8 +42,9 @@ class FreqMap<K, V> extends HashMap<K, V> {
      */
     void stripStopWords() {
         Logger loggger = Willow.getLogger();
+        String stoplistName = "/long-stopwords.txt";
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                this.getClass().getResourceAsStream("/stopwords-english.txt"),
+                this.getClass().getResourceAsStream(stoplistName),
                 StandardCharsets.UTF_8))) {
 
             for (String line; (line = br.readLine()) != null; ) {

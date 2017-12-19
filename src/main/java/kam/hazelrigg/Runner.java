@@ -55,8 +55,6 @@ public class Runner implements Runnable {
 
     private void setUpOutputWriter() {
         outputWriter = new OutputWriter(book);
-        boolean verbose = commandLine.hasOption("verbose");
-        outputWriter.setVerbose(verbose);
     }
 
     private void writeResults() {

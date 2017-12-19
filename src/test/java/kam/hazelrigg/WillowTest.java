@@ -39,6 +39,15 @@ public class WillowTest {
     }
 
     @Test
+    public void stringDoesNotEqualFreqmap() {
+        FreqMap one = new FreqMap();
+        one.increaseFreq("test");
+
+        assertFalse(one.equals("test"));
+    }
+
+
+    @Test
     public void copiedFreqmapsAreEqual() {
         FreqMap one = new FreqMap();
         one.increaseFreq("test");
@@ -152,7 +161,7 @@ public class WillowTest {
 
     @Test
     public void createsJSON() {
-        Book test = getTestBook();
+        Book test = getTestBook("test3.txt");
         test.readText(false);
         OutputWriter ow = new OutputWriter(test);
         assertTrue(ow.writeJson());
@@ -185,7 +194,7 @@ public class WillowTest {
     @Test
     public void getsCorrectWordCount() throws ParseException {
         Runner testEconomyRunner = new Runner(getTestPath(), getTestPath());
-        testEconomyRunner.setCommandLine(Willow.getCommandLine(new String[]{"-oe"}));
+        testEconomyRunner.setCommandLine(Willow.getCommandLine(new String[]{"-eo"}));
         testEconomyRunner.run();
 
         Book test = testEconomyRunner.getBook();
@@ -199,6 +208,31 @@ public class WillowTest {
         test.readText(false);
         BookStats stats = test.getStats();
         assertEquals(363, stats.getPartsOfSpeech().get("Noun, singular or mass"));
+    }
+
+    @Test
+    public void getsNovelLength() {
+        Book test = getTestBook("test4.txt");
+        test.readText(false);
+        BookStats stats = test.getStats();
+        assertEquals("novel", stats.getClassifiedLength());
+    }
+
+    @Test
+    public void isDifficult() {
+        Book test = getTestBook("difficult.txt");
+        test.readText(false);
+        BookStats stats = test.getStats();
+        assertEquals("difficult", stats.getEasyDifficult());
+    }
+
+
+    @Test
+    public void getsGradeLevel() {
+        Book test = getTestBook("Obama.txt");
+        test.readText(false);
+        BookStats stats = test.getStats();
+        assertEquals("10th to 12th grade", stats.classifyKincaidScore(stats.getFleschKincaidScore()));
     }
 
     @Test
@@ -218,6 +252,11 @@ public class WillowTest {
 
         Collections.sort(paths);
         assertEquals(realPaths, paths);
+    }
+
+    @Test(expected = IOException.class)
+    public void runNullFolder() throws IOException {
+        BatchRunner.startRunners(getTestPath(null), 1);
     }
 
     @Test
@@ -240,6 +279,7 @@ public class WillowTest {
         BatchRunner.clear();
         BatchRunner.startRunners(getTestPath("notarealfile"), 0);
     }
+
 
     // Text Readers
     @Test
@@ -349,6 +389,15 @@ public class WillowTest {
         reader.readText();
     }
 
+    @Test
+    public void runnerRunsFlags() throws ParseException {
+        Runner runner = new Runner(getTestPath(), getTestPath());
+        runner.setCommandLine(Willow.getCommandLine(new String[]{"-jicoe"}));
+        runner.run();
+        Book tester = runner.getBook();
+        assertTrue(tester.hasResults(true, true));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void willowPrintsHelp() {
         Willow.main(new String[]{});
@@ -363,25 +412,25 @@ public class WillowTest {
         return new StanfordCoreNLP(properties);
     }
 
-    static Book getTestBook() {
+    private static Book getTestBook() {
         Book book = new Book();
         book.setPath(getTestPath());
         book.setTitleFromText();
         return book;
     }
 
-    static Book getTestBook(String path) {
+    private static Book getTestBook(String path) {
         Book book = new Book();
         book.setPath(getTestPath(path));
         book.setTitleFromText();
         return book;
     }
 
-    static Path getTestPath() {
+    private static Path getTestPath() {
         return new File("src/test/resources/test.txt").toPath();
     }
 
-    static Path getTestPath(String path) {
+    private static Path getTestPath(String path) {
         return new File("src/test/resources/" + path).toPath();
     }
 

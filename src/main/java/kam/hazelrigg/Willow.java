@@ -39,6 +39,7 @@ public class Willow {
             if (cmd.hasOption("t")) {
                 threads = Integer.parseInt(cmd.getOptionValue("t"));
             }
+
             startRunners(filePath, threads);
         } catch (ParseException e) {
             logger.error("Parse exception for {}", e.toString());
@@ -59,7 +60,6 @@ public class Willow {
     private static Options createOptions() {
         Options options = new Options();
         options.addOption("h", "help", false, "Print help")
-                .addOption("v", "verbose", false, "Verbose output")
                 .addOption("e", "economy", false,
                         "Run in economy mode, reduces memory usage at the cost "
                                 + "of completion speed. Useful for computers with less memory")

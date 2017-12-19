@@ -29,6 +29,7 @@ public class BookStats {
 
     public void increaseWords(String word) {
         wordCount++;
+        word = word.replaceAll("\\W", "");
         words.increaseFreq(word);
     }
 
@@ -64,12 +65,12 @@ public class BookStats {
         return classifyKincaidScore(score);
     }
 
-    private double getFleschKincaidScore() {
+    double getFleschKincaidScore() {
         return 206.835 - (1.015 * wordCount / sentenceCount)
                 - (84.6 * syllableCount / wordCount);
     }
 
-    private String classifyKincaidScore(double score) {
+    String classifyKincaidScore(double score) {
         if (score <= 100) {
             if (score > 90) {
                 return "5th-grade";
@@ -91,11 +92,6 @@ public class BookStats {
         return "easiest";
     }
 
-    /**
-     * Uses Nebula Award classifications to classify a text based on its length.
-     *
-     * @return String classification
-     */
     private String classifyLength() {
         /*
         Classification    Word count
@@ -118,7 +114,6 @@ public class BookStats {
         }
 
         return "novel";
-
     }
 
     public void removeStopWords() {
@@ -126,7 +121,7 @@ public class BookStats {
         lemmas.stripStopWords();
     }
 
-    public long getWordCount() {
+    long getWordCount() {
         return wordCount;
     }
 
@@ -221,7 +216,6 @@ public class BookStats {
             }
 
             br.close();
-            return posNoAbbrev;
         } catch (IOException ioe) {
             logger.error("IOException reading abbreviations from disk");
         }
