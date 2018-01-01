@@ -1,11 +1,7 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import kam.hazelrigg.readers.DocTextReader;
-import kam.hazelrigg.readers.DocxTextReader;
-import kam.hazelrigg.readers.EconomyTextReader;
-import kam.hazelrigg.readers.PdfTextReader;
-import kam.hazelrigg.readers.PlainTextReader;
+import kam.hazelrigg.readers.*;
 import org.apache.commons.cli.ParseException;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,9 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class WillowTest {
 
@@ -40,25 +34,17 @@ public class WillowTest {
 
     @Test
     public void stringDoesNotEqualFreqmap() {
-        FreqMap one = new FreqMap();
+        FreqMap one;
+        one = new FreqMap();
         one.increaseFreq("test");
 
         assertFalse(one.equals("test"));
     }
 
-
-    @Test
-    public void copiedFreqmapsAreEqual() {
-        FreqMap one = new FreqMap();
-        one.increaseFreq("test");
-        FreqMap two = one;
-
-        assertTrue(one.equals(two));
-    }
-
     @Test
     public void freqmapsAreEqual() {
-        FreqMap one = new FreqMap();
+        FreqMap one;
+        one = new FreqMap();
         one.increaseFreq("test");
         one.increaseFreq("best");
 
@@ -71,7 +57,8 @@ public class WillowTest {
 
     @Test
     public void freqmapsAreNotEqual() {
-        FreqMap one = new FreqMap();
+        FreqMap one;
+        one = new FreqMap();
         one.increaseFreq("test");
         FreqMap two = new FreqMap();
         one.increaseFreq("toast");
@@ -161,7 +148,7 @@ public class WillowTest {
 
     @Test
     public void createsJSON() {
-        Book test = getTestBook("test3.txt");
+        Book test = getTestBook();
         test.readText(false);
         OutputWriter ow = new OutputWriter(test);
         assertTrue(ow.writeJson());
@@ -219,6 +206,30 @@ public class WillowTest {
     }
 
     @Test
+    public void getsSentenceCount() {
+        Book test = getTestBook();
+        test.readText(false);
+        BookStats stats = test.getStats();
+        assertEquals(261, stats.getSentenceCount());
+    }
+
+    @Test
+    public void getsMonosyllabic() {
+        Book test = getTestBook();
+        test.readText(false);
+        BookStats stats = test.getStats();
+        assertEquals(1769, stats.getMonosyllablic());
+    }
+
+    @Test
+    public void getsPolysyllabic() {
+        Book test = getTestBook();
+        test.readText(false);
+        BookStats stats = test.getStats();
+        assertEquals(905, stats.getPolysyllablic());
+    }
+
+    @Test
     public void isDifficult() {
         Book test = getTestBook("difficult.txt");
         test.readText(false);
@@ -237,6 +248,7 @@ public class WillowTest {
 
     @Test
     public void runBatchSetOfFiles() throws IOException {
+        BatchRunner.clear();
         BatchRunner.startRunners(getTestPath("dir"), 3);
         ArrayList<Runner> runners = BatchRunner.getRunners();
 
@@ -267,7 +279,7 @@ public class WillowTest {
     }
 
     @Test
-    public void runnerCreatesResults() throws IOException, ParseException {
+    public void runnerCreatesResults() throws ParseException {
         Runner runner = new Runner(getTestPath(), getTestPath());
         runner.setCommandLine(Willow.getCommandLine(new String[]{"-o"}));
         runner.run();
@@ -280,6 +292,15 @@ public class WillowTest {
         BatchRunner.startRunners(getTestPath("notarealfile"), 0);
     }
 
+    @Test(expected = UnsupportedOperationException.class)
+    public void batchRunnerNoConstructor() {
+        new BatchRunner();
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void willowNoConstructor() {
+        new Willow();
+    }
 
     // Text Readers
     @Test
@@ -400,7 +421,26 @@ public class WillowTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void willowPrintsHelp() {
-        Willow.main(new String[]{});
+        Willow.main(new String[]{"-o"});
+    }
+
+    @Test
+    public void willowNotRealPath() {
+        e.expect(IOException.class);
+        Willow.main(new String[]{"areallylongnamethatisnotanactualdirectory"});
+    }
+
+    @Test
+    public void willowParseException() {
+        e.expect(ParseException.class);
+        Willow.main(new String[]{"-xyz", ""});
+    }
+
+    @Test
+    public void willowRuns() {
+        BatchRunner.clear();
+        Willow.main(new String[]{"-ot", "3", "src/test/resources/dir"});
+        assertEquals(3, BatchRunner.getRunners().size());
     }
 
     private static StanfordCoreNLP createPipeline() {

@@ -11,12 +11,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Stream;
 
-class BatchRunner {
+final class BatchRunner {
     private static Logger logger = Willow.getLogger();
     private static CommandLine cmd;
 
-    private BatchRunner() {
-        throw new IllegalStateException("Utility class");
+    BatchRunner() {
+        throw new UnsupportedOperationException("Utility class");
     }
 
     private static ArrayList<Runner> runners = new ArrayList<>();
@@ -53,10 +53,8 @@ class BatchRunner {
             fileWalker
                     .filter(Files::isRegularFile)
                     .forEach(file -> runners.add(new Runner(file, file.getParent())));
-        } catch (NullPointerException e) {
-            logger.error("Null pointer walking files in {}", directory.getFileName().toString());
-        } catch (IOException e) {
-            logger.error("IOException walking files in {}", directory.getFileName().toString());
+        } catch (NullPointerException | IOException e) {
+            logger.error("Exception walking files in {}", directory.getFileName().toString());
         }
     }
 

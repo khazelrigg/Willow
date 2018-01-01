@@ -1,11 +1,7 @@
 package kam.hazelrigg;
 
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,16 +15,20 @@ public class Willow {
     static StanfordCoreNLP pipeline;
     private static final Options options = createOptions();
     private static Logger logger = LoggerFactory.getLogger(Willow.class);
-    private static int threads = 0;
+
+    Willow() {
+        throw new UnsupportedOperationException("Utility class");
+    }
 
     public static void main(String[] args) {
         Thread.currentThread().setName("Willow");
-
+        int threads;
         Path filePath;
         try {
             CommandLine cmd = getCommandLine(args);
-            if (commandLineOptionsAreEmpty(cmd) && commandLineArgIsEmpty(cmd)) {
+            if (commandLineArgIsEmpty(cmd)) {
                 printHelp();
+                throw new IllegalArgumentException("No args");
             }
 
             filePath = Paths.get(cmd.getArgs()[0]);
@@ -38,6 +38,8 @@ public class Willow {
 
             if (cmd.hasOption("t")) {
                 threads = Integer.parseInt(cmd.getOptionValue("t"));
+            } else {
+                threads = 0;
             }
 
             startRunners(filePath, threads);
@@ -82,19 +84,14 @@ public class Willow {
         return new StanfordCoreNLP(properties);
     }
 
-    private static boolean commandLineOptionsAreEmpty(CommandLine commandLine) {
-        return commandLine.getOptions().length == 0;
-    }
-
     private static boolean commandLineArgIsEmpty(CommandLine commandLine) {
-        return commandLine.getArgs().length == 0;
+        return commandLine.getArgs().length < 1;
     }
 
     private static void printHelp() {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("Willow [OPTIONS] [FILE]",
                 "Acceptable file types: Plain text and pdf", options, "");
-        throw new IllegalArgumentException("No args");
     }
 
     public static StanfordCoreNLP getPipeline() {

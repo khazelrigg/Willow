@@ -223,6 +223,10 @@ public class BookStats {
         return posNoAbbrev;
     }
 
+    long getSentenceCount() {
+        return sentenceCount;
+    }
+
     public boolean isGutenberg() {
         return gutenberg;
     }
